@@ -1,0 +1,8 @@
+# CMCD-Request: mtp=25400
+# CMCD-Object: br=3200,d=4004,ot=v,tb=6000
+# CMCD-Status: bs,rtp=15000
+# CMCD-Session: sid="6e2fb550-c457-11e9-bb97-0800200c9a66"
+
+?CMCD=br%3D3200%2Cbs%2Cd%3D4004%2Cmtp%3D25400%2Cot%3Dv%2Crtp%3D15000%2Csid%3D%226e2fb550-c457-11e9-bb97-0800200c9a66%22%2Ctb%3D6000
+
+# {"br": 3200,"bs":true,"d": 4004,"mtp": 25400, "ot": "v", "rtp":15000,"sid": "6e2fb550-c457-11e9-bb97-0800200c9a66","tb":6000}
