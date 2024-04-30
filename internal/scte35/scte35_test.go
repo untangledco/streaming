@@ -22,9 +22,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeBase64(t *testing.T) {
@@ -600,24 +597,37 @@ func TestDecodeBase64(t *testing.T) {
 			}
 			// test encode/decode XML
 			encodedXML := toXML(sis)
-			assert.Equal(t, toXML(&c.expected), encodedXML)
-			decodedXML := SpliceInfoSection{}
-			assert.NoError(t, xml.Unmarshal([]byte(encodedXML), &decodedXML))
+			if toXML(&c.expected) != encodedXML {
+				t.Fatalf("encode xml: want %s, got %s", toXML(&c.expected), encodedXML)
+			}
+			var info SpliceInfoSection
+			if err := xml.Unmarshal([]byte(encodedXML), &info); err != nil {
+				t.Error(err)
+			}
 
 			// legacy 35's produce an "updated" binary so will not match
 			if !c.legacy {
-				assert.Equal(t, c.binary, decodedXML.Base64())
+				if c.binary != info.Base64() {
+					t.Errorf("re-encode to binary: want %s, got %s", c.binary, info.Base64())
+				}
 			}
 
 			// test encode/decode JSON
 			encodedJSON := toJSON(sis)
-			assert.Equal(t, toJSON(&c.expected), encodedJSON)
-			decodedJSON := SpliceInfoSection{}
-			require.NoError(t, json.Unmarshal([]byte(encodedJSON), &decodedJSON))
+			if toJSON(&c.expected) != encodedJSON {
+				t.Fatalf("encode to json: want %s, got %s", toJSON(&c.expected), encodedJSON)
+			}
+			info = SpliceInfoSection{}
+
+			if err := json.Unmarshal([]byte(encodedJSON), &info); err != nil {
+				t.Fatal(err)
+			}
 
 			// legacy 35's produce an "updated" binary so will not match
 			if !c.legacy {
-				assert.Equal(t, c.binary, decodedJSON.Base64())
+				if c.binary != info.Base64() {
+					t.Errorf("re-encode to binary: want %s, got %s", c.binary, info.Base64())
+				}
 			}
 		})
 	}
@@ -716,24 +726,30 @@ func TestDecodeHex(t *testing.T) {
 
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			// decode the binary
 			sis, err := DecodeHex(c.hex)
-			require.Equal(t, c.err, err)
-			if err != nil {
-				return
+			if !errors.Is(c.err, err) {
+				t.Fatalf("want error %v, got %v", c.err, err)
 			}
 
 			// test encode/decode XML
 			encodedXML := toXML(sis)
-			assert.Equal(t, toXML(&c.expected), encodedXML)
-			decodedXML := SpliceInfoSection{}
-			assert.NoError(t, xml.Unmarshal([]byte(encodedXML), &decodedXML))
+			if toXML(&c.expected) != encodedXML {
+				t.Fatalf("encode xml: want %s, got %s", toXML(&c.expected), encodedXML)
+			}
+			var info SpliceInfoSection
+			if err := xml.Unmarshal([]byte(encodedXML), &info); err != nil {
+				t.Errorf("unmarshal back from xml: %v", err)
+			}
 
 			// test encode/decode JSON
 			encodedJSON := toJSON(sis)
-			assert.Equal(t, toJSON(&c.expected), encodedJSON)
-			decodedJSON := SpliceInfoSection{}
-			require.NoError(t, json.Unmarshal([]byte(encodedJSON), &decodedJSON))
+			if toJSON(&c.expected) != encodedJSON {
+				t.Fatalf("encode json: want %s, got %s", toJSON(&c.expected), encodedJSON)
+			}
+			info = SpliceInfoSection{}
+			if err := json.Unmarshal([]byte(encodedJSON), &info); err != nil {
+				t.Errorf("unmarshal from json back into splice info: %v", err)
+			}
 		})
 	}
 }
@@ -754,8 +770,12 @@ func TestEncodeWithAlignmentStuffing(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			sis, err := DecodeBase64(c.binary)
-			require.NoError(t, err)
-			require.Equal(t, c.binary, sis.Base64())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if c.binary != sis.Base64() {
+				t.Errorf("base64 re-encode: want %s, got %s", c.binary, sis.Base64())
+			}
 		})
 	}
 }
@@ -766,7 +786,10 @@ func TestTicksToDuration(t *testing.T) {
 	max := 61 * TicksPerSecond
 	for i := min; i < max; i++ {
 		d := TicksToDuration(uint64(i))
-		require.Equal(t, i, int(DurationToTicks(d)))
+		ticks := DurationToTicks(d)
+		if i != int(ticks) {
+			t.Errorf("DurationToTicks(%s) = %d, want %d", d, ticks, i)
+		}
 	}
 }
 
