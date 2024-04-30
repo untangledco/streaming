@@ -20,8 +20,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
-	"io"
-	"os"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,15 +28,11 @@ import (
 )
 
 func TestDecodeBase64(t *testing.T) {
-	Logger.SetOutput(os.Stderr)
-	defer Logger.SetOutput(io.Discard)
-
 	// when adding tests that contain multiple splice descriptors, care must be
 	// taken to ensure they are in the order specified in the custom UnmarshalXML
 	// implementation, otherwise misleading error may occur
 	cases := map[string]struct {
 		binary   string
-		err      error
 		expected SpliceInfoSection
 		legacy   bool
 	}{
@@ -384,14 +379,6 @@ func TestDecodeBase64(t *testing.T) {
 				SAPType: 3,
 			},
 		},
-		"Empty String": {
-			binary: "",
-			err:    ErrBufferOverflow,
-		},
-		"Invalid Base64 Encoding": {
-			binary: "/DBaf%^",
-			err:    ErrUnsupportedEncoding,
-		},
 		"Splice Insert with Avail Descriptor": {
 			binary: "/DAqAAAAAAAAAP/wDwUAAHn+f8/+QubGOQAAAAAACgAIQ1VFSQAAAADizteX",
 			expected: SpliceInfoSection{
@@ -464,10 +451,6 @@ func TestDecodeBase64(t *testing.T) {
 			},
 			legacy: true,
 		},
-		"SpliceInsert Time Specified With Invalid Component Count": {
-			binary: "FkC1lwP3uTQD0VvxHwVBEH89G6B7VjzaZ9eNuyUF9q8pYAIXsRM9ZpDCczBeDbytQhXkssQstGJVGcvjZ3tiIMULiA4BpRHlzLGFa0q6aVMtzk8ZRUeLcxtKibgVOKBBnkCbOQyhSflFiDkrAAIp+Fk+VRsByTSkPN3RvyK+lWcjHElhwa9hNFcAy4dm3DdeRXnrD3I2mISNc7DkgS0ReotPyp94FV77xMHT4D7SYL48XU20UM4bgg==",
-			err:    ErrBufferOverflow,
-		},
 		"Signal with non-CUEI descriptor": {
 			binary: "/DBPAAAAAAAAAP/wBQb/Gq9LggA5AAVTQVBTCwIwQ1VFSf////9//wAAFI4PDxx1cm46bmJjdW5pLmNvbTpicmM6NDk5ODY2NDM0MQoBbM98zw==",
 			expected: SpliceInfoSection{
@@ -502,10 +485,6 @@ func TestDecodeBase64(t *testing.T) {
 				Tier:          4095,
 				SAPType:       3,
 			},
-		},
-		"Invalid CRC_32": {
-			binary: "/DA4AAAAAAAAAP/wFAUABDEAf+//mWEhzP4Azf5gAQAAAAATAhFDVUVJAAAAAX+/AQIwNAEAAKeYO3Q=",
-			err:    ErrCRC32Invalid,
 		},
 		"Alignment Stuffing without Encryption": {
 			binary: "/DAeAAAAAAAAAP///wViAA/nf18ACQAAAAAskJv+YPtE",
@@ -615,13 +594,10 @@ func TestDecodeBase64(t *testing.T) {
 
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			// decode the binary
 			sis, err := DecodeBase64(c.binary)
-			require.ErrorIs(t, err, c.err)
 			if err != nil {
-				return
+				t.Fatal(err)
 			}
-
 			// test encode/decode XML
 			encodedXML := toXML(sis)
 			assert.Equal(t, toXML(&c.expected), encodedXML)
@@ -643,9 +619,31 @@ func TestDecodeBase64(t *testing.T) {
 			if !c.legacy {
 				assert.Equal(t, c.binary, decodedJSON.Base64())
 			}
+		})
+	}
+}
 
-			// uncomment this to verify the output as text
-			// Logger.Printf("\n%s", sis.Table("", "\t"))
+func TestBadBase64(t *testing.T) {
+	var tests = []struct {
+		name string
+		in   string
+		err  error
+	}{
+		{"empty", "", ErrBufferOverflow},
+		{"invalid base64", "/DBaf%^", ErrUnsupportedEncoding},
+		{"Invalid CRC_32", "/DA4AAAAAAAAAP/wFAUABDEAf+//mWEhzP4Azf5gAQAAAAATAhFDVUVJAAAAAX+/AQIwNAEAAKeYO3Q=", ErrCRC32Invalid},
+		{
+			"SpliceInsert time with invalid component count",
+			"FkC1lwP3uTQD0VvxHwVBEH89G6B7VjzaZ9eNuyUF9q8pYAIXsRM9ZpDCczBeDbytQhXkssQstGJVGcvjZ3tiIMULiA4BpRHlzLGFa0q6aVMtzk8ZRUeLcxtKibgVOKBBnkCbOQyhSflFiDkrAAIp+Fk+VRsByTSkPN3RvyK+lWcjHElhwa9hNFcAy4dm3DdeRXnrD3I2mISNc7DkgS0ReotPyp94FV77xMHT4D7SYL48XU20UM4bgg==",
+			ErrBufferOverflow,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := DecodeBase64(tt.in)
+			if !errors.Is(err, tt.err) {
+				t.Errorf("DecodeBase64: want error %v, got %v", tt.err, err)
+			}
 		})
 	}
 }

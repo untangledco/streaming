@@ -3,8 +3,8 @@ package scte35_test
 import (
 	"testing"
 
-	"github.com/untangledco/streaming/internal/scte35"
 	"github.com/stretchr/testify/require"
+	"github.com/untangledco/streaming/internal/scte35"
 )
 
 func TestSegmentationUPID_ASCIIValue(t *testing.T) {
