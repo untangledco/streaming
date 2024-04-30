@@ -7,8 +7,6 @@ import (
 	"path"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 type sistest struct {
@@ -68,12 +66,20 @@ func TestSpliceInfoSection(t *testing.T) {
 				if err := json.Unmarshal(b, &got); err != nil {
 					t.Fatal(err)
 				}
-				require.Equal(t, toJSON(&tt.sis), toJSON(&got))
+				if toJSON(&tt.sis) != toJSON(&got) {
+					t.Error("remarshalled json different from source")
+					t.Logf("want: %s", toJSON(&tt.sis))
+					t.Logf("got: %s", toJSON(&got))
+				}
 			} else {
 				if err := xml.Unmarshal(b, &got); err != nil {
 					t.Fatal(err)
 				}
-				require.Equal(t, toXML(&tt.sis), toXML(&got))
+				if toXML(&tt.sis) != toXML(&got) {
+					t.Error("remarshalled xml different from source")
+					t.Logf("want: %s", toXML(&tt.sis))
+					t.Logf("got: %s", toXML(&got))
+				}
 			}
 		})
 	}

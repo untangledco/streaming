@@ -1,29 +1,11 @@
-package scte35_test
+package scte35
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-	"github.com/untangledco/streaming/internal/scte35"
-)
+import "testing"
 
 func TestSegmentationUPID_ASCIIValue(t *testing.T) {
-	cases := map[string]struct {
-		upid     scte35.SegmentationUPID
-		expected string
-	}{
-		"Simple": {
-			upid: scte35.SegmentationUPID{
-				Type:  0x09,
-				Value: "SIGNAL:z1sFOMjCnV4AAAAAAAABAQ==",
-			},
-			expected: "SIGNAL:z1sFOMjCnV4AAAAAAAABAQ==",
-		},
-	}
-
-	for k, c := range cases {
-		t.Run(k, func(t *testing.T) {
-			require.Equal(t, c.expected, c.upid.ASCIIValue())
-		})
+	upid := SegmentationUPID{Type: 0x09, Value: "SIGNAL:z1sFOMjCnV4AAAAAAAABAQ=="}
+	want := "SIGNAL:z1sFOMjCnV4AAAAAAAABAQ=="
+	if want != upid.ASCIIValue() {
+		t.Errorf("want %s, got %s", want, upid.ASCIIValue())
 	}
 }
