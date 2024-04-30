@@ -1,0 +1,7 @@
+This is an in-progress fork of github.com/comcast/scte35-go@v1.4.5.
+The goals are:
+
+- remove dependencies
+- improve godoc with examples, idioms
+- no contributor license agreement (CLA)
+- ...
