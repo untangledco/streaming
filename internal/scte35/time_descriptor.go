@@ -22,10 +22,8 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// TimeDescriptorTag is the splice_descriptor_tag for a time_descriptor.
-	TimeDescriptorTag = 0x03
-)
+// TimeDescriptorTag is the splice_descriptor_tag for a time_descriptor.
+const TimeDescriptorTag = 0x03
 
 // TimeDescriptor is an implementation of a splice_descriptor. It provides an
 // optional extension to the splice_insert(), splice_null() and time_signal()

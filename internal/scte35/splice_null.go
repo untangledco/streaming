@@ -16,15 +16,10 @@
 
 package scte35
 
-import (
-	"encoding/xml"
-	"fmt"
-)
+import "fmt"
 
-const (
-	// SpliceNullType is the splice_command_type for splice_null()
-	SpliceNullType = 0x00
-)
+// SpliceNullType is the splice_command_type for splice_null()
+const SpliceNullType uint32 = 0
 
 // SpliceNull is the command is provided for extensibility of the standard. The
 // splice_null() command allows a splice_info_table to be sent that can carry
@@ -32,7 +27,7 @@ const (
 // command may also be used as a “heartbeat message” for monitoring cue
 // injection equipment integrity and link integrity.
 type SpliceNull struct {
-	XMLName  xml.Name `xml:"http://www.scte.org/schemas/35 SpliceNull" json:"-"`
+	XMLName  struct{} `xml:"http://www.scte.org/schemas/35 SpliceNull" json:"-"`
 	JSONType uint32   `xml:"-" json:"type"`
 }
 

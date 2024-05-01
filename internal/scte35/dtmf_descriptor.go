@@ -22,10 +22,8 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// DTMFDescriptorTag is the splice_descriptor_tag for a dtmf_descriptor
-	DTMFDescriptorTag = 0x01
-)
+// DTMFDescriptorTag is the splice_descriptor_tag for a dtmf_descriptor
+const DTMFDescriptorTag = 0x01
 
 // DTMFDescriptor is an implementation of a splice_descriptor. It provides an
 // optional extension to the splice_insert() command that allows a receiver

@@ -16,15 +16,11 @@
 
 package scte35
 
-import (
-	"fmt"
-)
+import "fmt"
 
-const (
-	// BandwidthReservationType is the splice_command_type for
-	// bandwidth_reservation()
-	BandwidthReservationType = 0x07
-)
+// BandwidthReservationType is the splice_command_type for
+// bandwidth_reservation()
+const BandwidthReservationType = 0x07
 
 // BandwidthReservation command is provided for reserving bandwidth in a
 // multiplex. A typical usage would be in a satellite delivery system that
@@ -57,14 +53,10 @@ func (cmd *BandwidthReservation) decode(b []byte) error {
 }
 
 // encode this bandwidth_reservation to binary.
-func (cmd *BandwidthReservation) encode() ([]byte, error) {
-	return nil, nil
-}
+func (cmd *BandwidthReservation) encode() ([]byte, error) { return nil, nil }
 
 // commandLength returns the splice_command_length
-func (cmd *BandwidthReservation) length() int {
-	return 0
-}
+func (cmd *BandwidthReservation) length() int { return 0 }
 
 // writeTo the given table.
 func (cmd *BandwidthReservation) writeTo(t *table) {

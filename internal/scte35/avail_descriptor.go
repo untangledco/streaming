@@ -22,10 +22,8 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// AvailDescriptorTag is the splice_descriptor_tag for an avail_descriptor
-	AvailDescriptorTag = 0x00
-)
+// AvailDescriptorTag is the splice_descriptor_tag for an avail_descriptor
+const AvailDescriptorTag = 0x00
 
 // AvailDescriptor is an implementation of a splice_descriptor. It provides an
 // optional extension to the splice_insert() command that allows an

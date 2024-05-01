@@ -22,10 +22,8 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// TimeSignalType is the splice_command_type for a time_signal SpliceCommand.
-	TimeSignalType = 0x06
-)
+// TimeSignalType is the splice_command_type for a time_signal SpliceCommand.
+const TimeSignalType = 0x06
 
 // NewTimeSignal constructs a new time_signal command with the
 // given pts_time value

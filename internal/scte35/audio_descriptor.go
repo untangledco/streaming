@@ -23,10 +23,8 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// AudioDescriptorTag is the splice_descriptor_tag for a audio descriptor.
-	AudioDescriptorTag = 0x04
-)
+// AudioDescriptorTag is the splice_descriptor_tag for an audio descriptor.
+const AudioDescriptorTag = 0x04
 
 // AudioDescriptor is an implementation of a audio_descriptor. The
 // audio_descriptor() should be used when programmers and/or MVPDs do not

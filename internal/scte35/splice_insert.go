@@ -23,10 +23,8 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// SpliceInsertType is the splice_command_type for splice_insert()
-	SpliceInsertType = 0x05
-)
+// SpliceInsertType is the splice_command_type for splice_insert()
+const SpliceInsertType = 0x05
 
 // SpliceInsert is a  command shall be sent at least once for every splice
 // event.

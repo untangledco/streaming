@@ -17,14 +17,10 @@
 package scte35
 
 const (
-	// DeviceRestrictionsGroup0 is the device_restrictions for Restrict Group 0
-	DeviceRestrictionsGroup0 = 0x00
-	// DeviceRestrictionsGroup1 is the device_restrictions for Restrict Group 1
-	DeviceRestrictionsGroup1 = 0x01
-	// DeviceRestrictionsGroup2 is the device_restrictions for Restrict Group 2
-	DeviceRestrictionsGroup2 = 0x02
-	// DeviceRestrictionsNone is the device_restrictions for None
-	DeviceRestrictionsNone = 0x03
+	DeviceRestrictionsGroup0 uint32 = iota
+	DeviceRestrictionsGroup1
+	DeviceRestrictionsGroup2
+	DeviceRestrictionsNone
 )
 
 // DeliveryRestrictions contains the specific delivery restriction flags as

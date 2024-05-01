@@ -23,11 +23,9 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// SpliceScheduleType is the splice_command_type for the splice_schedule()
-	// command
-	SpliceScheduleType = 0x04
-)
+// SpliceScheduleType is the splice_command_type for the splice_schedule()
+// command.
+const SpliceScheduleType = 0x04
 
 // SpliceSchedule is provided to allow a schedule of splice events to be
 // conveyed in advance.

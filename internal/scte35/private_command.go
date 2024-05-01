@@ -24,10 +24,8 @@ import (
 	"github.com/bamiaux/iobit"
 )
 
-const (
-	// PrivateCommandType is the splice_command_type for private_command()
-	PrivateCommandType = 0xFF
-)
+// PrivateCommandType is the splice_command_type for private_command()
+const PrivateCommandType = 0xFF
 
 // PrivateCommand provides a means to distribute user-defined commands using the
 // SCTE 35 protocol. The first bit field in each user-defined command is a
