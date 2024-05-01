@@ -264,7 +264,7 @@ func (sis *SpliceInfoSection) Table(prefix, indent string) string {
 	t.row(1, "section_length", sis.sectionLength())
 	t.row(0, "}", nil)
 	t.row(0, "protocol_version", sis.ProtocolVersion)
-	t.row(0, "encryption_algorithm", fmt.Sprintf("%d (%s)", sis.EncryptedPacket.EncryptionAlgorithm, sis.EncryptedPacket.encryptionAlgorithmName()))
+	t.row(0, "encryption_algorithm", fmt.Sprintf("%d (%s)", sis.EncryptedPacket.EncryptionAlgorithm, cipher(sis.EncryptedPacket.EncryptionAlgorithm)))
 	t.row(0, "pts_adjustment", sis.PTSAdjustment)
 	t.row(0, "cw_index", sis.EncryptedPacket.CWIndex)
 	t.row(0, "tier", sis.Tier)

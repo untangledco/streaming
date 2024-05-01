@@ -319,3 +319,13 @@ type SpliceInsertProgram struct {
 func (p *SpliceInsertProgram) TimeSpecifiedFlag() bool {
 	return p != nil && p.SpliceTime.PTSTime != nil
 }
+
+// SpliceTime  specifies the time of the splice event.
+type SpliceTime struct {
+	PTSTime *uint64 `xml:"ptsTime,attr" json:"ptsTime,omitempty"`
+}
+
+// TimeSpecifiedFlag returns true if PTSTime is not nil.
+func (t *SpliceTime) TimeSpecifiedFlag() bool {
+	return t != nil && t.PTSTime != nil
+}
