@@ -18,7 +18,6 @@ package scte35
 
 import (
 	"encoding/binary"
-	"encoding/xml"
 	"fmt"
 
 	"github.com/bamiaux/iobit"
@@ -26,7 +25,7 @@ import (
 
 // PrivateDescriptor encapsulates the contents of non-CUEI descriptors
 type PrivateDescriptor struct {
-	XMLName      xml.Name `xml:"http://www.scte.org/schemas/35 PrivateDescriptor" json:"-"`
+	XMLName      struct{} `xml:"http://www.scte.org/schemas/35 PrivateDescriptor" json:"-"`
 	JSONType     uint32   `xml:"-" json:"type"`
 	PrivateTag   uint32   `xml:"tag,attr" json:"tag"`
 	Identifier   uint32   `xml:"identifier,attr" json:"identifier"`

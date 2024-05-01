@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 	"strconv"
 
@@ -34,7 +33,7 @@ const (
 // support dynamic signaling (e.g., signaling of audio language changes) and
 // with legacy audio formats that do not support dynamic signaling.
 type AudioDescriptor struct {
-	XMLName       xml.Name       `xml:"http://www.scte.org/schemas/35 AudioDescriptor" json:"-"`
+	XMLName       struct{}       `xml:"http://www.scte.org/schemas/35 AudioDescriptor" json:"-"`
 	JSONType      uint32         `xml:"-" json:"type"`
 	AudioChannels []AudioChannel `xml:"http://www.scte.org/schemas/35 AudioChannel" json:"audioChannels"`
 }

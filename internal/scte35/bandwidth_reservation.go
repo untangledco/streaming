@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 )
 
@@ -38,7 +37,7 @@ const (
 // should be a private descriptor that is utilized only by the bandwidth
 // reservation process.
 type BandwidthReservation struct {
-	XMLName  xml.Name `xml:"http://www.scte.org/schemas/35 BandwidthReservation" json:"-"`
+	XMLName  struct{} `xml:"http://www.scte.org/schemas/35 BandwidthReservation" json:"-"`
 	JSONType uint32   `xml:"-" json:"type"`
 }
 

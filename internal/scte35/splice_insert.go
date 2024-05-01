@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 	"strconv"
 
@@ -32,7 +31,7 @@ const (
 // SpliceInsert is a  command shall be sent at least once for every splice
 // event.
 type SpliceInsert struct {
-	XMLName                    xml.Name                `xml:"http://www.scte.org/schemas/35 SpliceInsert" json:"-"`
+	XMLName                    struct{}                `xml:"http://www.scte.org/schemas/35 SpliceInsert" json:"-"`
 	JSONType                   uint32                  `xml:"-" json:"type"`
 	Program                    *SpliceInsertProgram    `xml:"http://www.scte.org/schemas/35 Program" json:"program,omitempty"`
 	Components                 []SpliceInsertComponent `xml:"http://www.scte.org/schemas/35 Component" json:"components,omitempty"`

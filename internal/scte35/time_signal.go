@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 
 	"github.com/bamiaux/iobit"
@@ -46,7 +45,7 @@ func NewTimeSignal(ptsTime uint64) *TimeSignal {
 // time_signal(). The carriage however can be in a different PID than that
 // carrying the other cue messages used for signaling splice points.
 type TimeSignal struct {
-	XMLName    xml.Name   `xml:"http://www.scte.org/schemas/35 TimeSignal" json:"-"`
+	XMLName    struct{}   `xml:"http://www.scte.org/schemas/35 TimeSignal" json:"-"`
 	JSONType   uint32     `xml:"-" json:"type"`
 	SpliceTime SpliceTime `xml:"http://www.scte.org/schemas/35 SpliceTime" json:"spliceTime"`
 }

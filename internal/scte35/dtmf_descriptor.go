@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 
 	"github.com/bamiaux/iobit"
@@ -33,7 +32,7 @@ const (
 // device to generate a legacy analog DTMF sequence based on a
 // splice_info_section being received.
 type DTMFDescriptor struct {
-	XMLName   xml.Name `xml:"http://www.scte.org/schemas/35 DTMFDescriptor" json:"-"`
+	XMLName   struct{} `xml:"http://www.scte.org/schemas/35 DTMFDescriptor" json:"-"`
 	JSONType  uint32   `xml:"-" json:"type"`
 	Preroll   uint32   `xml:"preroll,attr" json:"preroll"`
 	DTMFChars string   `xml:"chars,attr" json:"chars"`

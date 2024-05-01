@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 
 	"github.com/bamiaux/iobit"
@@ -35,7 +34,7 @@ const (
 // time_signal() or splice_insert( ) command. This command may be inserted using
 // SCTE 104 or by out of band provisioning on the device inserting this message.
 type TimeDescriptor struct {
-	XMLName    xml.Name `xml:"TimeDescriptor" json:"-"`
+	XMLName    struct{} `xml:"TimeDescriptor" json:"-"`
 	JSONType   uint32   `xml:"-" json:"type"`
 	TAISeconds uint64   `xml:"taiSeconds,attr" json:"taiSeconds"`
 	TAINS      uint32   `xml:"taiNs,attr" json:"taiNs"`

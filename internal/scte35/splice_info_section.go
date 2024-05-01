@@ -54,7 +54,7 @@ const (
 // and equal to 0x00 and the payload_unit_start_indicator bit shall be equal to
 // one (per the requirements of section syntax usage per [MPEG Systems]).
 type SpliceInfoSection struct {
-	XMLName             xml.Name          `xml:"http://www.scte.org/schemas/35 SpliceInfoSection"`
+	XMLName             struct{}          `xml:"http://www.scte.org/schemas/35 SpliceInfoSection"`
 	EncryptedPacket     EncryptedPacket   `xml:"http://www.scte.org/schemas/35 EncryptedPacket,omitempty"`
 	SpliceCommand       SpliceCommand     `xml:""`
 	SpliceDescriptors   SpliceDescriptors `xml:""`

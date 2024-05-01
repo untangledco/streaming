@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 	"strconv"
 
@@ -33,7 +32,7 @@ const (
 // SpliceSchedule is provided to allow a schedule of splice events to be
 // conveyed in advance.
 type SpliceSchedule struct {
-	XMLName  xml.Name `xml:"http://www.scte.org/schemas/35 SpliceSchedule" json:"-"`
+	XMLName  struct{} `xml:"http://www.scte.org/schemas/35 SpliceSchedule" json:"-"`
 	JSONType uint32   `xml:"-" json:"type"`
 	Events   []Event  `xml:"http://www.scte.org/schemas/35 Event" json:"events"`
 }
@@ -244,6 +243,6 @@ type EventComponent struct {
 
 // EventProgram contains the Splice Point in Program Splice Mode
 type EventProgram struct {
-	XMLName       xml.Name      `xml:"http://www.scte.org/schemas/35 Program" json:"-"`
+	XMLName       struct{}      `xml:"http://www.scte.org/schemas/35 Program" json:"-"`
 	UTCSpliceTime UTCSpliceTime `xml:"utcSpliceTime,attr" json:"utcSpliceTime"`
 }

@@ -51,16 +51,10 @@ func (cmd *SpliceNull) decode(b []byte) error {
 	return nil
 }
 
-// encode this splice_null to binary.
-func (cmd *SpliceNull) encode() ([]byte, error) {
-	var b []byte
-	return b, nil
-}
+func (cmd *SpliceNull) encode() ([]byte, error) { return []byte{}, nil }
 
 // commandLength returns the splice_command_length.
-func (cmd *SpliceNull) length() int {
-	return 0
-}
+func (cmd *SpliceNull) length() int { return 0 }
 
 // writeTo the given table.
 func (cmd *SpliceNull) writeTo(t *table) {

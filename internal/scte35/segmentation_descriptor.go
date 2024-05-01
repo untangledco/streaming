@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 	"strconv"
 
@@ -171,7 +170,7 @@ const (
 // in advance of the signaled splice_time() to permit the insertion device to
 // place the splice_info_section( ) accurately.
 type SegmentationDescriptor struct {
-	XMLName                          xml.Name                          `xml:"http://www.scte.org/schemas/35 SegmentationDescriptor" json:"-"`
+	XMLName                          struct{}                          `xml:"http://www.scte.org/schemas/35 SegmentationDescriptor" json:"-"`
 	JSONType                         uint32                            `xml:"-" json:"type"`
 	DeliveryRestrictions             *DeliveryRestrictions             `xml:"http://www.scte.org/schemas/35 DeliveryRestrictions" json:"deliveryRestrictions,omitempty"`
 	SegmentationUPIDs                []SegmentationUPID                `xml:"http://www.scte.org/schemas/35 SegmentationUpid" json:"segmentationUpids,omitempty"`

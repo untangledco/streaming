@@ -17,7 +17,6 @@
 package scte35
 
 import (
-	"encoding/xml"
 	"fmt"
 
 	"github.com/bamiaux/iobit"
@@ -36,7 +35,7 @@ const (
 // used in analog systems for ad insertion. This descriptor is intended only
 // for use with a splice_insert() command, within a splice_info_section.
 type AvailDescriptor struct {
-	XMLName         xml.Name `xml:"http://www.scte.org/schemas/35 AvailDescriptor" json:"-"`
+	XMLName         struct{} `xml:"http://www.scte.org/schemas/35 AvailDescriptor" json:"-"`
 	JSONType        uint32   `xml:"-" json:"type"`
 	ProviderAvailID uint32   `xml:"providerAvailId,attr" json:"providerAvailId"`
 }
