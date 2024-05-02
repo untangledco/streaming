@@ -81,8 +81,7 @@ func (sd *AvailDescriptor) encode() ([]byte, error) {
 	iow.PutUint32(32, CUEIdentifier)      // identifier
 	iow.PutUint32(32, sd.ProviderAvailID) // provider_avail_id
 
-	err := iow.Flush()
-	return buf, err
+	return buf, iow.Flush()
 }
 
 // descriptorLength returns the descriptor_length

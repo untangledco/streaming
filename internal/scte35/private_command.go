@@ -78,9 +78,7 @@ func (cmd *PrivateCommand) encode() ([]byte, error) {
 	if err != nil {
 		return buf, err
 	}
-
-	err = iow.Flush()
-	return buf, err
+	return buf, iow.Flush()
 }
 
 // commandLength returns the splice_command_length.

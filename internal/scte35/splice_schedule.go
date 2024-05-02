@@ -124,9 +124,7 @@ func (cmd *SpliceSchedule) encode() ([]byte, error) {
 		iow.PutUint32(8, e.AvailsExpected)
 	}
 
-	err := iow.Flush()
-
-	return buf, err
+	return buf, iow.Flush()
 }
 
 // commandLength returns the splice_command_length

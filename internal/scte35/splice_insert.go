@@ -218,8 +218,7 @@ func (cmd *SpliceInsert) encode() ([]byte, error) {
 		iow.PutUint32(8, cmd.AvailsExpected)
 	}
 
-	err := iow.Flush()
-	return buf, err
+	return buf, iow.Flush()
 }
 
 // length returns the splice_command_length.

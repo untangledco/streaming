@@ -84,9 +84,7 @@ func (sd *TimeDescriptor) encode() ([]byte, error) {
 	iow.PutUint64(48, sd.TAISeconds)
 	iow.PutUint32(32, sd.TAINS)
 	iow.PutUint32(16, sd.UTCOffset)
-
-	err := iow.Flush()
-	return buf, err
+	return buf, iow.Flush()
 }
 
 // descriptorLength returns descriptor_length.

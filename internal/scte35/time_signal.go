@@ -87,8 +87,7 @@ func (cmd *TimeSignal) encode() ([]byte, error) {
 		iow.PutUint32(7, Reserved) // reserved
 	}
 
-	err := iow.Flush()
-	return buf, err
+	return buf, iow.Flush()
 }
 
 // commandLength returns the splice_command_length.

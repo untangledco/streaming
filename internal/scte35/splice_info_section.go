@@ -219,8 +219,7 @@ func (sis *SpliceInfoSection) Encode() ([]byte, error) {
 	// Re-calculate CRC_32 to ensure correctness
 	iow.PutUint32(32, calculateCRC32(buf[:iow.Index()/8])) // CRC_32
 
-	err := iow.Flush()
-	return buf, err
+	return buf, iow.Flush()
 }
 
 // EncryptedPacketFlag returns the value of encrypted_packet_flag
