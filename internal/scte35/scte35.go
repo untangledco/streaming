@@ -99,8 +99,8 @@ func TicksToDuration(ticks uint64) time.Duration {
 // used to give the splicer an indication of when the break will be over and
 // when the network In Point will occur.
 type BreakDuration struct {
-	AutoReturn bool   `xml:"autoReturn,attr" json:"autoReturn"`
-	Duration   uint64 `xml:"duration,attr" json:"duration"`
+	AutoReturn bool
+	Duration   uint64
 }
 
 // Bytes is a byte array.

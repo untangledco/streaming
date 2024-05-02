@@ -32,19 +32,13 @@ const TimeDescriptorTag = 0x03
 // time_signal() or splice_insert( ) command. This command may be inserted using
 // SCTE 104 or by out of band provisioning on the device inserting this message.
 type TimeDescriptor struct {
-	XMLName    struct{} `xml:"TimeDescriptor" json:"-"`
-	JSONType   uint32   `xml:"-" json:"type"`
-	TAISeconds uint64   `xml:"taiSeconds,attr" json:"taiSeconds"`
-	TAINS      uint32   `xml:"taiNs,attr" json:"taiNs"`
-	UTCOffset  uint32   `xml:"utcOffset,attr" json:"utcOffset"`
+	TAISeconds uint64
+	TAINS      uint32
+	UTCOffset  uint32
 }
 
 // Tag returns the splice_descriptor_tag.
-func (sd *TimeDescriptor) Tag() uint32 {
-	// ensure JSONType is set
-	sd.JSONType = TimeDescriptorTag
-	return TimeDescriptorTag
-}
+func (sd *TimeDescriptor) Tag() uint32 { return TimeDescriptorTag }
 
 // table returns the tabular description of this TimeDescriptor.
 func (sd *TimeDescriptor) writeTo(t *table) {

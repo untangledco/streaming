@@ -18,7 +18,6 @@ package scte35
 
 import (
 	"encoding/binary"
-	"encoding/xml"
 	"fmt"
 
 	"github.com/bamiaux/iobit"
@@ -33,10 +32,8 @@ const PrivateCommandType = 0xFF
 // should skip any splice_info_section() messages containing private_command()
 // structures with unknown identifiers.
 type PrivateCommand struct {
-	XMLName      xml.Name `xml:"http://www.scte.org/schemas/35 PrivateCommand" json:"-"`
-	JSONType     uint32   `xml:"-" json:"type"`
-	Identifier   uint32   `xml:"identifier,attr" json:"identifier"`
-	PrivateBytes Bytes    `xml:",chardata" json:"privateBytes"`
+	Identifier   uint32
+	PrivateBytes Bytes
 }
 
 // IdentifierString returns the identifier as a string.
@@ -47,11 +44,7 @@ func (cmd *PrivateCommand) IdentifierString() string {
 }
 
 // Type returns the splice_command_type.
-func (cmd *PrivateCommand) Type() uint32 {
-	// ensure JSONType is set
-	cmd.JSONType = PrivateCommandType
-	return PrivateCommandType
-}
+func (cmd *PrivateCommand) Type() uint32 { return PrivateCommandType }
 
 // decode a binary private_command.
 func (cmd *PrivateCommand) decode(b []byte) error {

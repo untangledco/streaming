@@ -43,17 +43,11 @@ func NewTimeSignal(ptsTime uint64) *TimeSignal {
 // time_signal(). The carriage however can be in a different PID than that
 // carrying the other cue messages used for signaling splice points.
 type TimeSignal struct {
-	XMLName    struct{}   `xml:"http://www.scte.org/schemas/35 TimeSignal" json:"-"`
-	JSONType   uint32     `xml:"-" json:"type"`
-	SpliceTime SpliceTime `xml:"http://www.scte.org/schemas/35 SpliceTime" json:"spliceTime"`
+	SpliceTime SpliceTime
 }
 
 // Type returns the splice_command_type.
-func (cmd *TimeSignal) Type() uint32 {
-	// ensure JSONType is set
-	cmd.JSONType = TimeSignalType
-	return TimeSignalType
-}
+func (cmd *TimeSignal) Type() uint32 { return TimeSignalType }
 
 // decode a binary time_signal
 func (cmd *TimeSignal) decode(b []byte) error {
@@ -68,7 +62,7 @@ func (cmd *TimeSignal) decode(b []byte) error {
 	}
 
 	if err := readerError(r); err != nil {
-		return fmt.Errorf("%s: %w", cmd.XMLName, err)
+		return fmt.Errorf("%v: %w", cmd, err)
 	}
 	return nil
 }

@@ -31,17 +31,11 @@ const AudioDescriptorTag = 0x04
 // support dynamic signaling (e.g., signaling of audio language changes) and
 // with legacy audio formats that do not support dynamic signaling.
 type AudioDescriptor struct {
-	XMLName       struct{}       `xml:"http://www.scte.org/schemas/35 AudioDescriptor" json:"-"`
-	JSONType      uint32         `xml:"-" json:"type"`
-	AudioChannels []AudioChannel `xml:"http://www.scte.org/schemas/35 AudioChannel" json:"audioChannels"`
+	AudioChannels []AudioChannel
 }
 
 // Tag returns the splice_descriptor_tag.
-func (sd *AudioDescriptor) Tag() uint32 {
-	// ensure JSONType is set
-	sd.JSONType = AudioDescriptorTag
-	return AudioDescriptorTag
-}
+func (sd *AudioDescriptor) Tag() uint32 { return AudioDescriptorTag }
 
 // decode updates this SpliceDescriptor from binary.
 func (sd *AudioDescriptor) decode(b []byte) error {
@@ -122,11 +116,11 @@ func (sd *AudioDescriptor) writeTo(t *table) {
 
 // AudioChannel collects the audio PID details.
 type AudioChannel struct {
-	ComponentTag  uint32 `xml:"componentTag,attr" json:"componentTag"`
-	ISOCode       string `xml:"ISOCode,attr" json:"isoCode"`
-	BitStreamMode uint32 `xml:"BitStreamMode,attr" json:"bitStreamMode"`
-	NumChannels   uint32 `xml:"NumChannels,attr" json:"numChannels"`
-	FullSrvcAudio bool   `xml:"FullSrvcAudio,attr" json:"fullSrvcAudio"`
+	ComponentTag  uint32
+	ISOCode       string
+	BitStreamMode uint32
+	NumChannels   uint32
+	FullSrvcAudio bool
 }
 
 // length returns audio_channel length.

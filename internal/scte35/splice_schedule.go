@@ -30,17 +30,11 @@ const SpliceScheduleType = 0x04
 // SpliceSchedule is provided to allow a schedule of splice events to be
 // conveyed in advance.
 type SpliceSchedule struct {
-	XMLName  struct{} `xml:"http://www.scte.org/schemas/35 SpliceSchedule" json:"-"`
-	JSONType uint32   `xml:"-" json:"type"`
-	Events   []Event  `xml:"http://www.scte.org/schemas/35 Event" json:"events"`
+	Events   []Event
 }
 
 // Type returns the splice_command_type
-func (cmd *SpliceSchedule) Type() uint32 {
-	// ensure the JSONType is set correctly.
-	cmd.JSONType = SpliceScheduleType
-	return SpliceScheduleType
-}
+func (cmd *SpliceSchedule) Type() uint32 { return SpliceScheduleType }
 
 // decode a binary splice_schedule.
 func (cmd *SpliceSchedule) decode(b []byte) error {
@@ -210,15 +204,15 @@ func (cmd *SpliceSchedule) writeTo(t *table) {
 
 // Event is a single event within a splice_schedule.
 type Event struct {
-	Program                    *EventProgram    `xml:"http://www.scte.org/schemas/35 Program" json:"program"`
-	Components                 []EventComponent `xml:"http://www.scte.org/schemas/35 Component" json:"components"`
-	BreakDuration              *BreakDuration   `xml:"http://www.scte.org/schemas/35 BreakDuration" json:"breakDuration"`
-	SpliceEventID              uint32           `xml:"spliceEventId,attr" json:"spliceEventId"`
-	SpliceEventCancelIndicator bool             `xml:"spliceEventCancelIndicator,attr" json:"spliceEventCancelIndicator"`
-	OutOfNetworkIndicator      bool             `xml:"outOfNetworkIndicator,attr" json:"outOfNetworkIndicator,omitempty"`
-	UniqueProgramID            uint32           `xml:"uniqueProgramId,attr" json:"uniqueProgramId,omitempty"`
-	AvailNum                   uint32           `xml:"availNum,attr" json:"availNum,omitempty"`
-	AvailsExpected             uint32           `xml:"availsExpected,attr" json:"availsExpected,omitempty"`
+	Program                    *EventProgram
+	Components                 []EventComponent
+	BreakDuration              *BreakDuration
+	SpliceEventID              uint32
+	SpliceEventCancelIndicator bool
+	OutOfNetworkIndicator      bool
+	UniqueProgramID            uint32
+	AvailNum                   uint32
+	AvailsExpected             uint32
 }
 
 // DurationFlag returns the duration_flag.
@@ -233,12 +227,11 @@ func (e *Event) ProgramSpliceFlag() bool {
 
 // EventComponent contains the Splice Points in Component Splice Mode.
 type EventComponent struct {
-	Tag           uint32        `xml:"componentTag,attr" json:"componentTag"`
-	UTCSpliceTime UTCSpliceTime `xml:"utcSpliceTime,attr" json:"utcSpliceTime"`
+	Tag           uint32
+	UTCSpliceTime UTCSpliceTime
 }
 
 // EventProgram contains the Splice Point in Program Splice Mode
 type EventProgram struct {
-	XMLName       struct{}      `xml:"http://www.scte.org/schemas/35 Program" json:"-"`
-	UTCSpliceTime UTCSpliceTime `xml:"utcSpliceTime,attr" json:"utcSpliceTime"`
+	UTCSpliceTime UTCSpliceTime
 }

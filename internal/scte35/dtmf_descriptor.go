@@ -30,10 +30,8 @@ const DTMFDescriptorTag = 0x01
 // device to generate a legacy analog DTMF sequence based on a
 // splice_info_section being received.
 type DTMFDescriptor struct {
-	XMLName   struct{} `xml:"http://www.scte.org/schemas/35 DTMFDescriptor" json:"-"`
-	JSONType  uint32   `xml:"-" json:"type"`
-	Preroll   uint32   `xml:"preroll,attr" json:"preroll"`
-	DTMFChars string   `xml:"chars,attr" json:"chars"`
+	Preroll   uint32
+	DTMFChars string
 }
 
 // writeTo the given table.
@@ -49,11 +47,7 @@ func (sd *DTMFDescriptor) writeTo(t *table) {
 }
 
 // Tag returns the splice_descriptor_tag.
-func (sd *DTMFDescriptor) Tag() uint32 {
-	// ensure JSONType is set
-	sd.JSONType = DTMFDescriptorTag
-	return DTMFDescriptorTag
-}
+func (sd *DTMFDescriptor) Tag() uint32 { return DTMFDescriptorTag }
 
 // decode updates this splice_descriptor from binary.
 func (sd *DTMFDescriptor) decode(b []byte) error {

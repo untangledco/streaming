@@ -14,8 +14,8 @@ const (
 type EncryptedPacket struct {
 	// Specifies which cipher is used.
 	// See SCTE 35 section 11.3.
-	EncryptionAlgorithm uint32 `xml:"encryptionAlgorithm,attr,omitempty" json:"encryptionAlgorithm,omitempty"`
-	CWIndex             uint32 `xml:"cwIndex,attr,omitempty" json:"cwIndex,omitempty"`
+	EncryptionAlgorithm uint32
+	CWIndex             uint32
 }
 
 // cipher is a 6-bit field specifying the algorithm used to encrypt

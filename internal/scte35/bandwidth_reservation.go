@@ -32,17 +32,10 @@ const BandwidthReservationType = 0x07
 // expected that it will be carried through the entire transmission chain and it
 // should be a private descriptor that is utilized only by the bandwidth
 // reservation process.
-type BandwidthReservation struct {
-	XMLName  struct{} `xml:"http://www.scte.org/schemas/35 BandwidthReservation" json:"-"`
-	JSONType uint32   `xml:"-" json:"type"`
-}
+type BandwidthReservation struct {}
 
 // Type returns the splice_command_type.
-func (cmd *BandwidthReservation) Type() uint32 {
-	// ensure JSONType is set
-	cmd.JSONType = BandwidthReservationType
-	return BandwidthReservationType
-}
+func (cmd *BandwidthReservation) Type() uint32 { return BandwidthReservationType }
 
 // decode a binary bandwidth_reservation.
 func (cmd *BandwidthReservation) decode(b []byte) error {

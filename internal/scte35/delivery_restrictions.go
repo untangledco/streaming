@@ -26,10 +26,10 @@ const (
 // DeliveryRestrictions contains the specific delivery restriction flags as
 // defined within the SegmentationDescriptorType XML schema definition.
 type DeliveryRestrictions struct {
-	ArchiveAllowedFlag     bool   `xml:"archiveAllowedFlag,attr" json:"archiveAllowedFlag"`
-	WebDeliveryAllowedFlag bool   `xml:"webDeliveryAllowedFlag,attr" json:"webDeliveryAllowedFlag"`
-	NoRegionalBlackoutFlag bool   `xml:"noRegionalBlackoutFlag,attr" json:"noRegionalBlackoutFlag"`
-	DeviceRestrictions     uint32 `xml:"deviceRestrictions,attr" json:"deviceRestrictions"`
+	ArchiveAllowedFlag     bool
+	WebDeliveryAllowedFlag bool
+	NoRegionalBlackoutFlag bool
+	DeviceRestrictions     uint32
 }
 
 // deviceRestrictionsName returns the human-readable name for the

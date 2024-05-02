@@ -170,19 +170,17 @@ const (
 // in advance of the signaled splice_time() to permit the insertion device to
 // place the splice_info_section( ) accurately.
 type SegmentationDescriptor struct {
-	XMLName                          struct{}                          `xml:"http://www.scte.org/schemas/35 SegmentationDescriptor" json:"-"`
-	JSONType                         uint32                            `xml:"-" json:"type"`
-	DeliveryRestrictions             *DeliveryRestrictions             `xml:"http://www.scte.org/schemas/35 DeliveryRestrictions" json:"deliveryRestrictions,omitempty"`
-	SegmentationUPIDs                []SegmentationUPID                `xml:"http://www.scte.org/schemas/35 SegmentationUpid" json:"segmentationUpids,omitempty"`
-	Components                       []SegmentationDescriptorComponent `xml:"http://www.scte.org/schemas/35 Component" json:"components,omitempty"`
-	SegmentationEventID              uint32                            `xml:"segmentationEventId,attr,omitempty" json:"segmentationEventId,omitempty"`
-	SegmentationEventCancelIndicator bool                              `xml:"segmentationEventCancelIndicator,attr,omitempty" json:"segmentationEventCancelIndicator,omitempty"`
-	SegmentationDuration             *uint64                           `xml:"segmentationDuration,attr" json:"segmentationDuration,omitempty"`
-	SegmentationTypeID               uint32                            `xml:"segmentationTypeId,attr,omitempty" json:"segmentationTypeId,omitempty"`
-	SegmentNum                       uint32                            `xml:"segmentNum,attr,omitempty" json:"segmentNum,omitempty"`
-	SegmentsExpected                 uint32                            `xml:"segmentsExpected,attr,omitempty" json:"segmentsExpected,omitempty"`
-	SubSegmentNum                    *uint32                           `xml:"subSegmentNum,attr" json:"subSegmentNum,omitempty"`
-	SubSegmentsExpected              *uint32                           `xml:"subSegmentsExpected,attr" json:"subSegmentsExpected,omitempty"`
+	DeliveryRestrictions             *DeliveryRestrictions
+	SegmentationUPIDs                []SegmentationUPID
+	Components                       []SegmentationDescriptorComponent
+	SegmentationEventID              uint32
+	SegmentationEventCancelIndicator bool
+	SegmentationDuration             *uint64
+	SegmentationTypeID               uint32
+	SegmentNum                       uint32
+	SegmentsExpected                 uint32
+	SubSegmentNum                    *uint32
+	SubSegmentsExpected              *uint32
 }
 
 // Name returns the human-readable string for the segmentation_type_id.
@@ -286,11 +284,7 @@ func (sd *SegmentationDescriptor) Name() string {
 }
 
 // Tag returns the splice_descriptor_tag.
-func (sd *SegmentationDescriptor) Tag() uint32 {
-	// ensure JSONType is set
-	sd.JSONType = SegmentationDescriptorTag
-	return SegmentationDescriptorTag
-}
+func (sd *SegmentationDescriptor) Tag() uint32 { return SegmentationDescriptorTag }
 
 // DeliveryNotRestrictedFlag returns the delivery_not_restricted_flag.
 func (sd *SegmentationDescriptor) DeliveryNotRestrictedFlag() bool {
@@ -605,6 +599,6 @@ func (sd *SegmentationDescriptor) writeTo(t *table) {
 // SegmentationDescriptorComponent describes the Component element contained
 // within the SegmentationDescriptorType XML schema definition.
 type SegmentationDescriptorComponent struct {
-	Tag       uint32 `xml:"componentTag,attr" json:"componentTag"`
-	PTSOffset uint64 `xml:"ptsOffset,attr" json:"ptsOffset"`
+	Tag       uint32
+	PTSOffset uint64
 }

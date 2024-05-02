@@ -26,17 +26,10 @@ const SpliceNullType uint32 = 0
 // descriptors without having to send one of the other defined commands. This
 // command may also be used as a “heartbeat message” for monitoring cue
 // injection equipment integrity and link integrity.
-type SpliceNull struct {
-	XMLName  struct{} `xml:"http://www.scte.org/schemas/35 SpliceNull" json:"-"`
-	JSONType uint32   `xml:"-" json:"type"`
-}
+type SpliceNull struct{}
 
 // Type returns the splice_command_type.
-func (cmd *SpliceNull) Type() uint32 {
-	// ensure JSONType is set
-	cmd.JSONType = SpliceNullType
-	return SpliceNullType
-}
+func (cmd *SpliceNull) Type() uint32 { return SpliceNullType }
 
 // decode a binary splice_null.
 func (cmd *SpliceNull) decode(b []byte) error {

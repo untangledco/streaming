@@ -20,7 +20,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"time"
@@ -56,18 +55,17 @@ const (
 // and equal to 0x00 and the payload_unit_start_indicator bit shall be equal to
 // one (per the requirements of section syntax usage per [MPEG Systems]).
 type SpliceInfoSection struct {
-	XMLName             struct{}          `xml:"http://www.scte.org/schemas/35 SpliceInfoSection"`
-	EncryptedPacket     EncryptedPacket   `xml:"http://www.scte.org/schemas/35 EncryptedPacket,omitempty"`
-	SpliceCommand       SpliceCommand     `xml:""`
-	SpliceDescriptors   SpliceDescriptors `xml:""`
-	SAPType             uint32            `xml:"sapType,attr"`
-	PreRollMilliSeconds uint32            `xml:"preRollMilliSeconds,attr,omitempty"` // no corresponding binary field
-	PTSAdjustment       uint64            `xml:"ptsAdjustment,attr,omitempty"`
-	ProtocolVersion     uint32            `xml:"protocolVersion,attr,omitempty"`
-	Tier                uint32            `xml:"tier,attr"`
-	alignmentStuffing   []byte            // alignment_stuffing
-	ecrc32              []byte            // decoded e_crc_32
-	crc32               []byte            // decoded crc_32
+	EncryptedPacket     EncryptedPacket
+	SpliceCommand       SpliceCommand
+	SpliceDescriptors   SpliceDescriptors
+	SAPType             uint32
+	PreRollMilliSeconds uint32 // no corresponding binary field
+	PTSAdjustment       uint64
+	ProtocolVersion     uint32
+	Tier                uint32
+	alignmentStuffing   []byte // alignment_stuffing
+	ecrc32              []byte // decoded e_crc_32
+	crc32               []byte // decoded crc_32
 }
 
 // Base64 returns the SpliceInfoSection as a base64 encoded string.
@@ -283,73 +281,6 @@ func (sis *SpliceInfoSection) Table(prefix, indent string) string {
 	return t.String()
 }
 
-// MarshalJSON encodes a SpliceInfoSection to JSON.
-func (sis *SpliceInfoSection) MarshalJSON() ([]byte, error) {
-	// ensure JSONTypes are all set before marshalling. These are included in
-	// each SpliceCommand.Type() and SpliceDescriptor.Tag() implementation.
-	sis.SpliceCommand.Type()
-	for i := range sis.SpliceDescriptors {
-		sis.SpliceDescriptors[i].Tag()
-	}
-
-	m := map[string]interface{}{
-		"encryptedPacket": sis.EncryptedPacket,
-		"spliceCommand":   sis.SpliceCommand,
-		"sapType":         sis.SAPType,
-		"tier":            sis.Tier,
-	}
-	if sis.ProtocolVersion > 0 {
-		m["protocolVersion"] = sis.ProtocolVersion
-	}
-	if sis.PTSAdjustment > 0 {
-		m["ptsAdjustment"] = sis.PTSAdjustment
-	}
-	if len(sis.SpliceDescriptors) > 0 {
-		m["spliceDescriptors"] = sis.SpliceDescriptors
-	}
-	return json.Marshal(m)
-}
-
-// UnmarshalJSON decodes a SpliceInfoSection from JSON.
-func (sis *SpliceInfoSection) UnmarshalJSON(b []byte) error {
-	var tmp iSIS
-	if err := json.Unmarshal(b, &tmp); err != nil {
-		return err
-	}
-
-	sis.EncryptedPacket = tmp.EncryptedPacket
-	sis.SpliceCommand = tmp.SpliceCommand()
-	sis.SpliceDescriptors = tmp.SpliceDescriptors
-	if tmp.SAPType != nil {
-		sis.SAPType = *tmp.SAPType
-	} else {
-		sis.SAPType = SAPTypeNotSpecified
-	}
-	sis.PTSAdjustment = tmp.PTSAdjustment
-	sis.ProtocolVersion = tmp.ProtocolVersion
-	sis.Tier = tmp.Tier
-	return nil
-}
-
-// UnmarshalXML decodes a SpliceInfoSection from XML.
-func (sis *SpliceInfoSection) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var tmp iSIS
-	if err := d.DecodeElement(&tmp, &start); err != nil {
-		return err
-	}
-	sis.EncryptedPacket = tmp.EncryptedPacket
-	sis.SpliceCommand = tmp.SpliceCommand()
-	sis.SpliceDescriptors = tmp.SpliceDescriptors
-	sis.SAPType = SAPTypeNotSpecified
-	if tmp.SAPType != nil {
-		sis.SAPType = *tmp.SAPType
-	}
-	sis.PTSAdjustment = tmp.PTSAdjustment
-	sis.ProtocolVersion = tmp.ProtocolVersion
-	sis.Tier = tmp.Tier
-	return nil
-}
-
 // length returns the expected length of the encoded splice_info_section, in
 // bytes.
 func (sis *SpliceInfoSection) length() int {
@@ -403,19 +334,19 @@ func (sis *SpliceInfoSection) descriptorLoopLength() int {
 // iSIS is an internal SpliceInfoSection used to support (un)marshalling
 // polymorphic fields.
 type iSIS struct {
-	EncryptedPacket      EncryptedPacket       `xml:"http://www.scte.org/schemas/35 EncryptedPacket,omitempty" json:"encryptedPacket,omitempty"`
-	SpliceCommandRaw     json.RawMessage       `xml:"-" json:"spliceCommand"`
-	SpliceNull           *SpliceNull           `xml:"http://www.scte.org/schemas/35 SpliceNull" json:"-"`
-	SpliceSchedule       *SpliceSchedule       `xml:"http://www.scte.org/schemas/35 SpliceSchedule" json:"-"`
-	SpliceInsert         *SpliceInsert         `xml:"http://www.scte.org/schemas/35 SpliceInsert" json:"-"`
-	TimeSignal           *TimeSignal           `xml:"http://www.scte.org/schemas/35 TimeSignal" json:"-"`
-	BandwidthReservation *BandwidthReservation `xml:"http://www.scte.org/schemas/35 BandwidthReservation" json:"-"`
-	PrivateCommand       *PrivateCommand       `xml:"http://www.scte.org/schemas/35 PrivateCommand" json:"-"`
-	SpliceDescriptors    SpliceDescriptors     `xml:",any" json:"spliceDescriptors"`
-	SAPType              *uint32               `xml:"sapType,attr" json:"sapType,omitempty"`
-	PTSAdjustment        uint64                `xml:"ptsAdjustment,attr" json:"ptsAdjustment"`
-	ProtocolVersion      uint32                `xml:"protocolVersion,attr" json:"protocolVersion"`
-	Tier                 uint32                `xml:"tier,attr" json:"tier"`
+	EncryptedPacket      EncryptedPacket
+	SpliceCommandRaw     json.RawMessage
+	SpliceNull           *SpliceNull
+	SpliceSchedule       *SpliceSchedule
+	SpliceInsert         *SpliceInsert
+	TimeSignal           *TimeSignal
+	BandwidthReservation *BandwidthReservation
+	PrivateCommand       *PrivateCommand
+	SpliceDescriptors    SpliceDescriptors
+	SAPType              *uint32
+	PTSAdjustment        uint64
+	ProtocolVersion      uint32
+	Tier                 uint32
 }
 
 // SpliceCommand returns the polymorphic splice_command.

@@ -25,11 +25,9 @@ import (
 
 // PrivateDescriptor encapsulates the contents of non-CUEI descriptors
 type PrivateDescriptor struct {
-	XMLName      struct{} `xml:"http://www.scte.org/schemas/35 PrivateDescriptor" json:"-"`
-	JSONType     uint32   `xml:"-" json:"type"`
-	PrivateTag   uint32   `xml:"tag,attr" json:"tag"`
-	Identifier   uint32   `xml:"identifier,attr" json:"identifier"`
-	PrivateBytes Bytes    `xml:",chardata" json:"privateBytes"`
+	PrivateTag   uint32
+	Identifier   uint32
+	PrivateBytes Bytes
 }
 
 // IdentifierString returns the identifier as a string
@@ -40,11 +38,7 @@ func (sd *PrivateDescriptor) IdentifierString() string {
 }
 
 // Tag returns the splice_descriptor_tag.
-func (sd *PrivateDescriptor) Tag() uint32 {
-	// ensure JSONType is set
-	sd.JSONType = sd.PrivateTag
-	return sd.PrivateTag
-}
+func (sd *PrivateDescriptor) Tag() uint32 { return sd.PrivateTag }
 
 // decode updates this splice_descriptor from binary.
 func (sd *PrivateDescriptor) decode(b []byte) error {

@@ -16,13 +16,7 @@
 
 package scte35
 
-import (
-	"encoding/json"
-	"encoding/xml"
-	"fmt"
-
-	"github.com/bamiaux/iobit"
-)
+import "github.com/bamiaux/iobit"
 
 const (
 	// CUEIdentifier is 32-bit number used to identify the owner of the
@@ -75,81 +69,6 @@ type SpliceDescriptor interface {
 
 // SpliceDescriptors is a slice of SpliceDescriptor.
 type SpliceDescriptors []SpliceDescriptor
-
-// UnmarshalJSON decodes a JSON array into a slice of SpliceDescriptors.
-func (sds *SpliceDescriptors) UnmarshalJSON(data []byte) error {
-	// split the array into individual JSON objects
-	var items []json.RawMessage
-	if err := json.Unmarshal(data, &items); err != nil {
-		return err
-	}
-
-	// slice to hold decoded splice descriptors
-	results := make([]SpliceDescriptor, len(items))
-
-	// struct to extract splice descriptor type data
-	type sdtype struct {
-		Identifier uint32 `json:"identifier"`
-		Type       uint32 `json:"type"`
-	}
-
-	// decode each item
-	for i := range items {
-		sdt := sdtype{Identifier: CUEIdentifier}
-		if err := json.Unmarshal(items[i], &sdt); err != nil {
-			return err
-		}
-
-		sd := NewSpliceDescriptor(sdt.Identifier, sdt.Type)
-		if err := json.Unmarshal(items[i], &sd); err != nil {
-			return err
-		}
-
-		results[i] = sd
-	}
-
-	// replace the slice
-	*sds = results
-	return nil
-}
-
-// UnmarshalXML decodes an XML payload into a slice of SpliceDescriptors.
-//
-// Unlike UnmarshalJSON, this function is executed once per SpliceDescriptor
-// rather than once per slice.
-func (sds *SpliceDescriptors) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var tmp SpliceDescriptors
-
-	// determine the type
-	var sd SpliceDescriptor
-	switch start.Name.Local {
-	case "AudioDescriptor":
-		sd = &AudioDescriptor{}
-	case "AvailDescriptor":
-		sd = &AvailDescriptor{}
-	case "DTMFDescriptor":
-		sd = &DTMFDescriptor{}
-	case "PrivateDescriptor":
-		sd = &PrivateDescriptor{}
-	case "SegmentationDescriptor":
-		sd = &SegmentationDescriptor{}
-	case "TimeDescriptor":
-		sd = &TimeDescriptor{}
-	default:
-		return fmt.Errorf("unsupported splice_descriptor tag: %s", start.Name.Local)
-	}
-
-	// decode it
-	if err := d.DecodeElement(&sd, &start); err != nil {
-		return err
-	}
-
-	// add it to the slice
-	tmp = append(*sds, sd)
-	*sds = tmp
-
-	return nil
-}
 
 // decodeSpliceDescriptors returns a slice of SpliceDescriptors from decoding
 // the supplied byte array.

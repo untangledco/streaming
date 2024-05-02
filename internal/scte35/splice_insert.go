@@ -29,18 +29,16 @@ const SpliceInsertType = 0x05
 // SpliceInsert is a  command shall be sent at least once for every splice
 // event.
 type SpliceInsert struct {
-	XMLName                    struct{}                `xml:"http://www.scte.org/schemas/35 SpliceInsert" json:"-"`
-	JSONType                   uint32                  `xml:"-" json:"type"`
-	Program                    *SpliceInsertProgram    `xml:"http://www.scte.org/schemas/35 Program" json:"program,omitempty"`
-	Components                 []SpliceInsertComponent `xml:"http://www.scte.org/schemas/35 Component" json:"components,omitempty"`
-	BreakDuration              *BreakDuration          `xml:"http://www.scte.org/schemas/35 BreakDuration" json:"breakDuration,omitempty"`
-	SpliceEventID              uint32                  `xml:"spliceEventId,attr" json:"spliceEventId,omitempty"`
-	SpliceEventCancelIndicator bool                    `xml:"spliceEventCancelIndicator,attr" json:"spliceEventCancelIndicator"`
-	SpliceImmediateFlag        bool                    `xml:"spliceImmediateFlag,attr" json:"spliceImmediateFlag"`
-	OutOfNetworkIndicator      bool                    `xml:"outOfNetworkIndicator,attr" json:"outOfNetworkIndicator"`
-	UniqueProgramID            uint32                  `xml:"uniqueProgramId,attr" json:"uniqueProgramId,omitempty"`
-	AvailNum                   uint32                  `xml:"availNum,attr" json:"availNum,omitempty"`
-	AvailsExpected             uint32                  `xml:"availsExpected,attr" json:"availsExpected,omitempty"`
+	Program                    *SpliceInsertProgram
+	Components                 []SpliceInsertComponent
+	BreakDuration              *BreakDuration
+	SpliceEventID              uint32
+	SpliceEventCancelIndicator bool
+	SpliceImmediateFlag        bool
+	OutOfNetworkIndicator      bool
+	UniqueProgramID            uint32
+	AvailNum                   uint32
+	AvailsExpected             uint32
 }
 
 // DurationFlag returns the duration_flag.
@@ -59,10 +57,7 @@ func (cmd *SpliceInsert) TimeSpecifiedFlag() bool {
 }
 
 // Type returns the splice_command_type.
-func (cmd *SpliceInsert) Type() uint32 {
-	cmd.JSONType = SpliceInsertType
-	return SpliceInsertType
-}
+func (cmd *SpliceInsert) Type() uint32 { return SpliceInsertType }
 
 // writeTo the given table.
 func (cmd *SpliceInsert) writeTo(t *table) {
@@ -288,8 +283,8 @@ func (cmd SpliceInsert) length() int {
 
 // SpliceInsertComponent contains the Splice Point in Component Splice Mode.
 type SpliceInsertComponent struct {
-	Tag        uint32      `xml:"componentTag,attr" json:"componentTag,omitempty"`
-	SpliceTime *SpliceTime `xml:"http://www.scte.org/schemas/35 SpliceTime" json:"spliceTime,omitempty"`
+	Tag        uint32
+	SpliceTime *SpliceTime
 }
 
 // TimeSpecifiedFlag returns the time_specified_flag.
@@ -308,7 +303,7 @@ func NewSpliceInsertProgram(ptsTime uint64) *SpliceInsertProgram {
 
 // SpliceInsertProgram contains the Splice Point in Program Splice Mode.
 type SpliceInsertProgram struct {
-	SpliceTime SpliceTime `xml:"http://www.scte.org/schemas/35 SpliceTime" json:"spliceTime"`
+	SpliceTime SpliceTime
 }
 
 // TimeSpecifiedFlag returns the time_specified_flag.
@@ -318,7 +313,7 @@ func (p *SpliceInsertProgram) TimeSpecifiedFlag() bool {
 
 // SpliceTime  specifies the time of the splice event.
 type SpliceTime struct {
-	PTSTime *uint64 `xml:"ptsTime,attr" json:"ptsTime,omitempty"`
+	PTSTime *uint64
 }
 
 // TimeSpecifiedFlag returns true if PTSTime is not nil.

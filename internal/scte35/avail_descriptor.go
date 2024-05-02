@@ -33,17 +33,11 @@ const AvailDescriptorTag = 0x00
 // used in analog systems for ad insertion. This descriptor is intended only
 // for use with a splice_insert() command, within a splice_info_section.
 type AvailDescriptor struct {
-	XMLName         struct{} `xml:"http://www.scte.org/schemas/35 AvailDescriptor" json:"-"`
-	JSONType        uint32   `xml:"-" json:"type"`
-	ProviderAvailID uint32   `xml:"providerAvailId,attr" json:"providerAvailId"`
+	ProviderAvailID uint32
 }
 
 // Tag returns the splice_descriptor_tag.
-func (sd *AvailDescriptor) Tag() uint32 {
-	// ensure JSONType is set
-	sd.JSONType = AvailDescriptorTag
-	return AvailDescriptorTag
-}
+func (sd *AvailDescriptor) Tag() uint32 { return AvailDescriptorTag }
 
 // writeTo the given table.
 func (sd *AvailDescriptor) writeTo(t *table) {

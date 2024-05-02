@@ -115,11 +115,11 @@ func NewSegmentationUPID(upidType uint32, buf []byte) SegmentationUPID {
 
 // SegmentationUPID is used to express a UPID in an XML document.
 type SegmentationUPID struct {
-	Type             uint32  `xml:"segmentationUpidType,attr" json:"segmentationUpidType"`
-	FormatIdentifier *uint32 `xml:"formatIdentifier,attr,omitempty" json:"formatIdentifier,omitempty"`
-	Value            string  `xml:",chardata" json:"value"`
+	Type             uint32
+	FormatIdentifier *uint32
+	Value            string
 	// Deprecated: no longer used and will be removed in a future release
-	Format string `xml:"-" json:"-"`
+	Format string
 }
 
 // Name returns the name for the segmentation_upid_type.
