@@ -43,8 +43,3 @@ func (cmd *SpliceNull) encode() ([]byte, error) { return []byte{}, nil }
 
 // commandLength returns the splice_command_length.
 func (cmd *SpliceNull) length() int { return 0 }
-
-// writeTo the given table.
-func (cmd *SpliceNull) writeTo(t *table) {
-	t.row(0, "splice_null() {}", nil)
-}

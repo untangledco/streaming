@@ -18,7 +18,6 @@ package scte35
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/bamiaux/iobit"
 )
@@ -93,25 +92,6 @@ func (sd *AudioDescriptor) length() int {
 		length += sd.AudioChannels[i].length() * 8
 	}
 	return length / 8
-}
-
-// writeTo the given table.
-func (sd *AudioDescriptor) writeTo(t *table) {
-	t.row(0, "audio_descriptor() {", nil)
-	t.row(1, "splice_descriptor_tag", fmt.Sprintf("%#02x", sd.Tag()))
-	t.row(1, "descriptor_length", sd.length())
-	t.row(1, "identifier", fmt.Sprintf("%#08x, (%s)", CUEIdentifier, CUEIASCII))
-	t.row(1, "audio_count", len(sd.AudioChannels))
-	for i, ac := range sd.AudioChannels {
-		t.row(1, "audio_channel["+strconv.Itoa(i)+"] {", nil)
-		t.row(2, "component_tag", ac.ComponentTag)
-		t.row(2, "iso_code", ac.ISOCode)
-		t.row(2, "bit_stream_mode", ac.BitStreamMode)
-		t.row(2, "num_channels", ac.NumChannels)
-		t.row(2, "full_srvc_audio", ac.FullSrvcAudio)
-		t.row(1, "}", nil)
-	}
-	t.row(0, "}", nil)
 }
 
 // AudioChannel collects the audio PID details.

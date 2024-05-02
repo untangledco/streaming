@@ -32,7 +32,7 @@ const BandwidthReservationType = 0x07
 // expected that it will be carried through the entire transmission chain and it
 // should be a private descriptor that is utilized only by the bandwidth
 // reservation process.
-type BandwidthReservation struct {}
+type BandwidthReservation struct{}
 
 // Type returns the splice_command_type.
 func (cmd *BandwidthReservation) Type() uint32 { return BandwidthReservationType }
@@ -50,8 +50,3 @@ func (cmd *BandwidthReservation) encode() ([]byte, error) { return nil, nil }
 
 // commandLength returns the splice_command_length
 func (cmd *BandwidthReservation) length() int { return 0 }
-
-// writeTo the given table.
-func (cmd *BandwidthReservation) writeTo(t *table) {
-	t.row(0, "bandwidth_reservation() {}", nil)
-}

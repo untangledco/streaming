@@ -18,7 +18,6 @@ package scte35
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/bamiaux/iobit"
 )
@@ -58,47 +57,6 @@ func (cmd *SpliceInsert) TimeSpecifiedFlag() bool {
 
 // Type returns the splice_command_type.
 func (cmd *SpliceInsert) Type() uint32 { return SpliceInsertType }
-
-// writeTo the given table.
-func (cmd *SpliceInsert) writeTo(t *table) {
-	t.row(0, "splice_insert() {", nil)
-	t.row(1, "splice_event_id", cmd.SpliceEventID)
-	t.row(1, "splice_event_cancel_indicator", cmd.SpliceEventCancelIndicator)
-	if !cmd.SpliceEventCancelIndicator {
-		t.row(1, "out_of_network_indicator", cmd.OutOfNetworkIndicator)
-		t.row(1, "program_splice_flag", cmd.ProgramSpliceFlag())
-		t.row(1, "duration_flag", cmd.DurationFlag())
-		t.row(1, "splice_immediate_flag", cmd.SpliceImmediateFlag)
-		if cmd.ProgramSpliceFlag() && !cmd.SpliceImmediateFlag {
-			t.row(1, "time_specified_flag", cmd.TimeSpecifiedFlag())
-			if cmd.TimeSpecifiedFlag() {
-				t.row(1, "pts_time", cmd.Program.SpliceTime.PTSTime)
-			}
-		}
-		if !cmd.ProgramSpliceFlag() {
-			t.row(1, "component_count", len(cmd.Components))
-			for i, c := range cmd.Components {
-				t.row(1, "component["+strconv.Itoa(i)+"]", nil)
-				t.row(2, "component_tag", c.Tag)
-				if !cmd.SpliceImmediateFlag {
-					t.row(2, "time_specified_flag", c.TimeSpecifiedFlag())
-					if c.TimeSpecifiedFlag() {
-						t.row(2, "pts_time", c.SpliceTime.PTSTime)
-					}
-				}
-				t.row(1, "}", nil)
-			}
-		}
-		if cmd.DurationFlag() {
-			t.row(1, "auto_return", cmd.BreakDuration.AutoReturn)
-			t.row(1, "duration", cmd.BreakDuration.Duration)
-		}
-		t.row(1, "unique_program_id", cmd.UniqueProgramID)
-		t.row(1, "avail_num", cmd.AvailNum)
-		t.row(1, "avails_expected", cmd.AvailsExpected)
-	}
-	t.row(0, "}", nil)
-}
 
 // decode a binary splice_insert.
 func (cmd *SpliceInsert) decode(b []byte) error {

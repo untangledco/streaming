@@ -80,11 +80,3 @@ func (cmd *PrivateCommand) length() int {
 	length += len(cmd.PrivateBytes) * 8 // private_bytes
 	return length / 8
 }
-
-// writeTo the given table.
-func (cmd *PrivateCommand) writeTo(t *table) {
-	t.row(0, "private_command() {", nil)
-	t.row(1, "identifier", fmt.Sprintf("%#08x, (%s)", cmd.Identifier, cmd.IdentifierString()))
-	t.row(1, "private_byte", fmt.Sprintf("%#0x", cmd.PrivateBytes))
-	t.row(0, "}", nil)
-}

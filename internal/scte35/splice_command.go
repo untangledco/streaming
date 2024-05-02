@@ -40,7 +40,6 @@ type SpliceCommand interface {
 	decode(b []byte) error
 	encode() ([]byte, error)
 	length() int
-	writeTo(t *table)
 }
 
 // decodeSpliceCommand decodes the supplied byte array into the desired

@@ -18,7 +18,6 @@ package scte35
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/bamiaux/iobit"
 )
@@ -30,7 +29,7 @@ const SpliceScheduleType = 0x04
 // SpliceSchedule is provided to allow a schedule of splice events to be
 // conveyed in advance.
 type SpliceSchedule struct {
-	Events   []Event
+	Events []Event
 }
 
 // Type returns the splice_command_type
@@ -164,42 +163,6 @@ func (cmd SpliceSchedule) length() int {
 	}
 
 	return length / 8
-}
-
-// writeTo the given table.
-func (cmd *SpliceSchedule) writeTo(t *table) {
-	t.row(0, "splice_schedule() {", nil)
-	t.row(1, "splice_count", strconv.Itoa(len(cmd.Events)))
-	for i, e := range cmd.Events {
-		t.row(1, "event["+strconv.Itoa(i)+"]", nil)
-		t.row(2, "splice_event_id", e.SpliceEventID)
-		t.row(2, "splice_event_cancel_indicator", e.SpliceEventCancelIndicator)
-		if !e.SpliceEventCancelIndicator {
-			t.row(2, "out_of_network_indicator", e.OutOfNetworkIndicator)
-			t.row(2, "program_splice_flag", e.ProgramSpliceFlag())
-			t.row(2, "duration_flag", e.DurationFlag())
-			if e.ProgramSpliceFlag() {
-				t.row(2, "utc_splice_time", e.Program.UTCSpliceTime)
-			} else {
-				t.row(2, "component_count", len(e.Components))
-				for j, c := range e.Components {
-					t.row(2, "component["+strconv.Itoa(j)+"]", nil)
-					t.row(3, "component_tag", c.Tag)
-					t.row(3, "utc_splice_time", c.UTCSpliceTime)
-					t.row(2, "}", nil)
-				}
-			}
-			if e.DurationFlag() {
-				t.row(1, "auto_return", e.BreakDuration.AutoReturn)
-				t.row(1, "duration", e.BreakDuration.Duration)
-			}
-			t.row(1, "unique_program_id", e.UniqueProgramID)
-			t.row(1, "avail_num", e.AvailNum)
-			t.row(1, "avails_expected", e.AvailsExpected)
-		}
-		t.row(1, "}", nil)
-	}
-	t.row(0, "}", nil)
 }
 
 // Event is a single event within a splice_schedule.

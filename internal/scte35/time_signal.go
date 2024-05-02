@@ -96,16 +96,6 @@ func (cmd *TimeSignal) length() int {
 	return length / 8
 }
 
-// writeTo the given table.
-func (cmd *TimeSignal) writeTo(t *table) {
-	t.row(0, "time_signal() {", nil)
-	t.row(1, "time_specified_flag", cmd.timeSpecifiedFlag())
-	if cmd.timeSpecifiedFlag() {
-		t.row(1, "pts_time", cmd.SpliceTime.PTSTime)
-	}
-	t.row(0, "}", nil)
-}
-
 // timeSpecifiedFlag return the time_specified_flag.
 func (cmd *TimeSignal) timeSpecifiedFlag() bool {
 	return cmd != nil && cmd.SpliceTime.PTSTime != nil

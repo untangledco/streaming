@@ -249,38 +249,6 @@ func (sis *SpliceInfoSection) SAPTypeName() string {
 	}
 }
 
-// Table returns the tabular description of this SpliceInfoSection as described
-// in ANSI/SCTE 35 Table 5.
-func (sis *SpliceInfoSection) Table(prefix, indent string) string {
-	// top level table is not indented
-	t := newTable(prefix, indent)
-
-	t.row(0, "splice_info_section() {", nil)
-	t.row(1, "table_id", fmt.Sprintf("%#02x", TableID))
-	t.row(1, "section_syntax_indicator", SectionSyntaxIndicator)
-	t.row(1, "private_indicator", PrivateIndicator)
-	t.row(1, "sap_type", fmt.Sprintf("%d (%s)", sis.SAPType, sis.SAPTypeName()))
-	t.row(1, "section_length", sis.sectionLength())
-	t.row(0, "}", nil)
-	t.row(0, "protocol_version", sis.ProtocolVersion)
-	t.row(0, "encryption_algorithm", fmt.Sprintf("%d (%s)", sis.EncryptedPacket.EncryptionAlgorithm, cipher(sis.EncryptedPacket.EncryptionAlgorithm)))
-	t.row(0, "pts_adjustment", sis.PTSAdjustment)
-	t.row(0, "cw_index", sis.EncryptedPacket.CWIndex)
-	t.row(0, "tier", sis.Tier)
-
-	if sis.SpliceCommand != nil {
-		t.row(0, "splice_command_length", sis.SpliceCommand.length())
-		t.row(0, "splice_command_type", fmt.Sprintf("%#02x", sis.SpliceCommand.Type()))
-		sis.SpliceCommand.writeTo(t)
-	}
-
-	t.row(0, "descriptor_loop_length", sis.descriptorLoopLength())
-	for _, sd := range sis.SpliceDescriptors {
-		sd.writeTo(t)
-	}
-	return t.String()
-}
-
 // length returns the expected length of the encoded splice_info_section, in
 // bytes.
 func (sis *SpliceInfoSection) length() int {

@@ -6,6 +6,7 @@ Notable differences from the original works are:
 
 - third party dependencies removed
 - refactored test code
+- supports only binary/base64 encoding, decoding
 
 ## License
 

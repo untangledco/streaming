@@ -17,8 +17,6 @@
 package scte35
 
 import (
-	"fmt"
-
 	"github.com/bamiaux/iobit"
 )
 
@@ -39,18 +37,6 @@ type TimeDescriptor struct {
 
 // Tag returns the splice_descriptor_tag.
 func (sd *TimeDescriptor) Tag() uint32 { return TimeDescriptorTag }
-
-// table returns the tabular description of this TimeDescriptor.
-func (sd *TimeDescriptor) writeTo(t *table) {
-	t.row(0, "time_descriptor() {", nil)
-	t.row(1, "splice_descriptor_tag", fmt.Sprintf("%#02x", TimeDescriptorTag))
-	t.row(1, "descriptor_length", sd.length())
-	t.row(1, "identifier", fmt.Sprintf("%#08x, (%s)", CUEIdentifier, CUEIASCII))
-	t.row(1, "tai_seconds", sd.TAISeconds)
-	t.row(1, "tai_ns", sd.TAINS)
-	t.row(1, "utc_offset", sd.UTCOffset)
-	t.row(0, "}", nil)
-}
 
 // decode updates this splice_descriptor from binary.
 func (sd *TimeDescriptor) decode(b []byte) error {

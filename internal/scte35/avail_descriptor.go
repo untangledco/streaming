@@ -39,16 +39,6 @@ type AvailDescriptor struct {
 // Tag returns the splice_descriptor_tag.
 func (sd *AvailDescriptor) Tag() uint32 { return AvailDescriptorTag }
 
-// writeTo the given table.
-func (sd *AvailDescriptor) writeTo(t *table) {
-	t.row(0, "avail_descriptor() {", nil)
-	t.row(1, "splice_descriptor_tag", fmt.Sprintf("%#02x", AvailDescriptorTag))
-	t.row(1, "descriptor_length", sd.length())
-	t.row(1, "identifier", fmt.Sprintf("%#08x, (%s)", CUEIdentifier, CUEIASCII))
-	t.row(1, "provider_avail_id", sd.ProviderAvailID)
-	t.row(0, "}", nil)
-}
-
 // decode updates this splice_descriptor from binary.
 func (sd *AvailDescriptor) decode(b []byte) error {
 	r := iobit.NewReader(b)

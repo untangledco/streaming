@@ -18,7 +18,6 @@ package scte35
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/bamiaux/iobit"
 )
@@ -533,67 +532,6 @@ func (sd *SegmentationDescriptor) length() int {
 	}
 
 	return length / 8
-}
-
-// table returns the tabular description of this SegmentationDescriptor.
-func (sd *SegmentationDescriptor) writeTo(t *table) {
-	t.row(0, "segmentation_descriptor() {", nil)
-	t.row(1, "splice_descriptor_tag", fmt.Sprintf("%#02x", sd.Tag()))
-	t.row(1, "descriptor_length", sd.length())
-	t.row(1, "identifier", fmt.Sprintf("%#08x (%s)", CUEIdentifier, CUEIASCII))
-	t.row(1, "segmentation_event_id", sd.SegmentationEventID)
-	t.row(1, "segmentation_event_cancel_indicator", sd.SegmentationEventCancelIndicator)
-	if !sd.SegmentationEventCancelIndicator {
-		t.row(1, "program_segmentation_flag", sd.ProgramSegmentationFlag())
-		t.row(1, "segmentation_duration_flag", sd.SegmentationDurationFlag())
-		t.row(1, "delivery_not_restricted_flag", sd.DeliveryNotRestrictedFlag())
-		if sd.DeliveryRestrictions != nil {
-			t.row(1, "web_delivery_allowed_flag", sd.DeliveryRestrictions.WebDeliveryAllowedFlag)
-			t.row(1, "no_regional_blackout_flag", sd.DeliveryRestrictions.NoRegionalBlackoutFlag)
-			t.row(1, "archive_allowed_flag", sd.DeliveryRestrictions.ArchiveAllowedFlag)
-			t.row(1, "device_restrictions", fmt.Sprintf("%d (%s)", sd.DeliveryRestrictions.DeviceRestrictions, sd.DeliveryRestrictions.deviceRestrictionsName()))
-		}
-		if len(sd.Components) > 0 {
-			t.row(1, "component_count", len(sd.Components))
-			for i, c := range sd.Components {
-				t.row(1, "component["+strconv.Itoa(i)+"] {", nil)
-				t.row(2, "component_tag", c.Tag)
-				t.row(2, "pts_offset", c.PTSOffset)
-				t.row(1, "}", nil)
-			}
-		}
-		if sd.SegmentationDurationFlag() {
-			t.row(1, "segmentation_duration", sd.SegmentationDuration)
-		}
-
-		t.row(1, "segmentation_upid_length", sd.SegmentationUpidLength())
-		for i, u := range sd.SegmentationUPIDs {
-			t.row(1, "segmentation_upid["+strconv.Itoa(i)+"] {", nil)
-			t.row(2, "segmentation_upid_type", fmt.Sprintf("%#02x (%s)", u.Type, u.Name()))
-			if u.Type == SegmentationUPIDTypeMPU {
-				t.row(2, "format_identifier", u.formatIdentifierString())
-			}
-			t.row(2, "segmentation_upid", u.Value)
-			t.row(1, "}", nil)
-		}
-	}
-
-	t.row(1, "segmentation_type_id", fmt.Sprintf("%#02x (%s)", sd.SegmentationTypeID, sd.Name()))
-	t.row(1, "segment_num", sd.SegmentNum)
-	t.row(1, "segments_expected", sd.SegmentsExpected)
-	switch sd.SegmentationTypeID {
-	case SegmentationTypeProviderPOStart,
-		SegmentationTypeDistributorPOStart,
-		SegmentationTypeProviderOverlayPOStart,
-		SegmentationTypeDistributorOverlayPOStart:
-		if sd.SubSegmentNum != nil {
-			t.row(1, "sub_segment_num", sd.SubSegmentNum)
-		}
-		if sd.SubSegmentsExpected != nil {
-			t.row(1, "sub_segments_expected", sd.SubSegmentsExpected)
-		}
-	}
-	t.row(0, "}", nil)
 }
 
 // SegmentationDescriptorComponent describes the Component element contained

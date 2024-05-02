@@ -80,13 +80,3 @@ func (sd *PrivateDescriptor) length() int {
 	length += len(sd.PrivateBytes) * 8 // private_bytes
 	return length / 8
 }
-
-// table returns the tabular description of this PrivateDescriptor.
-func (sd *PrivateDescriptor) writeTo(t *table) {
-	t.row(0, "private_descriptor() {", nil)
-	t.row(1, "splice_descriptor_tag", fmt.Sprintf("%#02x", sd.Tag()))
-	t.row(1, "descriptor_length", sd.length())
-	t.row(1, "identifier", fmt.Sprintf("%#08x, (%s)", sd.Identifier, sd.IdentifierString()))
-	t.row(1, "private_bytes", fmt.Sprintf("%#0x", sd.PrivateBytes))
-	t.row(0, "}", nil)
-}
