@@ -18,13 +18,9 @@ package scte35
 
 import "github.com/bamiaux/iobit"
 
-const (
-	// CUEIdentifier is 32-bit number used to identify the owner of the
-	// descriptor. The identifier shall have a value of 0x43554549 (ASCII “CUEI”).
-	CUEIdentifier = 0x43554549
-	// CUEIASCII is the CUEIIdentifier ASCII value
-	CUEIASCII = "CUEI"
-)
+// CUEIdentifier is 32-bit number used to identify the owner of the
+// descriptor. The identifier shall have a value of 0x43554549 (ASCII “CUEI”).
+const CUEIdentifier = 0x43554549
 
 // NewSpliceDescriptor returns the appropriate splice_descriptor for the given
 // identifier and tag
