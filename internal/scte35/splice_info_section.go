@@ -35,15 +35,17 @@ const (
 	SectionSyntaxIndicator = false
 	// PrivateIndicator is a 1-bit flag that shall be set to 0.
 	PrivateIndicator = false
+)
 
+const (
 	// SAPType1 indicates closed GOP with no leading pictures.
-	SAPType1 = uint32(0x0)
+	SAPType1 uint32 = iota
 	// SAPType2 indicates closed GOP with leading pictures.
-	SAPType2 = uint32(0x1)
+	SAPType2
 	// SAPType3 indicates Open GOP.
-	SAPType3 = uint32(0x2)
+	SAPType3
 	// SAPTypeNotSpecified indicates the type of SAP, if any, is not signaled.
-	SAPTypeNotSpecified = uint32(0x3)
+	SAPTypeNotSpecified
 )
 
 // SpliceInfoSection shall be carried in transport packets whereby only one
@@ -339,10 +341,9 @@ func (sis *SpliceInfoSection) UnmarshalXML(d *xml.Decoder, start xml.StartElemen
 	sis.EncryptedPacket = tmp.EncryptedPacket
 	sis.SpliceCommand = tmp.SpliceCommand()
 	sis.SpliceDescriptors = tmp.SpliceDescriptors
+	sis.SAPType = SAPTypeNotSpecified
 	if tmp.SAPType != nil {
 		sis.SAPType = *tmp.SAPType
-	} else {
-		sis.SAPType = SAPTypeNotSpecified
 	}
 	sis.PTSAdjustment = tmp.PTSAdjustment
 	sis.ProtocolVersion = tmp.ProtocolVersion
