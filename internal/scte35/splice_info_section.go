@@ -319,7 +319,6 @@ type iSIS struct {
 
 // SpliceCommand returns the polymorphic splice_command.
 func (i *iSIS) SpliceCommand() SpliceCommand {
-	// xml unmarshalls to the corresponding struct
 	if i.SpliceNull != nil {
 		return i.SpliceNull
 	}

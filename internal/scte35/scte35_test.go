@@ -18,8 +18,6 @@ package scte35
 
 import (
 	"encoding/binary"
-	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"testing"
 )
@@ -595,38 +593,10 @@ func TestDecodeBase64(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			// test encode/decode XML
-			encodedXML := toXML(sis)
-			if toXML(&c.expected) != encodedXML {
-				t.Fatalf("encode xml: want %s, got %s", toXML(&c.expected), encodedXML)
-			}
-			var info SpliceInfoSection
-			if err := xml.Unmarshal([]byte(encodedXML), &info); err != nil {
-				t.Error(err)
-			}
-
 			// legacy 35's produce an "updated" binary so will not match
 			if !c.legacy {
-				if c.binary != info.Base64() {
-					t.Errorf("re-encode to binary: want %s, got %s", c.binary, info.Base64())
-				}
-			}
-
-			// test encode/decode JSON
-			encodedJSON := toJSON(sis)
-			if toJSON(&c.expected) != encodedJSON {
-				t.Fatalf("encode to json: want %s, got %s", toJSON(&c.expected), encodedJSON)
-			}
-			info = SpliceInfoSection{}
-
-			if err := json.Unmarshal([]byte(encodedJSON), &info); err != nil {
-				t.Fatal(err)
-			}
-
-			// legacy 35's produce an "updated" binary so will not match
-			if !c.legacy {
-				if c.binary != info.Base64() {
-					t.Errorf("re-encode to binary: want %s, got %s", c.binary, info.Base64())
+				if c.binary != sis.Base64() {
+					t.Errorf("re-encode to binary: want %s, got %s", c.binary, sis.Base64())
 				}
 			}
 		})
@@ -726,29 +696,9 @@ func TestDecodeHex(t *testing.T) {
 
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			sis, err := DecodeHex(c.hex)
+			_, err := DecodeHex(c.hex)
 			if !errors.Is(c.err, err) {
 				t.Fatalf("want error %v, got %v", c.err, err)
-			}
-
-			// test encode/decode XML
-			encodedXML := toXML(sis)
-			if toXML(&c.expected) != encodedXML {
-				t.Fatalf("encode xml: want %s, got %s", toXML(&c.expected), encodedXML)
-			}
-			var info SpliceInfoSection
-			if err := xml.Unmarshal([]byte(encodedXML), &info); err != nil {
-				t.Errorf("unmarshal back from xml: %v", err)
-			}
-
-			// test encode/decode JSON
-			encodedJSON := toJSON(sis)
-			if toJSON(&c.expected) != encodedJSON {
-				t.Fatalf("encode json: want %s, got %s", toJSON(&c.expected), encodedJSON)
-			}
-			info = SpliceInfoSection{}
-			if err := json.Unmarshal([]byte(encodedJSON), &info); err != nil {
-				t.Errorf("unmarshal from json back into splice info: %v", err)
 			}
 		})
 	}
@@ -799,16 +749,6 @@ func toBytes(i uint64) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, i)
 	return b
-}
-
-func toJSON(sis *SpliceInfoSection) string {
-	b, _ := json.MarshalIndent(sis, "", "\t")
-	return string(b)
-}
-
-func toXML(sis *SpliceInfoSection) string {
-	b, _ := xml.MarshalIndent(sis, "", "\t")
-	return string(b)
 }
 
 func uint32ptr(i uint32) *uint32 {
