@@ -31,20 +31,3 @@ type DeliveryRestrictions struct {
 	NoRegionalBlackoutFlag bool
 	DeviceRestrictions     uint32
 }
-
-// deviceRestrictionsName returns the human-readable name for the
-// device_restrictions.
-func (dr *DeliveryRestrictions) deviceRestrictionsName() string {
-	switch dr.DeviceRestrictions {
-	case DeviceRestrictionsGroup0:
-		return "Restrict Group 0"
-	case DeviceRestrictionsGroup1:
-		return "Restrict Group 1"
-	case DeviceRestrictionsGroup2:
-		return "Restrict Group 2"
-	case DeviceRestrictionsNone:
-		return "None"
-	default:
-		return "Unknown"
-	}
-}

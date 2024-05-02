@@ -235,20 +235,6 @@ func (sis *SpliceInfoSection) Hex() string {
 	return hex.EncodeToString(b)
 }
 
-// SAPTypeName returns the Stream Access Point type name.
-func (sis *SpliceInfoSection) SAPTypeName() string {
-	switch sis.SAPType {
-	case SAPType1:
-		return "Type 1"
-	case SAPType2:
-		return "Type 2"
-	case SAPType3:
-		return "Type 3"
-	default:
-		return "Not Specified"
-	}
-}
-
 // length returns the expected length of the encoded splice_info_section, in
 // bytes.
 func (sis *SpliceInfoSection) length() int {
