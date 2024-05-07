@@ -112,24 +112,6 @@ func (bb *Bytes) UnmarshalText(b []byte) error {
 	return nil
 }
 
-// NewUTCSpliceTime creates a UTCSpliceTime representing the number of seconds
-// from GPS Epoch (01 Jan 1980, 00:00:00 UTC)
-func NewUTCSpliceTime(sec uint32) UTCSpliceTime {
-	return UTCSpliceTime{
-		time.Unix(int64(sec+unixEpochToGPSEpoch), 0),
-	}
-}
-
-// UTCSpliceTime is used to carry utc_splice_time values.
-type UTCSpliceTime struct {
-	time.Time
-}
-
-// GPSSeconds returns the seconds since GPS Epoch
-func (t UTCSpliceTime) GPSSeconds() uint32 {
-	return uint32(t.Time.Unix()) - unixEpochToGPSEpoch
-}
-
 // readerError returns the readers error state, if any.
 func readerError(r iobit.Reader) error {
 	if r.LeftBits() > 0 {
