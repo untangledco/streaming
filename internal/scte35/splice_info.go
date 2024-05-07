@@ -118,6 +118,9 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	binary.LittleEndian.PutUint16(b, uint16(len(buf1)))
 	buf = append(buf, b...)
 
+	b = make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, calculateCRC32(buf))
+	buf = append(buf, b...)
 	return buf, nil
 }
 
