@@ -56,7 +56,7 @@ const (
 const maxTier uint16 = 0xfff
 
 func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
-	buf := make([]byte, 3)
+	buf := make([]byte, 5)
 	buf[0] = byte(tableID)
 	// next 2 bits (section_syntax_indicator, private_indicator) must be 0.
 	// 0b00000000
@@ -130,23 +130,4 @@ func packTier(tier uint16) [2]byte {
 	a[0] = byte(tier>>8) & 0b00001111
 	a[1] = byte(tier)
 	return a
-}
-
-const DescriptorIDCUEI = 0x43554549 // "CUEI" in ASCII
-
-type SpliceDescriptor struct {
-	Tag uint8
-	// For private descriptors, this value must not be DescriptorIDCUEI.
-	ID   uint32
-	Data []byte
-}
-
-func encodeSpliceDescriptor(sd *SpliceDescriptor) []byte {
-	var buf []byte
-	buf = append(buf, byte(sd.Tag))
-	buf = append(buf, byte(len(sd.Data)))
-	ibuf := make([]byte, 4) // uint32 length
-	binary.LittleEndian.PutUint32(ibuf, sd.ID)
-	buf = append(buf, ibuf...)
-	return append(buf, sd.Data...)
 }
