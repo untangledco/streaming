@@ -19,13 +19,9 @@
 package scte35
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"io"
-	"log"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/bamiaux/iobit"
@@ -53,6 +49,7 @@ var (
 	ErrUnsupportedEncoding = errors.New("invalid or unsupported encoding")
 )
 
+/*
 // Logger for emitting debug messages.
 var Logger = log.New(io.Discard, "SCTE35 ", log.Ldate|log.Ltime|log.Llongfile)
 
@@ -83,6 +80,7 @@ func DecodeHex(s string) (*SpliceInfoSection, error) {
 	err = sis.Decode(b)
 	return sis, err
 }
+*/
 
 // DurationToTicks converts a duration to 90MhZ ticks.
 func DurationToTicks(d time.Duration) uint64 {
@@ -93,14 +91,6 @@ func DurationToTicks(d time.Duration) uint64 {
 func TicksToDuration(ticks uint64) time.Duration {
 	s := float64(ticks) / float64(TicksPerSecond)
 	return time.Duration(int64(s * float64(time.Second)))
-}
-
-// BreakDuration specifies the duration of the commercial break(s). It may be
-// used to give the splicer an indication of when the break will be over and
-// when the network In Point will occur.
-type BreakDuration struct {
-	AutoReturn bool
-	Duration   uint64
 }
 
 // Bytes is a byte array.

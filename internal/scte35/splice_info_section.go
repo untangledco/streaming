@@ -16,11 +16,10 @@
 
 package scte35
 
+/*
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -56,7 +55,7 @@ const (
 // one (per the requirements of section syntax usage per [MPEG Systems]).
 type SpliceInfoSection struct {
 	EncryptedPacket     EncryptedPacket
-	SpliceCommand       SpliceCommand
+	SpliceCommand       *Command
 	SpliceDescriptors   SpliceDescriptors
 	SAPType             uint32
 	PreRollMilliSeconds uint32 // no corresponding binary field
@@ -95,16 +94,16 @@ func (sis *SpliceInfoSection) Decode(b []byte) (err error) {
 	sis.Tier = r.Uint32(12)
 
 	spliceCommandLength := int(r.Uint32(12)) // in bytes
-	spliceCommandType := r.Uint32(8)
+	//spliceCommandType := r.Uint32(8)
 	switch spliceCommandLength {
 	case 0xFFF:
 		// legacy signal, decode and skip (buffer underflow expected here)
-		r2 := r.Peek()
-		sis.SpliceCommand, err = decodeSpliceCommand(spliceCommandType, r2.LeftBytes())
-		if err != nil && !errors.Is(err, ErrBufferUnderflow) {
-			return err
-		}
-		r.Skip(uint(sis.SpliceCommand.length() * 8))
+		//r2 := r.Peek()
+			sis.SpliceCommand, err = decodeSpliceCommand(spliceCommandType, r2.LeftBytes())
+			if err != nil && !errors.Is(err, ErrBufferUnderflow) {
+				return err
+			}
+		//r.Skip(uint(sis.SpliceCommand.length() * 8))
 	default:
 		// standard signal, decode as usual
 		sis.SpliceCommand, err = decodeSpliceCommand(spliceCommandType, r.Bytes(spliceCommandLength))
@@ -147,11 +146,16 @@ func (sis *SpliceInfoSection) Decode(b []byte) (err error) {
 // Duration attempts to return the duration of the signal.
 func (sis *SpliceInfoSection) Duration() time.Duration {
 	// if this is a splice insert with a duration, use it
-	if sc, ok := sis.SpliceCommand.(*SpliceInsert); ok {
-		if sc.BreakDuration != nil {
-			return TicksToDuration(sc.BreakDuration.Duration)
-		}
+	if sis.SpliceCommand == nil {
+		return 0
 	}
+		if sis.SpliceCommand == CommandSpliceInsert {
+
+		if sc, ok := sis.SpliceCommand.(*SpliceInsert); ok {
+			if sc.BreakDuration != nil {
+				return TicksToDuration(sc.BreakDuration.Duration)
+			}
+		}
 
 	ticks := uint64(0)
 	for _, sd := range sis.SpliceDescriptors {
@@ -184,17 +188,14 @@ func (sis *SpliceInfoSection) Encode() ([]byte, error) {
 	iow.PutUint32(12, sis.Tier)
 
 	if sis.SpliceCommand != nil {
-		iow.PutUint32(12, uint32(sis.SpliceCommand.length()))
-		iow.PutUint32(8, sis.SpliceCommand.Type())
-		sc, err := sis.SpliceCommand.encode()
+		b, err := encodeCommand(sis.SpliceCommand)
 		if err != nil {
-			return buf, err
+			return buf, fmt.Errorf("encode command: %w", err)
 		}
-		if _, err = iow.Write(sc); err != nil {
-			return buf, err
+		for _, bb := range b {
+			iow.PutByte(bb)
 		}
 	}
-
 	iow.PutUint32(16, uint32(sis.descriptorLoopLength()))
 	for _, sd := range sis.SpliceDescriptors {
 		sde, err := sd.encode()
@@ -258,7 +259,7 @@ func (sis *SpliceInfoSection) sectionLength() int {
 	length += 12 // splice_command_length
 	length += 8  // splice_command_type
 	if sis.SpliceCommand != nil {
-		length += sis.SpliceCommand.length() * 8 // bytes -> bits
+		// length += sis.SpliceCommand.length() * 8 // bytes -> bits
 	}
 	length += 16                             // descriptor_loop_length (bytes remaining value)
 	length += sis.descriptorLoopLength() * 8 // bytes -> bits
@@ -285,65 +286,4 @@ func (sis *SpliceInfoSection) descriptorLoopLength() int {
 	return length / 8
 }
 
-// iSIS is an internal SpliceInfoSection used to support (un)marshalling
-// polymorphic fields.
-type iSIS struct {
-	EncryptedPacket      EncryptedPacket
-	SpliceCommandRaw     json.RawMessage
-	SpliceNull           *SpliceNull
-	SpliceSchedule       *SpliceSchedule
-	SpliceInsert         *SpliceInsert
-	TimeSignal           *TimeSignal
-	BandwidthReservation *BandwidthReservation
-	PrivateCommand       *PrivateCommand
-	SpliceDescriptors    SpliceDescriptors
-	SAPType              *uint32
-	PTSAdjustment        uint64
-	ProtocolVersion      uint32
-	Tier                 uint32
-}
-
-// SpliceCommand returns the polymorphic splice_command.
-func (i *iSIS) SpliceCommand() SpliceCommand {
-	if i.SpliceNull != nil {
-		return i.SpliceNull
-	}
-	if i.SpliceSchedule != nil {
-		return i.SpliceSchedule
-	}
-	if i.SpliceInsert != nil {
-		return i.SpliceInsert
-	}
-	if i.TimeSignal != nil {
-		return i.TimeSignal
-	}
-	if i.BandwidthReservation != nil {
-		return i.BandwidthReservation
-	}
-
-	// no valid splice_command?
-	if i.SpliceCommandRaw == nil {
-		return nil
-	}
-
-	// struct to determine the splice command's type
-	type sctype struct {
-		Type uint32 `json:"type"`
-	}
-
-	// get the type
-	var st sctype
-	if err := json.Unmarshal(i.SpliceCommandRaw, &st); err != nil {
-		Logger.Printf("error unmarshalling splice command type: %s", err)
-		return nil
-	}
-
-	// and decode it
-	sc := NewSpliceCommand(st.Type)
-	if err := json.Unmarshal(i.SpliceCommandRaw, sc); err != nil {
-		Logger.Printf("error unmarshalling splice command: %s", err)
-		return nil
-	}
-
-	return sc
-}
+*/

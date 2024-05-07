@@ -311,7 +311,6 @@ func verifyCRC32(b []byte) error {
 
 	calculated := calculateCRC32(payload)
 	if calculated != crc {
-		Logger.Printf("CRC_32 calculated (%d) != reported (%d)\n", calculated, crc)
 		return ErrCRC32Invalid
 	}
 

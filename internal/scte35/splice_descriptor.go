@@ -16,7 +16,7 @@
 
 package scte35
 
-import "github.com/bamiaux/iobit"
+/*
 
 // CUEIdentifier is 32-bit number used to identify the owner of the
 // descriptor. The identifier shall have a value of 0x43554549 (ASCII “CUEI”).
@@ -91,3 +91,5 @@ func decodeSpliceDescriptors(b []byte) ([]SpliceDescriptor, error) {
 
 	return sds, nil
 }
+
+*/

@@ -20,31 +20,35 @@ type EncryptedPacket struct {
 
 // cipher is a 6-bit field specifying the algorithm used to encrypt
 // payloads as defined in SCTE 35 section 11.3.
-type cipher uint8
+type Cipher uint8
 
 const (
-	cipherNone cipher = iota
-	des_ECB           // SCTE 35 section 11.3.1
-	des_CBC           // SCTE 35 section 11.3.2
-	tripleDES         // SCTE 35 section 11.3.3
+	CipherNone Cipher = iota
+	DES_ECB           // SCTE 35 section 11.3.1
+	DES_CBC           // SCTE 35 section 11.3.2
+	TripleDES         // SCTE 35 section 11.3.3
 	reserved
 	// Values 32 through 63 are available for "User private"
 	// algorithms. See SCTE 35 section 11.3.4.
 )
 
-func (c cipher) String() string {
+const maxCipher = 63
+
+func (c Cipher) String() string {
 	switch c {
-	case cipherNone:
+	case CipherNone:
 		return "none"
-	case des_ECB:
+	case DES_ECB:
 		return "DES – ECB mode"
-	case des_CBC:
+	case DES_CBC:
 		return "DES – CBC mode"
-	case tripleDES:
+	case TripleDES:
 		return "Triple DES EDE3 – ECB mode"
 	}
-	if c >= reserved && c < 32 {
+	if c >= reserved && c <= 31 {
 		return "reserved"
+	} else if c <= maxCipher {
+		return "user private"
 	}
-	return "user private"
+	return "invalid"
 }
