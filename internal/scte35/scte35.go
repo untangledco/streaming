@@ -19,7 +19,6 @@
 package scte35
 
 import (
-	"encoding/hex"
 	"errors"
 	"math"
 	"time"
@@ -91,25 +90,6 @@ func DurationToTicks(d time.Duration) uint64 {
 func TicksToDuration(ticks uint64) time.Duration {
 	s := float64(ticks) / float64(TicksPerSecond)
 	return time.Duration(int64(s * float64(time.Second)))
-}
-
-// Bytes is a byte array.
-type Bytes []byte
-
-// MarshalText encodes Bytes to a hexadecimal string.
-func (bb Bytes) MarshalText() ([]byte, error) {
-	tmp := hex.EncodeToString(bb)
-	return []byte(tmp), nil
-}
-
-// UnmarshalText decodes a hexadecimal string.
-func (bb *Bytes) UnmarshalText(b []byte) error {
-	tmp, err := hex.DecodeString(string(b))
-	if err != nil {
-		return err
-	}
-	*bb = tmp
-	return nil
 }
 
 // readerError returns the readers error state, if any.
