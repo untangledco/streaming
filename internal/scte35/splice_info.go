@@ -207,5 +207,13 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 		return nil, fmt.Errorf("decode splice descriptors: %w", err)
 	}
 	info.Descriptors = descriptors
+
+	buf = buf[2+desclen:]
+	if info.Encrypted {
+		// TODO(otl): handle alignment_stuffing for encrypted packets.
+		// skip past E_CRC_32; we don't store it.
+		buf = buf[1:]
+	}
+	info.CRC32 = binary.BigEndian.Uint32(buf)
 	return &info, nil
 }
