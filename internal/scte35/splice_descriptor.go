@@ -146,15 +146,38 @@ type AudioChannel struct {
 	FullService bool
 }
 
+func DecodeAllDescriptors(buf []byte) ([]SpliceDescriptor, error) {
+	var sds []SpliceDescriptor
+	for len(buf) > 0 {
+		desc, err := UnmarshalSpliceDescriptor(buf)
+		if err != nil {
+			return sds, err
+		}
+		sds = append(sds, *desc)
+		// desc.Tag + desclength + desc.ID + data
+		dlen := 1 + 1 + 4 + len(desc.Data)
+		if dlen >= len(buf) {
+			break
+		}
+		buf = buf[dlen:]
+		fmt.Println("bytes left in decode loop:", len(buf))
+	}
+	return sds, nil
+}
+
 func UnmarshalSpliceDescriptor(buf []byte) (*SpliceDescriptor, error) {
-	if len(buf) < 5 {
+	if len(buf) < 6 {
 		return nil, fmt.Errorf("need at least 5 bytes")
 	}
-	return &SpliceDescriptor{
-		Tag:  uint8(buf[0]),
-		ID:   binary.LittleEndian.Uint32(buf[1:4]),
-		Data: buf[5:],
-	}, nil
+	d := &SpliceDescriptor{
+		Tag: uint8(buf[0]),
+		ID:  binary.LittleEndian.Uint32(buf[2:6]),
+	}
+	length := uint8(buf[1])
+	if uint8(buf[1]) > 0 {
+		d.Data = buf[6 : 6+length]
+	}
+	return d, nil
 }
 
 func encodeSegDescriptor(sd *SegmentationDescriptor) []byte {

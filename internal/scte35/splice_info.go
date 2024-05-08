@@ -182,7 +182,7 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	cmdbuf := buf[11 : 11+cmdlength]
 	switch cmd.Type {
 	case SpliceNull, BandwidthReservation:
-		//
+		// nothing to decode
 	case TimeSignal:
 		// check if time specified flag is set.
 		if cmdbuf[0]&0x80 == 1<<7 {
@@ -196,8 +196,16 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 			cmd.TimeSignal = &t
 		}
 	default:
-		return nil, fmt.Errorf("cannot decode command %s", cmd.Type)
+		return nil, fmt.Errorf("cannot decode command type %s", cmd.Type)
 	}
 	info.Command = &cmd
+	buf = buf[11+cmdlength:]
+
+	desclen := binary.BigEndian.Uint16([]byte{buf[0], buf[1]})
+	descriptors, err := DecodeAllDescriptors(buf[2 : 2+desclen])
+	if err != nil {
+		return nil, fmt.Errorf("decode splice descriptors: %w", err)
+	}
+	info.Descriptors = descriptors
 	return &info, nil
 }
