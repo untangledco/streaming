@@ -17,9 +17,8 @@
 package scte35
 
 import (
+	"encoding/binary"
 	"errors"
-
-	"github.com/bamiaux/iobit"
 )
 
 // ErrCRC32Invalid indicates that a splice_info_sections CRC_32 is
@@ -304,13 +303,10 @@ func verifyCRC32(b []byte) error {
 		return ErrCRC32Invalid
 	}
 
-	r := iobit.NewReader(b)
-
-	payload := r.Bytes(len(b) - 4)
-	crc := r.Uint32(32)
-
-	calculated := calculateCRC32(payload)
-	if calculated != crc {
+	// crc32 is the last 4 bytes.
+	payload := b[:len(b)-4]
+	crc := binary.BigEndian.Uint32(b[len(b)-4:])
+	if calculateCRC32(payload) != crc {
 		return ErrCRC32Invalid
 	}
 

@@ -22,8 +22,6 @@ import (
 	"errors"
 	"math"
 	"time"
-
-	"github.com/bamiaux/iobit"
 )
 
 const (
@@ -90,15 +88,4 @@ func DurationToTicks(d time.Duration) uint64 {
 func TicksToDuration(ticks uint64) time.Duration {
 	s := float64(ticks) / float64(TicksPerSecond)
 	return time.Duration(int64(s * float64(time.Second)))
-}
-
-// readerError returns the readers error state, if any.
-func readerError(r iobit.Reader) error {
-	if r.LeftBits() > 0 {
-		return ErrBufferUnderflow
-	}
-	if errors.Is(r.Error(), iobit.ErrOverflow) {
-		return ErrBufferOverflow
-	}
-	return nil
 }
