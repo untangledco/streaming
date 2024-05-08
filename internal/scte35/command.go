@@ -22,12 +22,12 @@ type Command struct {
 type CommandType uint8
 
 const (
-	SpliceNull     CommandType = 0
-	SpliceSchedule             = 0x04 + iota
-	SpliceInsert
-	TimeSignal
-	BandwidthReservation
-	Private = 0xff
+	SpliceNull           CommandType = 0
+	SpliceSchedule                   = 0x04
+	SpliceInsert                     = 0x05
+	TimeSignal                       = 0x06
+	BandwidthReservation             = 0x07
+	Private                          = 0xff
 )
 
 func (t CommandType) String() string {
