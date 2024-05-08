@@ -3,14 +3,12 @@ package scte35
 import (
 	"encoding/base64"
 	"encoding/binary"
-	"fmt"
+	"reflect"
 	"testing"
 )
 
 func TestPackTier(t *testing.T) {
 	want := maxTier - 1
-	fmt.Printf("%012b\n", want)
-
 	packed := packTier(want)
 	got := uint16(packed[1]) | uint16(packed[0])<<8
 	if got != want {
@@ -57,5 +55,46 @@ func TestReadSpliceInfo(t *testing.T) {
 	got := base64.StdEncoding.EncodeToString(bgot)
 	if got != want {
 		t.Fatalf("want %s, got %s", want, got)
+	}
+}
+
+func TestDecodeSpliceInfo(t *testing.T) {
+	var tsig uint64 = 0x072bd0050
+	want := &SpliceInfo{
+		SAPType: SAPNone,
+		Tier:    0x0fff,
+		Command: &Command{
+			Type:       TimeSignal,
+			TimeSignal: &tsig,
+		},
+		Descriptors: []SpliceDescriptor{
+			{
+				Tag:  TagSegmentation,
+				ID:   binary.BigEndian.Uint32([]byte(DescriptorIDCUEI)),
+				Data: []byte("TODO"),
+			},
+		},
+		CRC32: 0x9ac9d17e,
+	}
+	b, err := base64.StdEncoding.DecodeString("/DA0AAAAAAAA///wBQb+cr0AUAAeAhxDVUVJSAAAjn/PAAGlmbAICAAAAAAsoKGKNAIAmsnRfg==") // sample 14.1
+	if err != nil {
+		t.Fatal("decode example splice info:", err)
+	}
+
+	info, err := decodeSpliceInfo(b)
+	if err != nil {
+		t.Fatalf("decode splice info: %v", err)
+	}
+	if want.SAPType != info.SAPType {
+		t.Errorf("want SAPType %s, got %s", want.SAPType, info.SAPType)
+	}
+	if want.Tier != info.Tier {
+		t.Errorf("want tier %#x, got %#x", want.Tier, info.Tier)
+	}
+	if *want.Command.TimeSignal != *info.Command.TimeSignal {
+		t.Errorf("want timesig %x, got %x", *want.Command.TimeSignal, *info.Command.TimeSignal)
+	}
+	if !reflect.DeepEqual(want, info) {
+		t.Errorf("decode splice info: want %+v, got %+v", want, info)
 	}
 }
