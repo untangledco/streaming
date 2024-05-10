@@ -19,3 +19,12 @@ func TestPackBreakDuration(t *testing.T) {
 		t.Errorf("packBreakDuration(%v) = %08b, want %08b", bd, got, want)
 	}
 }
+
+func TestReadBreakDuration(t *testing.T) {
+	want := samples[1].want.Command.Insert.Duration.Duration
+	a := [5]byte{0xfe, 0x00, 0x52, 0xcc, 0xf5}
+	got := readBreakDuration(a)
+	if want != got.Duration {
+		t.Errorf("readBreakDuration(%#x) = %d, want %d", a, got.Duration, want)
+	}
+}

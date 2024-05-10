@@ -1,5 +1,10 @@
 package scte35
 
+import (
+	"encoding/binary"
+	"fmt"
+)
+
 type BreakDuration struct {
 	AutoReturn bool
 	// Holds a number of ticks of a 90KHz clock.
@@ -21,4 +26,19 @@ func packBreakDuration(b *BreakDuration) [5]byte {
 	p[3] = pts[3]
 	p[4] = pts[4]
 	return p
+}
+
+func readBreakDuration(a [5]byte) *BreakDuration {
+	fmt.Printf("%#x\n", a)
+	var bd BreakDuration
+	if a[0]&(1<<7) > 0 {
+		bd.AutoReturn = true
+	}
+	a[0] &= 0x01
+	// first, allocate 3 empty bytes, then add the remaining 5;
+	// enough for the uint64 (8 bytes).
+	b := []byte{0, 0, 0}
+	b = append(b, a[:]...)
+	bd.Duration = binary.BigEndian.Uint64(b)
+	return &bd
 }
