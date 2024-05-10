@@ -167,13 +167,15 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	pts[4] = buf[5]
 	info.PTSAdjustment = binary.BigEndian.Uint64(pts)
 
-	info.CWIndex = uint8(buf[6])
+	if info.Encrypted {
+		info.CWIndex = uint8(buf[6])
+	}
 
 	// want left-most 12 bits, remaining is used by command length.
 	// TODO(otl): still not getting expected values here;
 	// check TestDecodeSpliceInfo
 	tier := binary.BigEndian.Uint16([]byte{buf[7], buf[8] & 0xf0})
-	info.Tier = tier
+	info.Tier = tier >> 4
 
 	// 4-bits out of buf[8], then all of buf[9] for a 12-bit integer.
 	cmdlen := binary.BigEndian.Uint16([]byte{buf[8] & 0x0f, buf[9]})
