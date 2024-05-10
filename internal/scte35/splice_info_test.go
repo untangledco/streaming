@@ -149,7 +149,7 @@ func TestDecodeSpliceInfo(t *testing.T) {
 					t.Errorf("want upid type %d, got %d", wd.UPID.Type, d.UPID.Type)
 				}
 			}
-			if !reflect.DeepEqual(tt.want, info) {
+			if !reflect.DeepEqual(tt.want, *info) {
 				t.Errorf("decode splice info: want %+v, got %+v", tt.want, info)
 				t.Log(diffInfo(tt.want, *info))
 			}
