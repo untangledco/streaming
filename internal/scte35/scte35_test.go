@@ -21,6 +21,43 @@ import (
 	"testing"
 )
 
+type sample struct {
+	name    string
+	encoded string
+	want    SpliceInfo
+}
+
+var samples = []sample{
+	{
+		name:    "14.1",
+		encoded: "/DA0AAAAAAAA///wBQb+cr0AUAAeAhxDVUVJSAAAjn/PAAGlmbAICAAAAAAsoKGKNAIAmsnRfg==",
+		want: SpliceInfo{
+			SAPType: SAPNone,
+			Tier:    0x0fff,
+			Command: &Command{
+				Type:       TimeSignal,
+				TimeSignal: newuint64(0x072bd0050),
+			},
+			Descriptors: []SpliceDescriptor{
+				SegmentationDescriptor{
+					EventID:      0x4800008e,
+					Restrictions: NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					Duration:     newuint64(0x0001a599b0),
+					UPID: UPID{
+						Type:  UPIDTypeTI,
+						Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
+					},
+					Type:   0x34,
+					Number: 2,
+				},
+			},
+			CRC32: 0x9ac9d17e,
+		},
+	},
+}
+
+func newuint64(i uint64) *uint64 { p := new(uint64); p = &i; return p }
+
 /*
 func TestDecodeBase64(t *testing.T) {
 	// when adding tests that contain multiple splice descriptors, care must be
