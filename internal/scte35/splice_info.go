@@ -114,7 +114,7 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 
 	var buf1 []byte
 	for _, desc := range sis.Descriptors {
-		buf1 = append(buf1, encodeSpliceDescriptor(&desc)...)
+		buf1 = append(buf1, encodeSpliceDescriptor(desc)...)
 	}
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(len(buf1)))
