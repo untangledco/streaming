@@ -176,39 +176,22 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	info.Tier = tier
 
 	// 4-bits out of buf[8], then all of buf[9] for a 12-bit integer.
-	cmdlength := binary.BigEndian.Uint16([]byte{buf[8] & 0x0f, buf[9]})
-	var cmd Command
-	cmd.Type = CommandType(buf[10])
-	cmdbuf := buf[11 : 11+cmdlength]
-	switch cmd.Type {
-	case SpliceNull, BandwidthReservation:
-		// nothing to decode
-	case TimeSignal:
-		// check if time specified flag is set.
-		if cmdbuf[0]&0x80 == 1<<7 {
-			b := make([]byte, 8)
-			b[3] = cmdbuf[0] & 0x01 // ignoring flag and reserved bits
-			b[4] = cmdbuf[1]
-			b[5] = cmdbuf[2]
-			b[6] = cmdbuf[3]
-			b[7] = cmdbuf[4]
-			t := binary.BigEndian.Uint64(b)
-			cmd.TimeSignal = &t
-		}
-	default:
-		return nil, fmt.Errorf("cannot decode command type %s", cmd.Type)
+	cmdlen := binary.BigEndian.Uint16([]byte{buf[8] & 0x0f, buf[9]})
+	cmd, err := decodeCommand(buf[10 : 10+cmdlen+1])
+	if err != nil {
+		return nil, fmt.Errorf("decode command: %w", err)
 	}
-	info.Command = &cmd
-	buf = buf[11+cmdlength:]
+	info.Command = cmd
+	buf = buf[10+cmdlen+1:]
 
 	desclen := binary.BigEndian.Uint16([]byte{buf[0], buf[1]})
-	descriptors, err := DecodeAllDescriptors(buf[2 : 2+desclen])
+	descriptors, err := DecodeAllDescriptors(buf[2 : 2+desclen+1])
 	if err != nil {
 		return nil, fmt.Errorf("decode splice descriptors: %w", err)
 	}
 	info.Descriptors = descriptors
 
-	buf = buf[2+desclen:]
+	buf = buf[2+desclen+1:]
 	if info.Encrypted {
 		// TODO(otl): handle alignment_stuffing for encrypted packets.
 		// skip past E_CRC_32; we don't store it.
@@ -216,4 +199,29 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	}
 	info.CRC32 = binary.BigEndian.Uint32(buf)
 	return &info, nil
+}
+
+func decodeCommand(buf []byte) (*Command, error) {
+	var cmd Command
+	cmd.Type = CommandType(buf[0])
+	switch cmd.Type {
+	case SpliceNull, BandwidthReservation:
+		// nothing to decode
+	case TimeSignal:
+		// check if time specified flag is set.
+		// If so, extract the 33-bit integer timestamp.
+		if buf[1]&0x80 == 1<<7 {
+			b := make([]byte, 8)
+			b[3] = buf[1] & 0x01 // ignoring flag and reserved bits
+			b[4] = buf[2]
+			b[5] = buf[3]
+			b[6] = buf[4]
+			b[7] = buf[5]
+			t := binary.BigEndian.Uint64(b)
+			cmd.TimeSignal = &t
+		}
+	default:
+		return nil, fmt.Errorf("cannot decode command type %s", cmd.Type)
+	}
+	return &cmd, nil
 }
