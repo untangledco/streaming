@@ -2,7 +2,9 @@ package scte35
 
 import (
 	"encoding/base64"
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -13,6 +15,65 @@ func TestPackTier(t *testing.T) {
 	if got != want {
 		t.Errorf("want packed tier %d, got %d", want, got)
 	}
+}
+
+func diffInfo(a, b SpliceInfo) string {
+	buf := &strings.Builder{}
+	if a.SAPType != b.SAPType {
+		fmt.Fprintf(buf, "SAP type = %s, %s\n", a.SAPType, b.SAPType)
+	}
+	if a.EncryptionAlgorithm != b.EncryptionAlgorithm {
+		fmt.Fprintln(buf, "cipher = ", a.EncryptionAlgorithm, b.EncryptionAlgorithm)
+	}
+	if a.PTSAdjustment != b.PTSAdjustment {
+		fmt.Fprintln(buf, "pts adjustment = ", a.PTSAdjustment, b.PTSAdjustment)
+	}
+	if a.CWIndex != b.CWIndex {
+		fmt.Fprintln(buf, "cw index differs")
+		fmt.Fprintf(buf, "< %v\n> %v\n", a.CWIndex, b.CWIndex)
+	}
+	if a.Tier != b.Tier {
+		fmt.Fprintln(buf, "tier differs")
+		fmt.Fprintf(buf, "< %#x\n> %#x\n", a.Tier, b.Tier)
+	}
+	if !reflect.DeepEqual(a.Command, b.Command) {
+		fmt.Fprintln(buf, "command = ", *a.Command, *b.Command)
+	}
+	if !reflect.DeepEqual(a.Descriptors, b.Descriptors) {
+		if len(a.Descriptors) != len(b.Descriptors) {
+			fmt.Fprintf(buf, "descriptor count = %d, %d\n", len(a.Descriptors), len(b.Descriptors))
+			fmt.Fprintf(buf, "descriptors = %+v, %+v\n", a.Descriptors, b.Descriptors)
+		} else {
+			fmt.Fprintln(buf, "descriptors differ")
+			for i := range a.Descriptors {
+				fmt.Fprintln(buf, "descriptor", i)
+				buf.WriteString(diffDescriptors(a.Descriptors[i], b.Descriptors[i]))
+			}
+		}
+	}
+	if a.CRC32 != b.CRC32 {
+		fmt.Fprintln(buf, "crc32 = ", a.CRC32, b.CRC32)
+	}
+	return buf.String()
+}
+
+func diffDescriptors(a, b SpliceDescriptor) string {
+	buf := &strings.Builder{}
+	if a.Tag() != b.Tag() {
+		fmt.Fprintln(buf, "tag differs")
+		fmt.Fprintln(buf, "<", a.Tag())
+		fmt.Fprintln(buf, ">", b.Tag())
+	}
+	if a.ID() != b.ID() {
+		fmt.Fprintln(buf, "id differs")
+		fmt.Fprintf(buf, "< %d\n> %d\n", a.ID(), b.ID())
+	}
+	if !reflect.DeepEqual(a.Data(), b.Data()) {
+		fmt.Fprintln(buf, "data differs")
+		fmt.Fprintf(buf, "< %v\n> %v\n", a.Data(), b.Data())
+	}
+	fmt.Fprintf(buf, "< %T %v\n> %T %v\n", a, a, b, b)
+	return buf.String()
 }
 
 /*
@@ -90,6 +151,7 @@ func TestDecodeSpliceInfo(t *testing.T) {
 			}
 			if !reflect.DeepEqual(tt.want, info) {
 				t.Errorf("decode splice info: want %+v, got %+v", tt.want, info)
+				t.Log(diffInfo(tt.want, *info))
 			}
 		})
 	}
