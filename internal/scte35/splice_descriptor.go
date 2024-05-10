@@ -85,13 +85,13 @@ func (d DTMFDescriptor) Data() []byte {
 type DeliveryRestrictions uint8
 
 const (
-	WebDeliveryAllowed DeliveryRestrictions = 1<<4 + iota
+	WebDeliveryAllowed DeliveryRestrictions = 1<<4 - iota
 	NoRegionalBlackout
 	ArchiveAllowed
 	DeviceRestrictGroup0   = 0x00
-	DeviceRestrictGroup1   = 0x40
-	DeviceRestrictGroup2   = 0x80
-	DeviceRestrictionsNone = 0xc0
+	DeviceRestrictGroup1   = 0x01
+	DeviceRestrictGroup2   = 0x02
+	DeviceRestrictionsNone = 0x03
 )
 
 // SegmentationDescriptor represents the segmentation_descriptor
@@ -165,11 +165,11 @@ func (d SegmentationDescriptor) Data() []byte {
 
 func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 	var desc SegmentationDescriptor
-	desc.EventID = binary.BigEndian.Uint32(buf[:5])
-	if buf[1]&0b10000000 > 0 {
+	desc.EventID = binary.BigEndian.Uint32(buf[:4])
+	if buf[4]&0b10000000 > 0 {
 		desc.Cancel = true
 	}
-	if buf[1]&0b01000000 > 0 {
+	if buf[4]&0b01000000 > 0 {
 		desc.EventIDCompliance = true
 	}
 	// next 6 bits are reserved
@@ -178,14 +178,18 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 	// we don't support the deprecated component mode.
 
 	if !desc.Cancel {
-		desc.Restrictions = DeliveryRestrictions(buf[5] & 0b00111111) // remaining 6 bits
+		// left-most 2 bits are flags for later.
+		desc.Restrictions = DeliveryRestrictions(buf[5] & 0b00111111)
+
 		// is segmentation duration flag set?
 		if buf[5]&0b01000000 > 0 {
-			b := buf[5:10] // get 40-bit integer
-			b = append(b, 0x00, 0x00, 0x00)
+			b := make([]byte, 3)
+			b = append(b, buf[6:11]...)
+			// b := buf[6:11] // get 40-bit integer
+			// b = append(b, 0x00, 0x00, 0x00)
 			dur := binary.BigEndian.Uint64(b)
 			desc.Duration = &dur
-			buf = buf[10:]
+			buf = buf[11:]
 		} else {
 			buf = buf[6:]
 		}
@@ -204,8 +208,10 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 		switch desc.Type {
 		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
 		case 0x34, 0x30, 0x32, 0x36, 0x38, 0x3a, 0x44, 0x46:
-			desc.SubNumber = uint8(buf[3])
-			desc.SubExpected = uint8(buf[4])
+			if desc.Expected > 0 {
+				desc.SubNumber = uint8(buf[3])
+				desc.SubExpected = uint8(buf[4])
+			}
 		}
 	}
 
@@ -309,17 +315,17 @@ func (d AudioDescriptor) Data() []byte {
 func DecodeAllDescriptors(buf []byte) ([]SpliceDescriptor, error) {
 	var sds []SpliceDescriptor
 	for len(buf) >= 6 {
-		desc, err := UnmarshalSpliceDescriptor(buf)
+		// first byte is tag, second is length of next descriptor.
+		dlen := uint8(buf[1])
+		desc, err := UnmarshalSpliceDescriptor(buf[:2+dlen])
 		if err != nil {
 			return sds, err
 		}
 		sds = append(sds, desc)
-		// desc.Tag + desclength + desc.ID + data
-		dlen := 1 + 1 + 4 + len(desc.Data())
-		if dlen >= len(buf) {
+		if int(dlen) >= len(buf) {
 			break
 		}
-		buf = buf[dlen:]
+		buf = buf[2+dlen:]
 		fmt.Println("bytes left in decode loop:", len(buf))
 	}
 	return sds, nil
@@ -332,8 +338,8 @@ func UnmarshalSpliceDescriptor(buf []byte) (SpliceDescriptor, error) {
 	}
 	tag := uint8(buf[0])
 	length := uint8(buf[1])
-	if len(buf[2:]) < int(length) {
-		return nil, fmt.Errorf("short slice: want %d bytes, have %d", length, len(buf))
+	if len(buf[2:]) != int(length) {
+		return nil, fmt.Errorf("need %d bytes, have %d", int(length), len(buf[2:]))
 	}
 	buf = buf[2 : 2+length]
 	id := binary.BigEndian.Uint32(buf[:4])
