@@ -40,9 +40,10 @@ var samples = []sample{
 			},
 			Descriptors: []SpliceDescriptor{
 				SegmentationDescriptor{
-					EventID:      0x4800008e,
-					Restrictions: NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
-					Duration:     newuint64(0x0001a599b0),
+					EventID:           0x4800008e,
+					EventIDCompliance: true,
+					Restrictions:      NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					Duration:          newuint64(0x0001a599b0),
 					UPID: UPID{
 						Type:  UPIDTypeTI,
 						Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
