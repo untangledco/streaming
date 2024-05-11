@@ -185,8 +185,6 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 		if buf[5]&0b01000000 > 0 {
 			b := make([]byte, 3)
 			b = append(b, buf[6:11]...)
-			// b := buf[6:11] // get 40-bit integer
-			// b = append(b, 0x00, 0x00, 0x00)
 			dur := binary.BigEndian.Uint64(b)
 			desc.Duration = &dur
 			buf = buf[11:]
@@ -326,7 +324,6 @@ func DecodeAllDescriptors(buf []byte) ([]SpliceDescriptor, error) {
 			break
 		}
 		buf = buf[2+dlen:]
-		fmt.Println("bytes left in decode loop:", len(buf))
 	}
 	return sds, nil
 }
