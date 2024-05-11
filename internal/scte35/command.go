@@ -1,6 +1,7 @@
 package scte35
 
 import (
+	"encoding/binary"
 	"fmt"
 	"time"
 )
@@ -113,12 +114,7 @@ func packEvents(events []Event) ([]byte, error) {
 func packEvent(e *Event) []byte {
 	// length is e.ID + flags
 	p := make([]byte, 4+1)
-
-	p[0] = byte(e.ID >> 24)
-	p[1] = byte(e.ID >> 16)
-	p[2] = byte(e.ID >> 8)
-	p[3] = byte(e.ID)
-
+	binary.BigEndian.PutUint32(p[:4], e.ID)
 	if e.Cancel {
 		p[4] |= 1 << 7
 	}
@@ -141,10 +137,7 @@ func packEvent(e *Event) []byte {
 		// 5 remaining bits are reserved
 
 		seconds := e.SpliceTime.Sub(gpsEpoch) / time.Second
-		p = append(p, byte(seconds>>24))
-		p = append(p, byte(seconds>>16))
-		p = append(p, byte(seconds>>8))
-		p = append(p, byte(seconds))
+		p = binary.BigEndian.AppendUint32(p, uint32(seconds))
 
 		if e.BreakDuration != nil {
 			bd := packBreakDuration(e.BreakDuration)
@@ -152,10 +145,9 @@ func packEvent(e *Event) []byte {
 		}
 	}
 
-	p = append(p, byte(e.ProgramID>>8))
-	p = append(p, byte(e.ProgramID))
-	p = append(p, byte(e.AvailNum))
-	p = append(p, byte(e.AvailExpected))
+	p = binary.BigEndian.AppendUint16(p, e.ProgramID)
+	p = append(p, e.AvailNum)
+	p = append(p, e.AvailExpected)
 	return p
 }
 
@@ -166,10 +158,7 @@ type PrivateCommand struct {
 
 func encodePrivateCommand(c *PrivateCommand) []byte {
 	buf := make([]byte, 4+len(c.Data))
-	buf[0] = byte(c.ID >> 24)
-	buf[1] = byte(c.ID >> 16)
-	buf[2] = byte(c.ID >> 8)
-	buf[3] = byte(c.ID)
+	binary.BigEndian.PutUint32(buf[:4], c.ID)
 	i := 4
 	for j := range c.Data {
 		buf[i] = c.Data[j]
@@ -196,10 +185,7 @@ type Insert struct {
 
 func encodeInsert(ins *Insert) []byte {
 	buf := make([]byte, 4+1) // uint32 + 1 byte
-	buf[0] = byte(ins.ID >> 24)
-	buf[1] = byte(ins.ID >> 16)
-	buf[2] = byte(ins.ID >> 8)
-	buf[3] = byte(ins.ID)
+	binary.BigEndian.PutUint32(buf[:4], ins.ID)
 	if ins.Cancel {
 		buf[4] |= (1 << 7)
 	}
