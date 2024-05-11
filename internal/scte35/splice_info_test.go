@@ -76,50 +76,6 @@ func diffDescriptors(a, b SpliceDescriptor) string {
 	return buf.String()
 }
 
-/*
-func TestReadSpliceInfo(t *testing.T) {
-	var tsig uint64 = 0x072bd0050
-	var segdur uint64 = 0x0001a599b0
-	sdesc := SegmentationDescriptor{
-		EventID:      0x4800008e,
-		Restrictions: NoRegionalBlackout | ArchiveAllowed | DeviceRestrictGroup2,
-		Duration:     &segdur,
-		UPID: UPID{
-			UPIDTypeTI,
-			[]byte{0x8a, 0xa1, 0xa0, 0x2c, 0x00, 0x00, 0x00, 0x00},
-		},
-		Type:   0x34,
-		Number: 2,
-	}
-	sis := SpliceInfo{
-		Tier: 0xfff,
-		Command: &Command{
-			Type:       TimeSignal,
-			TimeSignal: &tsig,
-		},
-		Descriptors: []SpliceDescriptor{
-			{
-				Tag:  TagSegmentation,
-				ID:   binary.LittleEndian.Uint32([]byte(DescriptorIDCUEI)),
-				Data: encodeSegDescriptor(&sdesc),
-			},
-		},
-		CRC32: 0x9ac9d17e,
-	}
-
-	want := "/DAvAAAAAAAA///wFAVIAACPf+/+c2nALv4AUsz1AAAAAAAKAAhDVUVJAAABNWLbowo="
-
-	bgot, err := encodeSpliceInfo(&sis)
-	if err != nil {
-		t.Fatalf("encode splice info: %v", err)
-	}
-	got := base64.StdEncoding.EncodeToString(bgot)
-	if got != want {
-		t.Fatalf("want %s, got %s", want, got)
-	}
-}
-*/
-
 func TestDecodeSpliceInfo(t *testing.T) {
 	for _, tt := range samples {
 		t.Run(tt.name, func(t *testing.T) {
@@ -155,6 +111,27 @@ func TestDecodeSpliceInfo(t *testing.T) {
 			if !reflect.DeepEqual(tt.want, *info) {
 				t.Errorf("decode splice info: want %+v, got %+v", tt.want, *info)
 				t.Log(diffInfo(tt.want, *info))
+			}
+		})
+	}
+}
+
+func TestEncodeSpliceInfo(t *testing.T) {
+	for _, tt := range samples {
+		t.Run(tt.name, func(t *testing.T) {
+			b, err := encodeSpliceInfo(&tt.want)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := base64.StdEncoding.EncodeToString(b)
+			bwant, err := base64.StdEncoding.DecodeString(tt.encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tt.encoded != got {
+				t.Errorf("expected encoded splice info differs from calculated")
+				t.Logf("< %v", bwant)
+				t.Logf("> %v", b)
 			}
 		})
 	}
