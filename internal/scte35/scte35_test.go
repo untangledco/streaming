@@ -44,9 +44,10 @@ var samples = []sample{
 			Command: &Command{
 				Type: SpliceInsert,
 				Insert: &Insert{
-					ID:           0x4800008f,
-					OutOfNetwork: true,
-					SpliceTime:   newuint64(0x07369c02e),
+					ID:                0x4800008f,
+					EventIDCompliance: true,
+					OutOfNetwork:      true,
+					SpliceTime:        newuint64(0x07369c02e),
 					Duration: &BreakDuration{
 						AutoReturn: true,
 						Duration:   0x00052ccf5,

@@ -141,16 +141,19 @@ func TestDecodeSpliceInfo(t *testing.T) {
 			if tt.want.Command.Insert != nil {
 				want := *tt.want.Command.Insert
 				got := *info.Command.Insert
-				if !reflect.DeepEqual(&want, got) {
+				if !reflect.DeepEqual(want, got) {
 					t.Errorf("info command: want %+v, got %+v", want, got)
 					if *want.SpliceTime != *got.SpliceTime {
 						t.Logf("want splice time %d, got %d", want.SpliceTime, got.SpliceTime)
+					}
+					if want.Duration.Duration != got.Duration.Duration {
+						t.Logf("want break duration %d, got %d", want.Duration.Duration, got.Duration.Duration)
 					}
 				}
 			}
 
 			if !reflect.DeepEqual(tt.want, *info) {
-				t.Errorf("decode splice info: want %+v, got %+v", tt.want, info)
+				t.Errorf("decode splice info: want %+v, got %+v", tt.want, *info)
 				t.Log(diffInfo(tt.want, *info))
 			}
 		})
