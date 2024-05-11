@@ -2,7 +2,6 @@ package scte35
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 type BreakDuration struct {
@@ -29,7 +28,6 @@ func packBreakDuration(b *BreakDuration) [5]byte {
 }
 
 func readBreakDuration(a [5]byte) *BreakDuration {
-	fmt.Printf("%#x\n", a)
 	var bd BreakDuration
 	if a[0]&(1<<7) > 0 {
 		bd.AutoReturn = true
