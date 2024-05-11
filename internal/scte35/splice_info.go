@@ -222,8 +222,60 @@ func decodeCommand(buf []byte) (*Command, error) {
 			t := binary.BigEndian.Uint64(b)
 			cmd.TimeSignal = &t
 		}
+	case SpliceInsert:
+		var ins Insert
+		ins.ID = binary.BigEndian.Uint32(buf[1:5])
+		if buf[5]&0x80 > 0 {
+			ins.Cancel = true
+			cmd.Insert = &ins
+			// rebelelder told us to do this.
+			return &cmd, nil
+		}
+		if buf[6]&(1<<7) > 0 {
+			ins.OutOfNetwork = true
+		}
+
+		// assume program_splice is set at bit 6;
+
+		var durflag bool
+		if buf[6]&(1<<5) > 0 {
+			durflag = true
+		}
+		// we don't support deprecated component mode.
+		if buf[6]&(1<<4) > 0 {
+			ins.Immediate = true
+		}
+		if buf[6]&(1<<3) > 0 {
+			ins.EventIDCompliance = true
+		}
+		// next 3 bits are reserved.
+
+		if !ins.Immediate {
+			// is time_specified_flag set? if so, read the 33-bit time.
+			if buf[7]&(1<<7) > 0 {
+				b := make([]byte, 3)
+				b = append(b, buf[7]&0x01)  // skip reserved bits.
+				b = append(b, buf[8:12]...) // read remaining 32 bits.
+				dur := binary.BigEndian.Uint64(b)
+				ins.SpliceTime = newuint64(dur)
+				buf = buf[12:]
+			} else {
+				buf = buf[8:]
+			}
+		}
+
+		if durflag {
+			a := [5]byte{buf[0], buf[1], buf[2], buf[3], buf[4]}
+			ins.Duration = readBreakDuration(a)
+			buf = buf[5:]
+		}
+
+		ins.ProgramID = binary.BigEndian.Uint16([]byte{buf[0], buf[1]})
+		ins.AvailNum = uint8(buf[2])
+		ins.AvailExpected = uint8(buf[3])
+		cmd.Insert = &ins
 	default:
-		return nil, fmt.Errorf("cannot decode command type %s", cmd.Type)
+		return nil, fmt.Errorf("TODO: cannot decode command type %s", cmd.Type)
 	}
 	return &cmd, nil
 }

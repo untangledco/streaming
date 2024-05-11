@@ -131,24 +131,24 @@ func TestDecodeSpliceInfo(t *testing.T) {
 			if err != nil {
 				t.Fatalf("decode splice info: %v", err)
 			}
-			if tt.want.SAPType != info.SAPType {
-				t.Errorf("want SAPType %s, got %s", tt.want.SAPType, info.SAPType)
-			}
-			if tt.want.Tier != info.Tier {
-				t.Errorf("want tier %#x, got %#x", tt.want.Tier, info.Tier)
-			}
-			if *tt.want.Command.TimeSignal != *info.Command.TimeSignal {
-				t.Errorf("want timesig %x, got %x", *tt.want.Command.TimeSignal, *info.Command.TimeSignal)
-			}
-			wd := info.Descriptors[0].(SegmentationDescriptor)
-			d, ok := info.Descriptors[0].(SegmentationDescriptor)
-			if !ok {
-				t.Errorf("want %T, got %T", wd, info.Descriptors[0])
-			} else {
-				if wd.UPID.Type != d.UPID.Type {
-					t.Errorf("want upid type %d, got %d", wd.UPID.Type, d.UPID.Type)
+
+			// test each possible command
+			if tt.want.Command.TimeSignal != nil {
+				if *tt.want.Command.TimeSignal != *info.Command.TimeSignal {
+					t.Errorf("want timesig %x, got %x", *tt.want.Command.TimeSignal, *info.Command.TimeSignal)
 				}
 			}
+			if tt.want.Command.Insert != nil {
+				want := *tt.want.Command.Insert
+				got := *info.Command.Insert
+				if !reflect.DeepEqual(&want, got) {
+					t.Errorf("info command: want %+v, got %+v", want, got)
+					if *want.SpliceTime != *got.SpliceTime {
+						t.Logf("want splice time %d, got %d", want.SpliceTime, got.SpliceTime)
+					}
+				}
+			}
+
 			if !reflect.DeepEqual(tt.want, *info) {
 				t.Errorf("decode splice info: want %+v, got %+v", tt.want, info)
 				t.Log(diffInfo(tt.want, *info))
