@@ -24,7 +24,7 @@ var samples = []sample{
 					Restrictions:      NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
 					Duration:          newuint64(0x0001a599b0),
 					UPID: UPID{
-						Type:  UPIDTypeTI,
+						Type:  UPIDTI,
 						Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
 					},
 					Type:     0x34,

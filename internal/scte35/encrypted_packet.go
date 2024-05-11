@@ -3,21 +3,6 @@
 
 package scte35
 
-const (
-	EncryptionAlgorithmNone uint32 = iota
-	EncryptionAlgorithmDESECB
-	EncryptionAlgorithmDESCBC
-	EncryptionAlgorithmTripleDES
-)
-
-// EncryptedPacket represents payload encryption information.
-type EncryptedPacket struct {
-	// Specifies which cipher is used.
-	// See SCTE 35 section 11.3.
-	EncryptionAlgorithm uint32
-	CWIndex             uint32
-}
-
 // cipher is a 6-bit field specifying the algorithm used to encrypt
 // payloads as defined in SCTE 35 section 11.3.
 type Cipher uint8

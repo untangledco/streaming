@@ -227,25 +227,25 @@ type UPIDType uint8
 
 // Valid UPIDType values defined in Table 22, SCTE 35 section 10.3.3.1.
 const (
-	UPIDTypeNone UPIDType = 0 + iota
-	_                     // User Defined, deprecated, use MPU.
-	_                     // ISCI, deprecated, use AdID.
-	UPIDTypeAdID
-	UPIDTypeUMID
+	UPIDNone UPIDType = 0 + iota
+	_                 // User Defined, deprecated, use MPU.
+	_                 // ISCI, deprecated, use AdID.
+	UPIDAdID
+	UPIDUMID
 	_ // ISAN, deprecated, use ISAN.
-	UPIDTypeISAN
-	UPIDTypeTID
-	UPIDTypeTI
-	UPIDTypeADI
-	UPIDTypeEIDR
-	UPIDTypeATSCContentID
-	UPIDTypeMPU
-	UPIDTypeMID
-	UPIDTypeADSInfo
-	UPIDTypeURI
-	UPIDTypeUUID
-	UPIDTypeSCR
-	UPIDTypeReserved
+	UPIDISAN
+	UPIDTID
+	UPIDTI
+	UPIDADI
+	UPIDEIDR
+	UPIDATSCContentID
+	UPIDMPU
+	UPIDMID
+	UPIDADSInfo
+	UPIDURI
+	UPIDUUID
+	UPIDSCR
+	UPIDReserved
 )
 
 // TimeDescriptor represents a moment in time as used in the Precision
