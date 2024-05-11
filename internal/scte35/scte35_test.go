@@ -29,7 +29,7 @@ type sample struct {
 
 var samples = []sample{
 	{
-		name:    "14.1",
+		name:    "14.1. time_signal",
 		encoded: "/DA0AAAAAAAA///wBQb+cr0AUAAeAhxDVUVJSAAAjn/PAAGlmbAICAAAAAAsoKGKNAIAmsnRfg==",
 		want: SpliceInfo{
 			SAPType: SAPNone,
@@ -54,6 +54,30 @@ var samples = []sample{
 				},
 			},
 			CRC32: 0x9ac9d17e,
+		},
+	},
+	{
+		name:    "14.2. splice_insert",
+		encoded: "/DAvAAAAAAAA///wFAVIAACPf+/+c2nALv4AUsz1AAAAAAAKAAhDVUVJAAABNWLbowo=",
+		want: SpliceInfo{
+			SAPType: SAPNone,
+			Tier:    0x0fff,
+			Command: &Command{
+				Type: SpliceInsert,
+				Insert: &Insert{
+					ID:           0x4800008f,
+					OutOfNetwork: true,
+					SpliceTime:   newuint64(0x07369c02e),
+					Duration: &BreakDuration{
+						AutoReturn: true,
+						Duration:   0x00052ccf5,
+					},
+				},
+			},
+			Descriptors: []SpliceDescriptor{
+				AvailDescriptor(0x00000135),
+			},
+			CRC32: 0x62dba30a,
 		},
 	},
 }
