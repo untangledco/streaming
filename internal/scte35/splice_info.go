@@ -116,14 +116,9 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	for _, desc := range sis.Descriptors {
 		buf1 = append(buf1, encodeSpliceDescriptor(desc)...)
 	}
-	b := make([]byte, 2)
-	binary.LittleEndian.PutUint16(b, uint16(len(buf1)))
-	buf = append(buf, b...)
+	buf = binary.BigEndian.AppendUint16(buf, uint16(len(buf1)))
 
-	b = make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, calculateCRC32(buf))
-	buf = append(buf, b...)
-	return buf, nil
+	return binary.BigEndian.AppendUint32(buf, calculateCRC32(buf)), nil
 }
 
 func packTier(tier uint16) [2]byte {

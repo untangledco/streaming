@@ -35,9 +35,7 @@ func encodeSpliceDescriptor(sd SpliceDescriptor) []byte {
 	var buf []byte
 	buf = append(buf, byte(sd.Tag()))
 	buf = append(buf, byte(len(sd.Data())))
-	ibuf := make([]byte, 4) // uint32 length
-	binary.LittleEndian.PutUint32(ibuf, sd.ID())
-	buf = append(buf, ibuf...)
+	buf = binary.LittleEndian.AppendUint32(buf, sd.ID())
 	return append(buf, sd.Data()...)
 }
 
