@@ -3,7 +3,7 @@
 
 package scte35
 
-// cipher is a 6-bit field specifying the algorithm used to encrypt
+// Cipher is a 6-bit field specifying the algorithm used to encrypt
 // payloads as defined in SCTE 35 section 11.3.
 type Cipher uint8
 

@@ -22,8 +22,8 @@ func diffInfo(a, b SpliceInfo) string {
 	if a.SAPType != b.SAPType {
 		fmt.Fprintf(buf, "SAP type = %s, %s\n", a.SAPType, b.SAPType)
 	}
-	if a.EncryptionAlgorithm != b.EncryptionAlgorithm {
-		fmt.Fprintln(buf, "cipher = ", a.EncryptionAlgorithm, b.EncryptionAlgorithm)
+	if a.Cipher != b.Cipher {
+		fmt.Fprintln(buf, "cipher = ", a.Cipher, b.Cipher)
 	}
 	if a.PTSAdjustment != b.PTSAdjustment {
 		fmt.Fprintln(buf, "pts adjustment = ", a.PTSAdjustment, b.PTSAdjustment)

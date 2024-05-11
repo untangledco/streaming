@@ -9,11 +9,11 @@ func TestPackEncryption(t *testing.T) {
 	}
 	var tests = []ptest{
 		{
-			sis:  SpliceInfo{Encrypted: true, EncryptionAlgorithm: DES_CBC},
+			sis:  SpliceInfo{Encrypted: true, Cipher: DES_CBC},
 			want: 0b10000100,
 		},
 		{
-			sis:  SpliceInfo{Encrypted: true, EncryptionAlgorithm: TripleDES},
+			sis:  SpliceInfo{Encrypted: true, Cipher: TripleDES},
 			want: 0b10000110,
 		},
 	}
@@ -22,7 +22,7 @@ func TestPackEncryption(t *testing.T) {
 		if tt.sis.Encrypted {
 			b |= (1 << 7)
 		}
-		b |= byte(tt.sis.EncryptionAlgorithm) << 1
+		b |= byte(tt.sis.Cipher) << 1
 		if b != tt.want {
 			t.Errorf("pack encryption info %v: got %08b, want %08b", tt.sis, b, tt.want)
 		}

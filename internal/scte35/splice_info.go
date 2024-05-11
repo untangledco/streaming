@@ -32,9 +32,9 @@ func (t SAPType) String() string {
 }
 
 type SpliceInfo struct {
-	SAPType             SAPType
-	Encrypted           bool
-	EncryptionAlgorithm Cipher
+	SAPType   SAPType
+	Encrypted bool
+	Cipher    Cipher
 	// Holds a 33-bit unsigned integer representing the number of ticks of a 90KHz clock.
 	PTSAdjustment uint64
 	CWIndex       uint8
@@ -81,11 +81,11 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	if sis.Encrypted {
 		buf[4] |= (1 << 7)
 	}
-	if sis.EncryptionAlgorithm > maxCipher {
-		return nil, fmt.Errorf("encryption algorithm %d larger than max value %d", sis.EncryptionAlgorithm, maxCipher)
+	if sis.Cipher > maxCipher {
+		return nil, fmt.Errorf("encryption algorithm %d larger than max value %d", sis.Cipher, maxCipher)
 	}
 	// pack 6-bit cipher into next 6. Keep 1 bit for PTSAdjustment.
-	buf[4] |= byte(sis.EncryptionAlgorithm) << 1
+	buf[4] |= byte(sis.Cipher) << 1
 	pts := toPTS(sis.PTSAdjustment)
 	buf[4] |= pts[0]
 	buf = append(buf, pts[1:]...)
@@ -151,7 +151,7 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	if buf[1]&0b10000000 == 1 {
 		info.Encrypted = true
 		// right-most bit is used by PTSAdjustment.
-		info.EncryptionAlgorithm = Cipher(buf[1] & 0b01111110)
+		info.Cipher = Cipher(buf[1] & 0b01111110)
 	}
 
 	pts := make([]byte, 8)
