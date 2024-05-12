@@ -23,7 +23,8 @@ func diffInfo(a, b SpliceInfo) string {
 		fmt.Fprintf(buf, "SAP type = %s, %s\n", a.SAPType, b.SAPType)
 	}
 	if a.Cipher != b.Cipher {
-		fmt.Fprintln(buf, "cipher = ", a.Cipher, b.Cipher)
+		fmt.Fprintln(buf, "cipher differs")
+		fmt.Fprintf(buf, "< %s\n> %s", a.Cipher, b.Cipher)
 	}
 	if a.PTSAdjustment != b.PTSAdjustment {
 		fmt.Fprintln(buf, "pts adjustment = ", a.PTSAdjustment, b.PTSAdjustment)
@@ -130,8 +131,8 @@ func TestEncodeSpliceInfo(t *testing.T) {
 			}
 			if tt.encoded != got {
 				t.Errorf("expected encoded splice info differs from calculated")
-				t.Logf("< %v", bwant)
-				t.Logf("> %v", b)
+				t.Logf("< %#x", bwant)
+				t.Logf("> %#x", b)
 			}
 		})
 	}
