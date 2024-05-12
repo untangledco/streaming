@@ -67,19 +67,20 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	// length, buf[1,2] set at the end
 	buf[3] = protocolVersion
 
-	buf = append(buf, 0x00)
+	var b byte
 	if sis.Encrypted {
-		buf[4] |= (1 << 7)
+		b |= (1 << 7)
+		if sis.Cipher > maxCipher {
+			return nil, fmt.Errorf("cipher %d larger than max %d", sis.Cipher, maxCipher)
+		}
+		// pack cipher, keeping 1 bit for PTSAdjustment.
+		b |= byte(sis.Cipher) << 1
 	}
-	if sis.Cipher > maxCipher {
-		return nil, fmt.Errorf("encryption algorithm %d larger than max value %d", sis.Cipher, maxCipher)
-	}
-	// pack 6-bit cipher into next 6. Keep 1 bit for PTSAdjustment.
-	buf[4] |= byte(sis.Cipher) << 1
 	pts := toPTS(sis.PTSAdjustment)
-	buf[4] |= pts[0]
+	// set the remaining 1 bit in b from the 33-bit timestamp. append the rest.
+	b |= pts[0]
+	buf = append(buf, b)
 	buf = append(buf, pts[1:]...)
-
 	buf = append(buf, byte(sis.CWIndex))
 
 	if sis.Tier > maxTier {
