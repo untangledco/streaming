@@ -11,10 +11,10 @@ import (
 type SAPType uint8
 
 const (
-	SAPClosedGOP SAPType = iota
-	SAPClosedGOPLeading
-	SAPOpenGOP
-	SAPNone
+	SAPClosedGOP SAPType = 0
+	SAPClosedGOPLeading = 0x10
+	SAPOpenGOP = 0x20
+	SAPNone = 0x30
 )
 
 func (t SAPType) String() string {
@@ -62,18 +62,8 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	buf[0] = byte(tableID)
 	// next 2 bits (section_syntax_indicator, private_indicator) must be 0.
 	// 0b00000000
-	switch sis.SAPType {
-	case SAPClosedGOP:
-		// nothing to do
-	case SAPClosedGOPLeading:
-		buf[0] |= (1 << 2)
-	case SAPOpenGOP:
-		buf[0] |= (1 << 3)
-	case SAPNone:
-		buf[0] |= 0b00001100
-	default:
-		return nil, fmt.Errorf("invalid SAP type %x", sis.SAPType)
-	}
+	buf[1] |= byte(sis.SAPType)
+
 	// length, buf[1,2] set at the end
 	buf[3] = protocolVersion
 
@@ -137,9 +127,7 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 
 	var info SpliceInfo
 	// skip 2 bits, straight to sap_type.
-	st := buf[1] & 0b00110000
-	info.SAPType = SAPType(st >> 4)
-
+	info.SAPType = SAPType(buf[1] & 0b00110000)
 	length := binary.BigEndian.Uint16([]byte{buf[1], buf[2]})
 	length &= 0x0fff // 12-bit field
 	buf = buf[3:]
