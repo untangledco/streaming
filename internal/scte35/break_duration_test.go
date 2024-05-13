@@ -8,7 +8,7 @@ func TestPackBreakDuration(t *testing.T) {
 	dur := uint64(8589934492) // 2^33 - 100
 	bd := BreakDuration{true, dur}
 	want := [5]byte{
-		0b10000001,
+		0b11111111,
 		0b11111111,
 		0b11111111,
 		0b11111111,

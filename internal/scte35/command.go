@@ -209,7 +209,8 @@ func encodeInsert(ins *Insert) []byte {
 		if ins.EventIDCompliance {
 			buf[5] |= (1 << 3)
 		}
-		// next 3 bits are reserved.
+		// toggle remaining 3 reserved bits.
+		buf[5] |= 0x07
 
 		if ins.SpliceTime != nil && !ins.Immediate {
 			b := encodeSpliceTime(*ins.SpliceTime)

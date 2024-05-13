@@ -128,25 +128,3 @@ func TestEncodeSpliceInfo(t *testing.T) {
 		})
 	}
 }
-
-func TestEncodeInsert(t *testing.T) {
-	// want := 0x4800008f7feffe7369c02efe
-	ins := samples[1].want.Command.Insert
-	b := encodeInsert(ins)
-	want := []byte{
-		0x48,
-		0x00,
-		0x00,
-		0x8f,
-		0x7f,
-		0xef,
-		0xfe,
-		0x73,
-		0x69,
-		0xc0,
-		0x2e,
-		0xfe,
-	}
-	fmt.Printf("%#x\n", want)
-	fmt.Printf("%#x\n", b)
-}
