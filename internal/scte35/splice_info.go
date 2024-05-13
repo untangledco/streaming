@@ -79,7 +79,12 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	buf = append(buf, b)
 	buf = append(buf, 0, 0, 0, 0)
 	putPTS(buf[4:], sis.PTSAdjustment)
-	buf = append(buf, sis.CWIndex)
+	if sis.Encrypted {
+		buf = append(buf, sis.CWIndex)
+	} else {
+		// unused; must toggle all bits.
+		buf = append(buf, 0xff)
+	}
 
 	if sis.Tier > maxTier {
 		return nil, fmt.Errorf("tier %d greater than max %d", sis.Tier, maxTier)
@@ -148,12 +153,7 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	pts[3] = buf[4]
 	pts[4] = buf[5]
 	info.PTSAdjustment = binary.BigEndian.Uint64(pts)
-
-	if info.Encrypted {
-		info.CWIndex = uint8(buf[6])
-	} else {
-		info.CWIndex = 0xff
-	}
+	info.CWIndex = uint8(buf[6])
 
 	// want left-most 12 bits, remaining is used by command length.
 	// TODO(otl): still not getting expected values here;
