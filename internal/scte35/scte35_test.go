@@ -13,6 +13,7 @@ var samples = []sample{
 		want: SpliceInfo{
 			SAPType: SAPNone,
 			Tier:    0x0fff,
+			CWIndex: 0xff,
 			Command: &Command{
 				Type:       TimeSignal,
 				TimeSignal: newuint64(0x072bd0050),
@@ -40,6 +41,7 @@ var samples = []sample{
 		encoded: "/DAvAAAAAAAA///wFAVIAACPf+/+c2nALv4AUsz1AAAAAAAKAAhDVUVJAAABNWLbowo=",
 		want: SpliceInfo{
 			SAPType: SAPNone,
+			CWIndex: 0xff,
 			Tier:    0x0fff,
 			Command: &Command{
 				Type: SpliceInsert,

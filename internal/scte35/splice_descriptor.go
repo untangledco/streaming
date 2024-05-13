@@ -34,8 +34,8 @@ type SpliceDescriptor interface {
 func encodeSpliceDescriptor(sd SpliceDescriptor) []byte {
 	var buf []byte
 	buf = append(buf, byte(sd.Tag()))
-	buf = append(buf, byte(len(sd.Data())))
-	buf = binary.LittleEndian.AppendUint32(buf, sd.ID())
+	buf = append(buf, byte(len(sd.Data())+4)) // len(sd.ID()) == 4
+	buf = binary.BigEndian.AppendUint32(buf, sd.ID())
 	return append(buf, sd.Data()...)
 }
 
@@ -126,25 +126,16 @@ func (d SegmentationDescriptor) Data() []byte {
 	if d.EventIDCompliance {
 		buf[4] |= (1 << 6)
 	}
-	// next 6 bits are reserved.
+	// toggle next remaining 6 reserved bits.
+	buf[4] |= 0b00111111
 
 	if !d.Cancel {
-		buf = append(buf, 0x00)
-		// assume program_segmentation is always set; we do not support the deprecated component mode.
-		buf[5] |= (1 << 7)
+		buf = append(buf, segDescFlags(&d))
 		if d.Duration != nil {
-			buf[5] |= (1 << 6)
-		}
-		if d.Restrictions != 0 {
-			buf[5] |= (1 << 5)
-			buf[5] |= byte(d.Restrictions)
-		}
-
-		if d.Duration != nil {
-			b := make([]byte, 8) // uint64 needs 8
-			binary.BigEndian.PutUint64(b, *d.Duration)
+			b := make([]byte, 8)                           // uint64 needs 8
+			binary.BigEndian.PutUint64(b, *d.Duration<<24) // 40 bits
 			// append 40 bits (5 bytes)
-			buf = append(buf, b[:4]...)
+			buf = append(buf, b[:5]...)
 		}
 
 		buf = append(buf, byte(d.UPID.Type))
@@ -155,7 +146,9 @@ func (d SegmentationDescriptor) Data() []byte {
 		switch d.Type {
 		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
 		case 0x34, 0x30, 0x32, 0x36, 0x38, 0x3a, 0x44, 0x46:
-			buf = append(buf, d.SubNumber, d.SubExpected)
+			if d.Expected > 0 {
+				buf = append(buf, d.SubNumber, d.SubExpected)
+			}
 		}
 	}
 	return buf
@@ -360,3 +353,18 @@ type PrivateDescriptor struct {
 func (d PrivateDescriptor) Tag() uint8   { return d.PTag }
 func (d PrivateDescriptor) ID() uint32   { return d.PID }
 func (d PrivateDescriptor) Data() []byte { return d.PData }
+
+func segDescFlags(seg *SegmentationDescriptor) uint8 {
+	var b uint8
+	// assume program_segmentation is always set; we do not support the deprecated component mode.
+	b |= (1 << 7)
+	if seg.Duration != nil {
+		b |= (1 << 6)
+	}
+	if seg.Restrictions != 0 {
+		b |= byte(seg.Restrictions)
+	} else {
+		b |= (1 << 5)
+	}
+	return b
+}

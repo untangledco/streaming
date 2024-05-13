@@ -5,13 +5,19 @@ import (
 )
 
 func TestPTS(t *testing.T) {
-	cases := []uint64{1, 128, 8589934492}
-
-	for _, tt := range cases {
-		pts := toPTS(tt)
-		count := ticks(pts)
-		if count != tt {
-			t.Errorf("ticks(%b) = %d, want %d", pts, count, tt)
-		}
+	ticks := uint64(8589934591) // max 33-bit uint
+	buf := make([]byte, 5)
+	putPTS(buf, ticks)
+	want := [5]byte{
+		0x01,
+		0xff,
+		0xff,
+		0xff,
+		0xff,
+	}
+	var got [5]byte
+	copy(got[:], buf)
+	if want != got {
+		t.Errorf("putPTS(buf, %d); want %#x, got %#x", ticks, want, got)
 	}
 }

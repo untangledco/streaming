@@ -11,10 +11,10 @@ import (
 type SAPType uint8
 
 const (
-	SAPClosedGOP SAPType = 0
-	SAPClosedGOPLeading = 0x10
-	SAPOpenGOP = 0x20
-	SAPNone = 0x30
+	SAPClosedGOP        SAPType = 0
+	SAPClosedGOPLeading         = 0x10
+	SAPOpenGOP                  = 0x20
+	SAPNone                     = 0x30
 )
 
 func (t SAPType) String() string {
@@ -58,7 +58,7 @@ const (
 const maxTier uint16 = 0xfff
 
 func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
-	buf := make([]byte, 5)
+	buf := make([]byte, 4)
 	buf[0] = byte(tableID)
 	// next 2 bits (section_syntax_indicator, private_indicator) must be 0.
 	// 0b00000000
@@ -76,20 +76,17 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 		// pack cipher, keeping 1 bit for PTSAdjustment.
 		b |= byte(sis.Cipher) << 1
 	}
-	pts := toPTS(sis.PTSAdjustment)
-	// set the remaining 1 bit in b from the 33-bit timestamp. append the rest.
-	b |= pts[0]
 	buf = append(buf, b)
-	buf = append(buf, pts[1:]...)
-	buf = append(buf, byte(sis.CWIndex))
+	buf = append(buf, 0, 0, 0, 0)
+	putPTS(buf[4:], sis.PTSAdjustment)
+	buf = append(buf, sis.CWIndex)
 
 	if sis.Tier > maxTier {
 		return nil, fmt.Errorf("tier %d greater than max %d", sis.Tier, maxTier)
 	}
-	tier := packTier(sis.Tier)
-	buf = append(buf, tier[0])
-	buf = append(buf, tier[1]<<4)
-	// next 4 bits will be from the command length
+	tier := sis.Tier & 0x0fff // just 12 bits
+	// right 4 bits are for command length
+	buf = binary.BigEndian.AppendUint16(buf, tier<<4)
 	if sis.Command == nil {
 		return nil, fmt.Errorf("nil command")
 	}
@@ -97,10 +94,11 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("encode splice command: %w", err)
 	}
-	length := uint16(len(cmd))
+	cmdlen := uint16(len(cmd)) & 0x0fff
 	// stuff remaining 4 bits into the last byte.
-	buf[len(buf)-1] |= byte(length >> 8)
-	buf = append(buf, byte(length))
+	buf[len(buf)-1] |= byte(cmdlen >> 8)
+	buf = append(buf, byte(cmdlen))
+	buf = append(buf, byte(sis.Command.Type))
 	buf = append(buf, cmd...)
 
 	var buf1 []byte
@@ -108,16 +106,16 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 		buf1 = append(buf1, encodeSpliceDescriptor(desc)...)
 	}
 	buf = binary.BigEndian.AppendUint16(buf, uint16(len(buf1)))
+	buf = append(buf, buf1...)
 
-	return binary.BigEndian.AppendUint32(buf, calculateCRC32(buf)), nil
-}
+	// want only 12 bits, left 4 bits are used by flags, saptype.
+	buflen := uint16(len(buf)) & 0x0fff
+	buflen++ // TODO(otl): is this required because of alignment stuffing?
+	buf[1] |= byte(buflen >> 8)
+	buf[2] = byte(buflen)
 
-func packTier(tier uint16) [2]byte {
-	var a [2]byte
-	// mask off last 4 bits; we want a 12-bit integer.
-	a[0] = byte(tier>>8) & 0b00001111
-	a[1] = byte(tier)
-	return a
+	crc := calculateCRC32(buf)
+	return binary.BigEndian.AppendUint32(buf, crc), nil
 }
 
 func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
@@ -153,6 +151,8 @@ func decodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 
 	if info.Encrypted {
 		info.CWIndex = uint8(buf[6])
+	} else {
+		info.CWIndex = 0xff
 	}
 
 	// want left-most 12 bits, remaining is used by command length.

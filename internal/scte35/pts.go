@@ -4,8 +4,8 @@ package scte35
 // 90KHz clock - as a 33-bit field.
 type PTS [5]byte
 
-func toPTS(ticks uint64) PTS {
-	var p PTS
+func toPTS(ticks uint64) [5]byte {
+	var p [5]byte
 	p[0] = byte(ticks >> 32)
 	// mask off 7 bits; we only want 33 total, not 40.
 	p[0] &= 0b00000001
@@ -16,6 +16,8 @@ func toPTS(ticks uint64) PTS {
 	return p
 }
 
-func ticks(pts PTS) uint64 {
-	return uint64(pts[4]) | uint64(pts[3])<<8 | uint64(pts[2])<<16 | uint64(pts[1])<<24 | uint64(pts[0])<<32
+func putPTS(buf []byte, ticks uint64) {
+	pts := toPTS(ticks)
+	buf[0] |= pts[0]
+	copy(buf[1:5], pts[1:5])
 }

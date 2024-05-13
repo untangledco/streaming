@@ -189,16 +189,17 @@ func encodeInsert(ins *Insert) []byte {
 	if ins.Cancel {
 		buf[4] |= (1 << 7)
 	}
-	// next 7 bits are reserved.
+	// toggle remaining reserved 7 bits
+	buf[4] |= 0x7f
 
 	if !ins.Cancel {
 		buf = append(buf, 0x00)
 		if ins.OutOfNetwork {
 			buf[5] |= (1 << 7)
 		}
-		if ins.SpliceTime != nil {
-			buf[5] |= (1 << 6)
-		}
+		// assume program_splice is set;
+		// we do not support the deprecated component_count mode.
+		buf[5] |= (1 << 6)
 		if ins.Duration != nil {
 			buf[5] |= (1 << 5)
 		}
@@ -231,5 +232,7 @@ func encodeSpliceTime(ticks uint64) [5]byte {
 	pts := toPTS(ticks)
 	// set time_specified_flag
 	pts[0] |= (1 << 7)
+	// toggle 6 reserved bits, so that we match the spec.
+	pts[0] |= 0x7e
 	return pts
 }
