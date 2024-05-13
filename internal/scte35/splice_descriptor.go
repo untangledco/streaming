@@ -72,11 +72,7 @@ func (d DTMFDescriptor) Data() []byte {
 	b[0] = byte(d.Preroll)
 	// set 3 bits, right-most 5 are reserved.
 	b[1] = byte(len(d.Chars)) << 5
-	i := 2
-	for j := range d.Chars {
-		b[i] = d.Chars[j]
-		i++
-	}
+	copy(b[2:], d.Chars)
 	return b
 }
 

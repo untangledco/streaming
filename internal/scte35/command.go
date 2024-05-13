@@ -64,7 +64,7 @@ func encodeCommand(c *Command) ([]byte, error) {
 		return b, nil
 	case TimeSignal:
 		if c.TimeSignal == nil {
-			return nil, fmt.Errorf("command type is %s, but nil TimeSignal value set", c.Type)
+			return nil, fmt.Errorf("cannot encode nil TimeSignal")
 		}
 		b := encodeSpliceTime(*c.TimeSignal)
 		return b[:], nil
@@ -159,11 +159,7 @@ type PrivateCommand struct {
 func encodePrivateCommand(c *PrivateCommand) []byte {
 	buf := make([]byte, 4+len(c.Data))
 	binary.BigEndian.PutUint32(buf[:4], c.ID)
-	i := 4
-	for j := range c.Data {
-		buf[i] = c.Data[j]
-		i++
-	}
+	copy(buf[4:], c.Data)
 	return buf
 }
 
