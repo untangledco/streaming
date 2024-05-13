@@ -62,6 +62,69 @@ var samples = []sample{
 			CRC32: 0x62dba30a,
 		},
 	},
+	{
+		name:    "14.3. time_signal",
+		encoded: "/DAvAAAAAAAA///wBQb+dGKQoAAZAhdDVUVJSAAAjn+fCAgAAAAALKChijUCAKnMZ1g=",
+		want: SpliceInfo{
+			SAPType: SAPNone,
+			CWIndex: 0xff,
+			Tier:    0x0fff,
+			Command: &Command{
+				Type:       TimeSignal,
+				TimeSignal: newuint64(0x0746290a0),
+			},
+			Descriptors: []SpliceDescriptor{
+				SegmentationDescriptor{
+					EventID:           0x4800008e,
+					EventIDCompliance: true,
+					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					UPID: UPID{
+						Type:  UPIDTI,
+						Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
+					},
+					Type:   0x35,
+					Number: 2,
+				},
+			},
+			CRC32: 0xa9cc6758,
+		},
+	},
+	{
+		name:    "14.4. time_signal",
+		encoded: "/DBIAAAAAAAA///wBQb+ek2ItgAyAhdDVUVJSAAAGH+fCAgAAAAALMvDRBEAAAIXQ1VFSUgAABl/nwgIAAAAACyk26AQAACZcuND",
+		want: SpliceInfo{
+			SAPType: SAPNone,
+			CWIndex: 0xff,
+			Tier:    0x0fff,
+			Command: &Command{
+				Type:       TimeSignal,
+				TimeSignal: newuint64(0x07a4d88b6),
+			},
+			Descriptors: []SpliceDescriptor{
+				SegmentationDescriptor{
+					EventID:           0x48000018,
+					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					EventIDCompliance: true,
+					UPID: UPID{
+						Type:  UPIDTI,
+						Value: []byte{0, 0, 0, 0, 0x2c, 0xcb, 0xc3, 0x44},
+					},
+					Type: 0x11,
+				},
+				SegmentationDescriptor{
+					EventID:           0x48000019,
+					EventIDCompliance: true,
+					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					UPID: UPID{
+						Type:  UPIDTI,
+						Value: []byte{0, 0, 0, 0, 0x2c, 0xa4, 0xdb, 0xa0},
+					},
+					Type: 0x10,
+				},
+			},
+			CRC32: 0x9972e343,
+		},
+	},
 }
 
 func newuint64(i uint64) *uint64 { p := new(uint64); p = &i; return p }
