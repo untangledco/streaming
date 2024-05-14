@@ -76,6 +76,14 @@ func (d DTMFDescriptor) Data() []byte {
 	return b
 }
 
+func unmarshalDTMF(buf []byte) DTMFDescriptor {
+	// skip buf[1]; contains the length which we don't care about when using slices.
+	return DTMFDescriptor{
+		Preroll: uint8(buf[0]),
+		Chars:   buf[2:],
+	}
+}
+
 type DeliveryRestrictions uint8
 
 const (
@@ -142,8 +150,11 @@ func (d SegmentationDescriptor) Data() []byte {
 		switch d.Type {
 		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
 		case 0x34, 0x30, 0x32, 0x36, 0x38, 0x3a, 0x44, 0x46:
-			if d.Expected > 0 {
-				buf = append(buf, d.SubNumber, d.SubExpected)
+			if d.SubNumber > 0 {
+				buf = append(buf, d.SubNumber)
+			}
+			if d.SubExpected > 0 {
+				buf = append(buf, d.SubExpected)
 			}
 		}
 	}
@@ -193,8 +204,10 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 		switch desc.Type {
 		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
 		case 0x34, 0x30, 0x32, 0x36, 0x38, 0x3a, 0x44, 0x46:
-			if desc.Expected > 0 {
+			if len(buf[2:]) > 1 {
 				desc.SubNumber = uint8(buf[3])
+			}
+			if len(buf[2:]) > 2 {
 				desc.SubExpected = uint8(buf[4])
 			}
 		}
@@ -336,6 +349,8 @@ func UnmarshalSpliceDescriptor(buf []byte) (SpliceDescriptor, error) {
 		return AvailDescriptor(binary.BigEndian.Uint32(buf)), nil
 	case TagSegmentation:
 		return unmarshalSegDescriptor(buf), nil
+	case TagDTMF:
+		return unmarshalDTMF(buf), nil
 	}
 	return nil, fmt.Errorf("unmarshal %d unsupported", tag)
 }
