@@ -82,7 +82,7 @@ func encodeSpliceInfo(sis *SpliceInfo) ([]byte, error) {
 	if sis.Encrypted {
 		buf = append(buf, sis.CWIndex)
 	} else {
-		// unused; must toggle all bits.
+		// unused; toggle all bits as in the spec.
 		buf = append(buf, 0xff)
 	}
 

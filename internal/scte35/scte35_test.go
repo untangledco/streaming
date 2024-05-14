@@ -125,6 +125,48 @@ var samples = []sample{
 			CRC32: 0x9972e343,
 		},
 	},
+	{
+		// from "The Essential Guide to SCTE-35" by Bitmovin (https://bitmovin.com/scte-35-guide)
+		name:    "dtmf",
+		encoded: "/DBcAAAAAAAAAP/wBQb//ciI8QBGAh1DVUVJXQk9EX+fAQ5FUDAxODAzODQwMDY2NiEEZAIZQ1VFSV0JPRF/3wABLit7AQVDMTQ2NDABAQEKQ1VFSQCAMTUwKnPhdcU=",
+		want: SpliceInfo{
+			SAPType: SAPNone,
+			Tier:    0x0fff,
+			Command: &Command{
+				Type:       TimeSignal,
+				TimeSignal: newuint64(8552745201),
+			},
+			Descriptors: []SpliceDescriptor{
+				SegmentationDescriptor{
+					EventID:           1560886545,
+					EventIDCompliance: true,
+					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | DeviceRestrictionsNone,
+					UPID: UPID{
+						Type:  UPIDType(1),
+						Value: []byte{69, 80, 48, 49, 56, 48, 51, 56, 52, 48, 48, 54, 54, 54},
+					},
+					Type:     33,
+					Number:   4,
+					Expected: 100,
+				},
+				SegmentationDescriptor{
+					EventID:           1560886545,
+					EventIDCompliance: true,
+					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | DeviceRestrictionsNone,
+					Duration:          newuint64(19803003),
+					UPID: UPID{
+						Type:  UPIDType(1),
+						Value: []byte{67, 49, 52, 54, 52},
+					},
+					Type:     48,
+					Number:   1,
+					Expected: 1,
+				},
+				DTMFDescriptor{Chars: []byte("150*")},
+			},
+			CRC32: 1944155589,
+		},
+	},
 }
 
 func newuint64(i uint64) *uint64 { p := new(uint64); p = &i; return p }
