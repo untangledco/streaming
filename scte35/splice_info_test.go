@@ -70,7 +70,7 @@ func TestDecodeSpliceInfo(t *testing.T) {
 			if err != nil {
 				t.Fatal("decode example splice info:", err)
 			}
-			info, err := decodeSpliceInfo(b)
+			info, err := DecodeSpliceInfo(b)
 			if err != nil {
 				t.Fatalf("decode splice info: %v", err)
 			}
@@ -113,7 +113,7 @@ func TestDecodeSpliceInfo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		splice, err := decodeSpliceInfo(b)
+		splice, err := DecodeSpliceInfo(b)
 		if err != nil {
 			t.Fatalf("decode splice info: %v", err)
 		}
@@ -135,7 +135,7 @@ func TestDecodeSpliceInfo(t *testing.T) {
 func TestEncodeSpliceInfo(t *testing.T) {
 	for _, tt := range samples {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := encodeSpliceInfo(&tt.want)
+			b, err := EncodeSpliceInfo(&tt.want)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -310,12 +310,12 @@ func (d AudioDescriptor) Data() []byte {
 	return b
 }
 
-func DecodeAllDescriptors(buf []byte) ([]SpliceDescriptor, error) {
+func decodeAllDescriptors(buf []byte) ([]SpliceDescriptor, error) {
 	var sds []SpliceDescriptor
 	for len(buf) >= 6 {
 		// first byte is tag, second is length of next descriptor.
 		dlen := uint8(buf[1])
-		desc, err := UnmarshalSpliceDescriptor(buf[:2+dlen])
+		desc, err := unmarshalSpliceDescriptor(buf[:2+dlen])
 		if err != nil {
 			return sds, err
 		}
@@ -329,7 +329,7 @@ func DecodeAllDescriptors(buf []byte) ([]SpliceDescriptor, error) {
 }
 
 // UnmarshalSpliceDescriptor reads exactly one descriptor from buf.
-func UnmarshalSpliceDescriptor(buf []byte) (SpliceDescriptor, error) {
+func unmarshalSpliceDescriptor(buf []byte) (SpliceDescriptor, error) {
 	if len(buf) < 6 {
 		return nil, fmt.Errorf("short slice: need at least 5 bytes")
 	}
