@@ -15,7 +15,9 @@ type Command struct {
 	Type     CommandType
 	Schedule []Event // SpliceSchedule
 	Insert   *Insert
-	// Number of ticks of a 90KHz clock.
+	// Number of ticks of a 90KHz clock since midnight UTC.
+	// TODO(otl): use time.Time here instead,
+	// then calculate ticks when converting to wire format?
 	TimeSignal *uint64
 	Private    *PrivateCommand
 }

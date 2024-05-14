@@ -168,5 +168,3 @@ var samples = []sample{
 		},
 	},
 }
-
-func newuint64(i uint64) *uint64 { p := new(uint64); p = &i; return p }
