@@ -18,6 +18,17 @@ const (
 	TagAudio
 )
 
+const (
+	ProviderAdStart                     = 0x30
+	DistributorAdStart                  = 0x32
+	ProviderPlacementOppStart           = 0x34
+	DistributorPlacementOppStart        = 0x36
+	ProviderOverlayPlacementOppStart    = 0x38
+	DistributorOverlayPlacementOppStart = 0x3a
+	ProviderAdBlockStart                = 0x44
+	DistributorAdBlockStart             = 0x46
+)
+
 type SpliceDescriptor interface {
 	// Tag identifies the type of descriptor. If ID is
 	// DescriptorIDCUEI, then the the values [TagAvail] et al. may be used.
@@ -203,7 +214,7 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 		desc.Expected = uint8(buf[2])
 		switch desc.Type {
 		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
-		case 0x34, 0x30, 0x32, 0x36, 0x38, 0x3a, 0x44, 0x46:
+		case ProviderAdStart, DistributorAdStart, ProviderPlacementOppStart, DistributorPlacementOppStart, ProviderOverlayPlacementOppStart, DistributorOverlayPlacementOppStart, ProviderAdBlockStart, DistributorAdBlockStart:
 			if len(buf[2:]) > 1 {
 				desc.SubNumber = uint8(buf[3])
 			}
