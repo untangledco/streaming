@@ -19,6 +19,7 @@ const (
 	tagGap             = "#EXT-X-GAP"
 	tagBitrate         = "#EXT-X-BITRATE"
 	tagPart            = "#EXT-X-PART"
+	tagDateRange       = "#EXT-X-DATERANGE"
 )
 
 // parseSegment returns the next segment from items and the leading
