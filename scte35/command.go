@@ -54,6 +54,17 @@ func (t CommandType) String() string {
 func encodeCommand(c *Command) ([]byte, error) {
 	switch c.Type {
 	case SpliceNull, BandwidthReservation:
+		// Since SpliceNull == 0 (default) check if we've
+		// accidentally set another field.
+		if c.Schedule != nil {
+			return nil, fmt.Errorf("command %s has non-nil schedule", c.Type)
+		} else if c.Insert != nil {
+			return nil, fmt.Errorf("command %s has non-nil Insert", c.Type)
+		} else if c.TimeSignal != nil {
+			return nil, fmt.Errorf("command %s has non-nil TimeSignal", c.Type)
+		} else if c.Private != nil {
+			return nil, fmt.Errorf("command %s has non-nil Private", c.Type)
+		}
 		return nil, nil
 	case SpliceSchedule:
 		b, err := packEvents(c.Schedule)
