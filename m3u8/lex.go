@@ -1,4 +1,4 @@
-package m3u82
+package m3u8
 
 import (
 	"bufio"
@@ -217,6 +217,8 @@ func lexAttrs(l *lexer) stateFn {
 			return lexAttrs(l)
 		case r == '.':
 			return lexAttrValue(l)
+		case r == '@':
+			return lexAttrValue(l)
 		default:
 			return l.errorf("illegal character %q in attribute name", r)
 		}
@@ -230,6 +232,9 @@ func lexAttrValue(l *lexer) stateFn {
 		return lexNumber(l)
 	case '"':
 		return lexQString(l)
+	case '@':
+		// we're lexing a byte range, e.g. 69@420
+		return lexRawString(l)
 	}
 	if isTagNameChar(r) {
 		return lexRawString(l)

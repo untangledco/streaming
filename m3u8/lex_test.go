@@ -1,4 +1,4 @@
-package m3u82
+package m3u8
 
 import (
 	"os"

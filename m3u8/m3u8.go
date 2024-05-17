@@ -1,6 +1,6 @@
 // Package m3u8 implements reading and writing of m3u8 playlists
 // used in HTTP Live Streaming (HLS) as specified in RFC 8216.
-package m3u82
+package m3u8
 
 import (
 	"fmt"
@@ -33,15 +33,22 @@ type Playlist struct {
 }
 
 type Segment struct {
-	URI           string
+	URI string
 	// Duration of this specific segment from the #EXTINF tag.
-	Duration      time.Duration
-	Range         ByteRange
+	Duration time.Duration
+	// Indicates this segment holds a subset of the segment point to by URI.
+	// Range is the length of the subsegment from from the #EXT-X-BYTERANGE tag.
+	Range ByteRange
+	// If true, the preceding segment and the following segment
+	// are discontinuous. For example, this segment is part of a
+	// commercial break.
 	Discontinuity bool
-	Key           *Key
-	Map           *Map
-	DateTime      time.Time
-	DateRange     *DateRange
+	// Holds information on how to decrypt this segment.
+	// If nil, the segment is not encrypted.
+	Key       *Key
+	Map       *Map
+	DateTime  time.Time
+	DateRange *DateRange
 }
 
 // A Key specifies how to decrypt encrypted playlist segments.

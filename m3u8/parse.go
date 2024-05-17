@@ -1,4 +1,4 @@
-package m3u82
+package m3u8
 
 import (
 	"errors"
@@ -16,6 +16,7 @@ const (
 	tagRendition      = "#EXT-X-MEDIA"
 	tagPlaylistType   = "#EXT-X-PLAYLIST-TYPE"  // RFC 8216, 4.4.3.5
 	tagTargetDuration = "#EXT-X-TARGETDURATION" // RFC 8216, 4.4.3.1
+	tagEndList        = "#EXT-X-ENDLIST"        // RFC 8216, 4.4.3.4
 )
 
 func ParsePlaylist(rd io.Reader) (*Playlist, error) {
@@ -77,6 +78,8 @@ func ParsePlaylist(rd io.Reader) (*Playlist, error) {
 					return p, fmt.Errorf("parse segment: %w", err)
 				}
 				p.Segments = append(p.Segments, *segment)
+			case tagEndList:
+				p.End = true
 			}
 		}
 	}
@@ -346,4 +349,24 @@ func parseTargetDuration(it item) (time.Duration, error) {
 		return 0, err
 	}
 	return time.Duration(i) * time.Second, nil
+}
+
+func parseByteRange(s string) (ByteRange, error) {
+	offset, until, found := strings.Cut(s, "@")
+	if !found {
+		n, err := strconv.Atoi(offset)
+		if err != nil {
+			return ByteRange{}, err
+		}
+		return ByteRange{n, 0}, nil
+	}
+	n, err := strconv.Atoi(offset)
+	if err != nil {
+		return ByteRange{}, err
+	}
+	nn, err := strconv.Atoi(until)
+	if err != nil {
+		return ByteRange{}, err
+	}
+	return ByteRange{n, nn}, nil
 }

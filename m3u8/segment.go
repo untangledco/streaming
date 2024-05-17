@@ -1,4 +1,4 @@
-package m3u82
+package m3u8
 
 import (
 	"errors"
@@ -54,8 +54,22 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 					return nil, fmt.Errorf("parse segment duration: %w", err)
 				}
 				seg.Duration = dur
+			case tagByteRange:
+				it = <-items
+				if it.typ != itemString {
+					return nil, fmt.Errorf("parse byte range: got %s, want item type string", it)
+				}
+				r, err := parseByteRange(it.val)
+				if err != nil {
+					return nil, fmt.Errorf("parse byte range: %w", err)
+				}
+				seg.Range = r
 			case tagDiscontinuity:
 				seg.Discontinuity = true
+			case tagKey:
+				return nil, fmt.Errorf("parsing %s unsupported", it)
+			default:
+				return nil, fmt.Errorf("parsing %s unsupported", it)
 			}
 		}
 	}
