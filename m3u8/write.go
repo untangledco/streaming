@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 	"time"
+
+	"github.com/untangledco/streaming/scte35"
 )
 
 func Encode(w io.Writer, p *Playlist) error {
@@ -52,10 +54,18 @@ func writeDateRange(w io.Writer, dr *DateRange) error {
 	// TODO(otl): dr.Custom.
 	// TODO(otl): dr.CueCommand, when to write this versuse cuein, cueout.
 	if dr.CueIn != nil {
-		attrs = append(attrs, fmt.Sprintf("SCTE35-IN=0x%s", hex.EncodeToString(dr.CueIn)))
+		b, err := scte35.EncodeSpliceInfo(dr.CueIn)
+		if err != nil {
+			return fmt.Errorf("encode cue in: %w", err)
+		}
+		attrs = append(attrs, fmt.Sprintf("SCTE35-IN=0x%s", hex.EncodeToString(b)))
 	}
 	if dr.CueOut != nil {
-		attrs = append(attrs, fmt.Sprintf("SCTE35-OUT=0x%s", hex.EncodeToString(dr.CueOut)))
+		b, err := scte35.EncodeSpliceInfo(dr.CueOut)
+		if err != nil {
+			return fmt.Errorf("encode cue out: %w", err)
+		}
+		attrs = append(attrs, fmt.Sprintf("SCTE35-OUT=0x%s", hex.EncodeToString(b)))
 	}
 	if dr.EndOnNext {
 		attrs = append(attrs, "END-ON-NEXT:YES")

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/untangledco/streaming/scte35"
 )
 
 type Playlist struct {
@@ -111,10 +113,14 @@ type DateRange struct {
 	Planned  time.Duration
 	// value must be a string, float or hex sequence (int?)
 	Custom     map[string]any
-	CueCommand []byte
-	CueIn      []byte
-	CueOut     []byte
-	EndOnNext  bool
+	CueCommand *scte35.SpliceInfo
+	// Contains the first of the in/out cue pair. Command may be
+	// TimeSignal or Insert, with OutOfNetwork set to true.
+	CueOut *scte35.SpliceInfo
+	// Contains the second of the cue in/out pair. The Command's
+	// Type must match the "out" cue.
+	CueIn     *scte35.SpliceInfo
+	EndOnNext bool
 }
 
 type PlaylistType uint8
