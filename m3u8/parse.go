@@ -97,6 +97,8 @@ func parseVariant(items chan item) (*Variant, error) {
 				return nil, fmt.Errorf("missing equals after %s", attr)
 			}
 			switch attr.val {
+			case "PROGRAM-ID":
+				return nil, fmt.Errorf("parsing PROGRAM-ID attribute unsupported; removed in HLS version 6")
 			case "BANDWIDTH", "AVERAGE-BANDWIDTH":
 				it = <-items
 				if it.typ != itemNumber {
@@ -165,7 +167,7 @@ func parseVariant(items chan item) (*Variant, error) {
 				if it.typ != itemString {
 					return nil, fmt.Errorf("parse closed-captions: unexpcted %s", it)
 				}
-				v.ClosedCaptions = strings.Split(it.val, ",")
+				v.ClosedCaptions = strings.Split(strings.Trim(it.val, `"`), ",")
 			default:
 				return nil, fmt.Errorf("unknown attribute %s", attr.val)
 			}
