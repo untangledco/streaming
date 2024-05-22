@@ -232,9 +232,6 @@ func lexAttrValue(l *lexer) stateFn {
 		return lexNumber(l)
 	case '"':
 		return lexQString(l)
-	case '@':
-		// we're lexing a byte range, e.g. 69@420
-		return lexRawString(l)
 	}
 	if isTagNameChar(r) {
 		return lexRawString(l)
@@ -245,6 +242,10 @@ func lexAttrValue(l *lexer) stateFn {
 func lexNumber(l *lexer) stateFn {
 	for {
 		switch r := l.peek(); r {
+		case 'x', '@':
+			// are we lexing a resolution? e.g. 640x480
+			// or a byte range? e.g. 69@3000
+			return lexRawString(l)
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
 			l.next()
 			continue
@@ -269,7 +270,7 @@ func lexQString(l *lexer) stateFn {
 
 func lexRawString(l *lexer) stateFn {
 	for {
-		if !isTagNameChar(l.peek()) {
+		if l.peek() == ',' || l.peek() == '\n' {
 			break
 		}
 		l.next()

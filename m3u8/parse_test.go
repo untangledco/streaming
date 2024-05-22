@@ -1,23 +1,30 @@
 package m3u8
 
 import (
-	"fmt"
 	"os"
+	"path"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestParse(t *testing.T) {
-	f, err := os.Open("testdata/bbb.m3u8")
+	names, err := filepath.Glob("testdata/*.m3u8")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
-	p, err := ParsePlaylist(f)
-	if err != nil {
-		t.Fatal(err)
+	for _, name := range names {
+		t.Run(path.Base(name), func(t *testing.T) {
+			f, err := os.Open(name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer f.Close()
+			if _, err := ParsePlaylist(f); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
-	fmt.Println(p.Segments[0])
 }
 
 func TestParseDuration(t *testing.T) {
