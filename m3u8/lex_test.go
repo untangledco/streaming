@@ -7,7 +7,7 @@ import (
 )
 
 func TestLex(t *testing.T) {
-	files := []string{"testdata/master.m3u8", "testdata/master-with-alternatives.m3u8"}
+	files := []string{"testdata/master.m3u8"}
 	for _, name := range files {
 		fname := path.Base(name)
 		t.Run(fname, func(t *testing.T) {

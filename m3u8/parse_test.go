@@ -86,3 +86,22 @@ func TestParseClosedCaptions(t *testing.T) {
 		t.Errorf("want closed captions %s, got %s", want, cc2)
 	}
 }
+
+// Tests that we parse floats and integers of different precisions ok.
+func TestFrameRate(t *testing.T) {
+	f, err := os.Open("testdata/frame_rate.m3u8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	plist, err := ParsePlaylist(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rates := []float32{24, 25, 29.97, 30, 23.976, 60}
+	for i, v := range plist.Variants {
+		if v.FrameRate != rates[i] {
+			t.Errorf("want %f, got %f", rates[i], v.FrameRate)
+		}
+	}
+}
