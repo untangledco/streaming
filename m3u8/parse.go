@@ -10,13 +10,14 @@ import (
 )
 
 const (
-	tagHead           = tagStart + "M3U"
-	tagVersion        = "#EXT-X-VERSION"
-	tagVariant        = "#EXT-X-STREAM-INF"
-	tagRendition      = "#EXT-X-MEDIA"
-	tagPlaylistType   = "#EXT-X-PLAYLIST-TYPE"  // RFC 8216, 4.4.3.5
-	tagTargetDuration = "#EXT-X-TARGETDURATION" // RFC 8216, 4.4.3.1
-	tagEndList        = "#EXT-X-ENDLIST"        // RFC 8216, 4.4.3.4
+	tagHead                = tagStart + "M3U"
+	tagVersion             = "#EXT-X-VERSION"
+	tagVariant             = "#EXT-X-STREAM-INF"
+	tagRendition           = "#EXT-X-MEDIA"
+	tagPlaylistType        = "#EXT-X-PLAYLIST-TYPE"        // RFC 8216, 4.4.3.5
+	tagTargetDuration      = "#EXT-X-TARGETDURATION"       // RFC 8216, 4.4.3.1
+	tagEndList             = "#EXT-X-ENDLIST"              // RFC 8216, 4.4.3.4
+	tagIndependentSegments = "#EXT-X-INDEPENDENT-SEGMENTS" // RFC 8216, 4.3.5.1
 )
 
 func ParsePlaylist(rd io.Reader) (*Playlist, error) {
@@ -46,6 +47,8 @@ func ParsePlaylist(rd io.Reader) (*Playlist, error) {
 				if err != nil {
 					return p, fmt.Errorf("parse playlist version: %w", err)
 				}
+			case tagIndependentSegments:
+				p.IndependentSegments = true
 			case tagVariant:
 				variant, err := parseVariant(lex.items)
 				if err != nil {
@@ -260,7 +263,7 @@ func parseRendition(items chan item) (*Rendition, error) {
 		case "CHARACTERISTICS":
 			rend.Characteristics = strings.Split(it.val, ",")
 		case "CHANNELS":
-			rend.Channels = strings.Split(it.val, "/")
+			rend.Channels = strings.Split(strings.Trim(it.val, `"`), "/")
 		default:
 			return nil, fmt.Errorf("unknown rendition attribute %s", attr.val)
 		}

@@ -18,6 +18,9 @@ func Encode(w io.Writer, p *Playlist) error {
 	if p.Type != PlaylistNone {
 		fmt.Fprintf(w, "%s:%s\n", tagPlaylistType, p.Type)
 	}
+	if p.IndependentSegments {
+		fmt.Fprintln(w, tagIndependentSegments)
+	}
 	if p.TargetDuration > 0 {
 		fmt.Fprintf(w, "%s:%d\n", tagTargetDuration, p.TargetDuration/time.Second)
 	}
@@ -36,19 +39,73 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintln(w, seg.URI)
 	}
 
+	for _, r := range p.Media {
+		if r.Name == "" {
+			return fmt.Errorf("empty name")
+		}
+		fmt.Fprintf(w, tagRendition+":")
+		// TODO(otl): use string slice, then strings.Join(s, ",")
+		// then we don't worry about errors from w.Write
+		fmt.Fprintf(w, "NAME=%q,", r.Name)
+		rname := fmt.Sprintf("rendition %s", r.Name)
+		if r.Type > MediaClosedCaptions {
+			return fmt.Errorf("%s: unknown type %s", rname, r.Type)
+		}
+		fmt.Fprintf(w, "TYPE=%s,", r.Type)
+		if r.URI != "" {
+			fmt.Fprintf(w, "URI=%q,", r.URI)
+		}
+		if r.Group == "" {
+			return fmt.Errorf("%s: empty group", rname)
+		}
+		fmt.Fprintf(w, "GROUP-ID=%q,", r.Group)
+		if r.Language != "" {
+			fmt.Fprintf(w, "LANGUAGE=%q,", r.Language)
+		}
+		if r.AssocLanguage != "" {
+			fmt.Fprintf(w, "ASSOC-LANGUAGE=%q,", r.AssocLanguage)
+		}
+		if r.Default {
+			fmt.Fprint(w, "DEFAULT=YES,")
+		}
+		if r.AutoSelect {
+			fmt.Fprint(w, "AUTOSELECT=YES,")
+		}
+		if r.Forced {
+			fmt.Fprint(w, "FORCED=YES,")
+		}
+
+		if r.Type != MediaClosedCaptions && r.InstreamID != nil {
+			return fmt.Errorf("%s: instream-id set but type is %s", rname, r.Type)
+		}
+		if r.Type == MediaClosedCaptions {
+			if r.InstreamID == nil {
+				return fmt.Errorf("%s: nil instream-id", rname)
+			}
+			fmt.Fprintf(w, "INSTREAM-ID=%q,", r.InstreamID)
+		}
+		if len(r.Characteristics) > 0 {
+			fmt.Fprintf(w, "CHARACTERISTICS=%q,", strings.Join(r.Characteristics, ","))
+		}
+		if len(r.Channels) > 0 {
+			fmt.Fprintf(w, "CHANNELS=%q,", strings.Join(r.Channels, "/"))
+		}
+		fmt.Fprintln(w)
+	}
+
 	for _, v := range p.Variants {
 		fmt.Fprint(w, tagVariant+":")
 		if v.Bandwidth > 0 {
 			fmt.Fprintf(w, "BANDWIDTH=%d,", v.Bandwidth)
 		}
 		if v.AverageBandwidth > 0 {
-			fmt.Fprintf(w, "AVERAGE-BANDWIDTH=%d", v.AverageBandwidth)
+			fmt.Fprintf(w, "AVERAGE-BANDWIDTH=%d,", v.AverageBandwidth)
 		}
 		if len(v.Codecs) > 0 {
 			fmt.Fprintf(w, "CODECS=%q,", strings.Join(v.Codecs, ","))
 		}
 		if v.Resolution != [2]int{0, 0} {
-			fmt.Fprintf(w, "RESOLUTION=%dx%d", v.Resolution[0], v.Resolution[1])
+			fmt.Fprintf(w, "RESOLUTION=%dx%d,", v.Resolution[0], v.Resolution[1])
 		}
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, v.URI)
