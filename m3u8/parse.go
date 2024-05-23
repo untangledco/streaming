@@ -119,7 +119,7 @@ func parseVariant(items chan item) (*Variant, error) {
 				if it.typ != itemString {
 					return nil, fmt.Errorf("parse codecs attribute: unexpected %s", it)
 				}
-				v.Codecs = strings.Split(it.val, ",")
+				v.Codecs = strings.Split(strings.Trim(it.val, `"`), ",")
 			case "RESOLUTION":
 				it = <-items
 				if it.typ != itemString {
