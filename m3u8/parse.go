@@ -154,11 +154,12 @@ func parseVariant(items chan item) (*Variant, error) {
 				}
 				v.HDCP = l
 			case "AUDIO", "VIDEO", "SUBTITLES":
-				name := it.val
+				name := attr.val
 				it = <-items
 				if it.typ != itemString {
 					return nil, fmt.Errorf("parse %s: unexpected %s", name, it)
 				}
+				it.val = strings.Trim(it.val, `"`)
 				if name == "AUDIO" {
 					v.Audio = it.val
 				} else if name == "VIDEO" {
@@ -171,7 +172,7 @@ func parseVariant(items chan item) (*Variant, error) {
 				if it.typ != itemString {
 					return nil, fmt.Errorf("parse closed-captions: unexpcted %s", it)
 				}
-				v.ClosedCaptions = strings.Split(strings.Trim(it.val, `"`), ",")
+				v.ClosedCaptions = strings.Trim(it.val, `"`)
 			default:
 				return nil, fmt.Errorf("unknown attribute %s", attr.val)
 			}

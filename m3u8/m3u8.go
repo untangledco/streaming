@@ -217,8 +217,15 @@ type Variant struct {
 	Audio            string
 	Video            string
 	Subtitles        string
-	ClosedCaptions   []string // `NONE` or comma-separated values
+	// May be NoClosedCaptions or the empty string to indicate
+	// absence of closed captions.
+	ClosedCaptions string
 }
+
+// NoClosedCaptions may be the value for Variant.ClosedCaptions to
+// explicitly indicate that no closed captions are available for the
+// Variant.
+const NoClosedCaptions string = "NONE"
 
 type HDCPLevel uint8
 
@@ -228,7 +235,7 @@ const (
 	HDCPType1
 )
 
-func (l HDCPLevel) String() {
+func (l HDCPLevel) String() string {
 	switch l {
 	case HDCPNone:
 		return "NONE"

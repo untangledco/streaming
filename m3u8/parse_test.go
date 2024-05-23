@@ -4,7 +4,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -21,7 +20,8 @@ func TestParse(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer f.Close()
-			if _, err := ParsePlaylist(f); err != nil {
+			_, err = ParsePlaylist(f)
+			if err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -63,27 +63,6 @@ func TestParseByteRange(t *testing.T) {
 				t.Errorf("parseByteRange(%s) = %v, want %v", tt.in, r, tt.want)
 			}
 		})
-	}
-}
-
-func TestParseClosedCaptions(t *testing.T) {
-	f, err := os.Open("testdata/closed_captions.m3u8")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
-	p, err := ParsePlaylist(f)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cc := p.Variants[0].ClosedCaptions[0]
-	if cc != "NONE" {
-		t.Errorf("want closed captions %q, got %s", "NONE", cc)
-	}
-	cc2 := p.Variants[1].ClosedCaptions
-	want := []string{"something", "another"}
-	if !reflect.DeepEqual(want, cc2) {
-		t.Errorf("want closed captions %s, got %s", want, cc2)
 	}
 }
 

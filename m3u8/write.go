@@ -107,6 +107,24 @@ func Encode(w io.Writer, p *Playlist) error {
 		if v.Resolution != [2]int{0, 0} {
 			fmt.Fprintf(w, "RESOLUTION=%dx%d,", v.Resolution[0], v.Resolution[1])
 		}
+		if v.FrameRate > 0 {
+			fmt.Fprintf(w, "FRAME-RATE=%f,", v.FrameRate)
+		}
+		if v.HDCP != HDCPNone {
+			fmt.Fprintf(w, "HDCP-LEVEL=%s,", v.HDCP)
+		}
+		if v.Audio != "" {
+			fmt.Fprintf(w, "AUDIO=%q,", v.Audio)
+		}
+		if v.Video != "" {
+			fmt.Fprintf(w, "VIDEO=%q,", v.Video)
+		}
+		if v.Subtitles != "" {
+			fmt.Fprintf(w, "SUBTITLES=%q,", v.Subtitles)
+		}
+		if v.ClosedCaptions != "" && v.ClosedCaptions != NoClosedCaptions {
+			fmt.Fprintf(w, "CLOSED-CAPTIONS=%q,", v.ClosedCaptions)
+		}
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, v.URI)
 	}

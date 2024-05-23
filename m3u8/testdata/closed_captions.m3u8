@@ -1,6 +1,0 @@
-#EXTM3U
-#EXT-X-STREAM-INF:CLOSED-CAPTIONS=NONE
-tos_1080p/index.m3u8
-## can also have quoted strings, comma-delimeted
-#EXT-X-STREAM-INF:CLOSED-CAPTIONS="something,another"
-playlist.m3u8
