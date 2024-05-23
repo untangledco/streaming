@@ -36,6 +36,24 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintln(w, seg.URI)
 	}
 
+	for _, v := range p.Variants {
+		fmt.Fprint(w, tagVariant+":")
+		if v.Bandwidth > 0 {
+			fmt.Fprintf(w, "BANDWIDTH=%d,", v.Bandwidth)
+		}
+		if v.AverageBandwidth > 0 {
+			fmt.Fprintf(w, "AVERAGE-BANDWIDTH=%d", v.AverageBandwidth)
+		}
+		if len(v.Codecs) > 0 {
+			fmt.Fprintf(w, "CODECS=%q,", strings.Join(v.Codecs, ","))
+		}
+		if v.Resolution != [2]int{0, 0} {
+			fmt.Fprintf(w, "RESOLUTION=%dx%d", v.Resolution[0], v.Resolution[1])
+		}
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, v.URI)
+	}
+
 	if p.End {
 		fmt.Fprintln(w, tagEndList)
 	}
