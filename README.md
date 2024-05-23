@@ -4,12 +4,12 @@ This repository contains packages for developing media streaming systems in Go.
 
 ## Contributing
 
-Patches are accepted via [pull requests](https://github.com/untangledco/streaming/pulls).
-
-Alternatively, patches are accepted via email.
+Patches are preferred via email so that we're not too locked in to GitHub.
 Post them to the mailing list
-[~otl/public-inbox@lists.sr.ht](mailto:~otl/public-inbox@lists.sr.ht),
+[~otl/untangledco@lists.sr.ht](mailto:~otl/untangledco@lists.sr.ht),
 or to [Oliver Lowe](mailto:o@olowe.co).
+
+We also accept changes via [pull requests](https://github.com/untangledco/streaming/pulls).
 
 ### Commit messages
 
