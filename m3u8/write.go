@@ -12,9 +12,15 @@ import (
 
 func Encode(w io.Writer, p *Playlist) error {
 	fmt.Fprintln(w, "#EXTM3U")
-	fmt.Fprintf(w, "%s:%d\n", tagVersion, p.Version)
-	fmt.Fprintf(w, "%s:%s\n", tagPlaylistType, p.Type)
-	fmt.Fprintf(w, "%s:%d\n", tagTargetDuration, p.TargetDuration/time.Second)
+	if p.Version > 0 {
+		fmt.Fprintf(w, "%s:%d\n", tagVersion, p.Version)
+	}
+	if p.Type != PlaylistNone {
+		fmt.Fprintf(w, "%s:%s\n", tagPlaylistType, p.Type)
+	}
+	if p.TargetDuration > 0 {
+		fmt.Fprintf(w, "%s:%d\n", tagTargetDuration, p.TargetDuration/time.Second)
+	}
 	for _, seg := range p.Segments {
 		if seg.Discontinuity {
 			fmt.Fprintln(w, tagDiscontinuity)
@@ -29,6 +35,7 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintf(w, "%s:%.03f\n", tagSegmentDuration, float32(us)/1e6)
 		fmt.Fprintln(w, seg.URI)
 	}
+
 	if p.End {
 		fmt.Fprintln(w, tagEndList)
 	}

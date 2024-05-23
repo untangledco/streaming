@@ -126,7 +126,8 @@ type DateRange struct {
 type PlaylistType uint8
 
 const (
-	PlaylistEvent PlaylistType = 0 + iota
+	PlaylistNone PlaylistType = iota
+	PlaylistEvent
 	PlaylistVOD
 )
 
