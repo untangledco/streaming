@@ -97,8 +97,9 @@ func parseVariant(items chan item) (*Variant, error) {
 				return nil, fmt.Errorf("missing equals after %s", attr)
 			}
 			switch attr.val {
-			case "PROGRAM-ID":
-				return nil, fmt.Errorf("parsing PROGRAM-ID attribute unsupported; removed in HLS version 6")
+			case "PROGRAM-ID", "NAME":
+				// parsing PROGRAM-ID attribute unsupported; removed in HLS version 6
+				// NAME is non-standard, should be set in Rendition.
 			case "BANDWIDTH", "AVERAGE-BANDWIDTH":
 				it = <-items
 				if it.typ != itemNumber {
