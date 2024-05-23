@@ -228,6 +228,18 @@ const (
 	HDCPType1
 )
 
+func (l HDCPLevel) String() {
+	switch l {
+	case HDCPNone:
+		return "NONE"
+	case HDCPType0:
+		return "TYPE-0"
+	case HDCPType1:
+		return "TYPE-1"
+	}
+	return "unknown"
+}
+
 // IFrameInfo represents the EXT-X-I-FRAME-STREAM-INF tag.
 // It has the same structure as Variant, but the following fields should be unset:
 // - FrameRate
