@@ -119,7 +119,7 @@ func EncodeSpliceInfo(info *SpliceInfo) ([]byte, error) {
 	buf[1] |= byte(buflen >> 8)
 	buf[2] = byte(buflen)
 
-	crc := calculateCRC32(buf)
+	crc := checksum(buf, &crctab)
 	return binary.BigEndian.AppendUint32(buf, crc), nil
 }
 
