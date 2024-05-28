@@ -3,14 +3,18 @@
 package m3u8
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/untangledco/streaming/scte35"
 )
 
 const MimeType string = "application/vnd.apple.mpegurl"
+
+const RFC3339Milli string = "2006-01-02T15:04:05.999Z07:00"
 
 type Playlist struct {
 	Version  int
@@ -68,6 +72,24 @@ type Key struct {
 	// IV is a 128-bit unsigned integer holding the key's
 	// initialisation vector.
 	IV [16]byte
+}
+
+func (k Key) String() string {
+	var attrs []string
+	attrs = append(attrs, fmt.Sprintf("METHOD=%s", k.Method))
+	attrs = append(attrs, fmt.Sprintf("URI=%q", k.URI))
+	attrs = append(attrs, fmt.Sprintf("IV=0x%s", hex.EncodeToString(k.IV[:])))
+	if k.Format != "" {
+		attrs = append(attrs, fmt.Sprintf("KEYFORMAT=%q", k.Format))
+	}
+	if k.FormatVersions != nil {
+		ss := make([]string, len(k.FormatVersions))
+		for i := range k.FormatVersions {
+			ss[i] = strconv.Itoa(int(k.FormatVersions[i]))
+		}
+		attrs = append(attrs, fmt.Sprintf("KEYFORMATVERSIONS=%q", strings.Join(ss, "/")))
+	}
+	return strings.Join(attrs, ",")
 }
 
 type EncryptMethod uint8
