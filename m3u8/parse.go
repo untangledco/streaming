@@ -308,13 +308,15 @@ func parseCCInfo(s string) (*CCInfo, error) {
 	if len(s) < 3 {
 		return nil, fmt.Errorf("too short")
 	}
-	if s[:1] == "CC" {
-		// TODO(otl): compare against literals '1', '2', '3', '4' instead of parsing.
-		i, err := strconv.Atoi(string(s[2]))
-		if err != nil {
-			return nil, fmt.Errorf("parse channel number: %w", err)
+	if s[:2] == "CC" {
+		// MUST have one of the values: "CC1", "CC2", "CC3", "CC4"
+		switch {
+		case len(s) == 3 && s[2] >= '1' && s[2] <= '4':
+			i := int(s[2] - '0')
+			return &CCInfo{i, false}, nil
+		default:
+			return nil, fmt.Errorf("invalid closed caption %s", s)
 		}
-		return &CCInfo{i, false}, nil
 	}
 	// SERVICE00
 	if len(s) < 8 {
