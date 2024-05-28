@@ -24,6 +24,7 @@ func Encode(w io.Writer, p *Playlist) error {
 	if p.TargetDuration > 0 {
 		fmt.Fprintf(w, "%s:%d\n", tagTargetDuration, p.TargetDuration/time.Second)
 	}
+	fmt.Fprintf(w, "%s:%d\n", tagMediaSequence, p.Sequence)
 	for _, seg := range p.Segments {
 		if seg.Discontinuity {
 			fmt.Fprintln(w, tagDiscontinuity)
