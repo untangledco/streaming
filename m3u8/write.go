@@ -25,31 +25,9 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintf(w, "%s:%d\n", tagTargetDuration, p.TargetDuration/time.Second)
 	}
 	fmt.Fprintf(w, "%s:%d\n", tagMediaSequence, p.Sequence)
-	for _, seg := range p.Segments {
-		if seg.Discontinuity {
-			fmt.Fprintln(w, tagDiscontinuity)
-		}
-		if seg.DateRange != nil {
-			if err := writeDateRange(w, seg.DateRange); err != nil {
-				return fmt.Errorf("write date range: %w", err)
-			}
-		}
-		if seg.Range != [2]int{0, 0} {
-			fmt.Fprintf(w, "%s:%s\n", tagByteRange, seg.Range)
-		}
-		if seg.Key != nil {
-			fmt.Fprintf(w, "%s:%s\n", tagKey, seg.Key)
-		}
-		if seg.Map != nil {
-			writeMap(w, *seg.Map)
-		}
-		if !seg.DateTime.IsZero() {
-			fmt.Fprintf(w, "%s:%s\n", tagDateTime, seg.DateTime.Format(RFC3339Milli))
-		}
-		us := seg.Duration / time.Microsecond
-		// we do .03f for the same precision as test-streams.mux.dev.
-		fmt.Fprintf(w, "%s:%.03f\n", tagSegmentDuration, float32(us)/1e6)
-		fmt.Fprintln(w, seg.URI)
+
+	if _, err := writeSegments(w, p.Segments); err != nil {
+		return fmt.Errorf("write segments: %w", err)
 	}
 
 	for _, r := range p.Media {

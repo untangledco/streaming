@@ -3,6 +3,7 @@ package m3u8
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -116,4 +117,40 @@ func parseSegmentDuration(it item) (time.Duration, error) {
 	// precision based on a 90KHz clock.
 	microseconds := seconds * 1e6
 	return time.Duration(microseconds) * time.Microsecond, nil
+}
+
+func writeSegments(w io.Writer, segments []Segment) (n int, err error) {
+	for _, seg := range segments {
+		if seg.URI == "" {
+			return 0, fmt.Errorf("empty URI")
+		}
+		if seg.Duration == 0 {
+			return 0, fmt.Errorf("zero duration")
+		}
+		if seg.Discontinuity {
+			fmt.Fprintln(w, tagDiscontinuity)
+		}
+		if seg.DateRange != nil {
+			if err := writeDateRange(w, seg.DateRange); err != nil {
+				return 0, fmt.Errorf("write date range: %w", err)
+			}
+		}
+		if seg.Range != [2]int{0, 0} {
+			fmt.Fprintf(w, "%s:%s\n", tagByteRange, seg.Range)
+		}
+		if seg.Key != nil {
+			fmt.Fprintf(w, "%s:%s\n", tagKey, seg.Key)
+		}
+		if seg.Map != nil {
+			writeMap(w, *seg.Map)
+		}
+		if !seg.DateTime.IsZero() {
+			fmt.Fprintf(w, "%s:%s\n", tagDateTime, seg.DateTime.Format(RFC3339Milli))
+		}
+		us := seg.Duration / time.Microsecond
+		// we do .03f for the same precision as test-streams.mux.dev.
+		fmt.Fprintf(w, "%s:%.03f\n", tagSegmentDuration, float32(us)/1e6)
+		fmt.Fprintln(w, seg.URI)
+	}
+	return 0, nil
 }

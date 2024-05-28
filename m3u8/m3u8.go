@@ -74,6 +74,8 @@ type Key struct {
 	IV [16]byte
 }
 
+const defaultKeyFormat string = "identity"
+
 func (k Key) String() string {
 	var attrs []string
 	attrs = append(attrs, fmt.Sprintf("METHOD=%s", k.Method))
