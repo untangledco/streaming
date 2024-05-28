@@ -10,6 +10,8 @@ import (
 	"github.com/untangledco/streaming/scte35"
 )
 
+const MimeType string = "application/vnd.apple.mpegurl"
+
 type Playlist struct {
 	Version  int
 	Segments []Segment
