@@ -288,3 +288,12 @@ type SessionData struct {
 	URI      string
 	Language string
 }
+
+func (sd *SessionData) String() string {
+	var attrs []string
+	attrs = append(attrs, fmt.Sprintf("DATA-ID=%q", sd.ID))
+	attrs = append(attrs, fmt.Sprintf("VALUE=%q", sd.Value))
+	attrs = append(attrs, fmt.Sprintf("URI=%q", sd.URI))
+	attrs = append(attrs, fmt.Sprintf("LANGUAGE=%q", sd.Language))
+	return strings.Join(attrs, ",")
+}
