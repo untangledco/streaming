@@ -120,6 +120,12 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintln(w, v.URI)
 	}
 
+	for i, sd := range p.SessionData {
+		if _, err := writeSessionData(w, sd); err != nil {
+			return fmt.Errorf("write session data %d: %w", i, err)
+		}
+	}
+
 	if p.End {
 		fmt.Fprintln(w, tagEndList)
 	}
@@ -172,4 +178,14 @@ func writeMap(w io.Writer, m Map) (n int, err error) {
 		return fmt.Fprintf(w, "%s:URI=%q,BYTERANGE=%s\n", tagMap, m.URI, m.ByteRange)
 	}
 	return fmt.Fprintf(w, "%s:URI=%q\n", tagMap, m.URI)
+}
+
+func writeSessionData(w io.Writer, sd SessionData) (n int, err error) {
+	if sd.ID == "" {
+		return 0, fmt.Errorf("ID not set")
+	}
+	if sd.URI != "" && sd.Value != "" {
+		return 0, fmt.Errorf("only one of Value or URI may be set")
+	}
+	return fmt.Fprintf(w, "%s:%s\n", tagSessionData, sd)
 }

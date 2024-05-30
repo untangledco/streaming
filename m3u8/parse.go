@@ -19,6 +19,7 @@ const (
 	tagMediaSequence       = "#EXT-X-MEDIA-SEQUENCE"       // RFC 8216, 4.3.3.2
 	tagEndList             = "#EXT-X-ENDLIST"              // RFC 8216, 4.4.3.4
 	tagIndependentSegments = "#EXT-X-INDEPENDENT-SEGMENTS" // RFC 8216, 4.3.5.1
+	tagSessionData         = "#EXT-X-SESSION-DATA"         // RFC 8216, 4.3.4.4
 )
 
 func ParsePlaylist(rd io.Reader) (*Playlist, error) {
