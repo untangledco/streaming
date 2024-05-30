@@ -7,15 +7,15 @@ import (
 
 func TestEncodeInsert(t *testing.T) {
 	out := &Insert{
-		ID:                12345,
-		EventIDCompliance: true,
-		OutOfNetwork:      true,
-		Immediate:         true,
-		Duration:          &BreakDuration{true, uint64(90000 * 2)},
+		ID:           12345,
+		idCompliance: true,
+		OutOfNetwork: true,
+		Immediate:    true,
+		Duration:     &BreakDuration{true, uint64(90000 * 2)},
 	}
 	in := &Insert{
-		ID:                out.ID,
-		EventIDCompliance: true,
+		ID:           out.ID,
+		idCompliance: true,
 	}
 
 	bout := encodeInsert(out)

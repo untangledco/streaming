@@ -94,9 +94,6 @@ type Event struct {
 	// Indicates a previously sent event identified by ID should
 	// be cancelled.
 	Cancel bool
-	// Indicates the event's ID is prepared in the method
-	// described in SCTE 35 section 9.3.3.
-	IDCompliance bool
 
 	OutOfNetwork bool
 	// TODO(otl): should always be true? should we support
@@ -109,6 +106,11 @@ type Event struct {
 	ProgramID     uint16
 	AvailNum      uint8
 	AvailExpected uint8
+	// Indicates the event's ID is prepared in the method
+	// described in SCTE 35 section 9.3.3.
+	// TODO(otl): can we calculate this at runtime?
+	// See https://github.com/untangledco/streaming/issues/2
+	idCompliance bool
 }
 
 func packEvents(events []Event) ([]byte, error) {
@@ -131,7 +133,7 @@ func packEvent(e *Event) []byte {
 	if e.Cancel {
 		p[4] |= 1 << 7
 	}
-	if e.IDCompliance {
+	if e.idCompliance {
 		p[4] |= 1 << 6
 	}
 	// 6 remaining bits are reserved.
@@ -179,17 +181,21 @@ func encodePrivateCommand(c *PrivateCommand) []byte {
 // Insert represents the splice_insert command
 // as specified in SCTE 35 section 9.7.3.
 type Insert struct {
-	ID                uint32
-	Cancel            bool
-	OutOfNetwork      bool
-	Immediate         bool
-	EventIDCompliance bool
+	ID           uint32
+	Cancel       bool
+	OutOfNetwork bool
+	Immediate    bool
 	// Number of ticks of a 90KHz clock.
 	SpliceTime    *uint64
 	Duration      *BreakDuration
 	ProgramID     uint16
 	AvailNum      uint8
 	AvailExpected uint8
+	// Indicates the event's ID is prepared in the method
+	// described in SCTE 35 section 9.3.3.
+	// TODO(otl): can we calculate this at runtime?
+	// See https://github.com/untangledco/streaming/issues/2
+	idCompliance bool
 }
 
 func encodeInsert(ins *Insert) []byte {
@@ -215,7 +221,7 @@ func encodeInsert(ins *Insert) []byte {
 		if ins.Immediate {
 			buf[5] |= (1 << 4)
 		}
-		if ins.EventIDCompliance {
+		if ins.idCompliance {
 			buf[5] |= (1 << 3)
 		}
 		// toggle remaining 3 reserved bits.

@@ -110,10 +110,9 @@ const (
 // SegmentationDescriptor represents the segmentation_descriptor
 // structure defined in SCTE 35 section 10.3.3.
 type SegmentationDescriptor struct {
-	EventID           uint32
-	Cancel            bool
-	EventIDCompliance bool
-	Restrictions      DeliveryRestrictions
+	EventID      uint32
+	Cancel       bool
+	Restrictions DeliveryRestrictions
 	// 40-bit integer representing the number of ticks of a 90KHz clock.
 	Duration *uint64
 	UPID     UPID
@@ -127,6 +126,11 @@ type SegmentationDescriptor struct {
 	SubNumber uint8
 	// Expected count of subsegments.
 	SubExpected uint8
+	// Indicates the event's ID is prepared in the method
+	// described in SCTE 35 section 9.3.3.
+	// TODO(otl): can we calculate this at runtime?
+	// See https://github.com/untangledco/streaming/issues/2
+	idCompliance bool
 }
 
 func (d SegmentationDescriptor) Tag() uint8 { return TagSegmentation }
@@ -138,7 +142,7 @@ func (d SegmentationDescriptor) Data() []byte {
 	if d.Cancel {
 		buf[4] |= (1 << 7)
 	}
-	if d.EventIDCompliance {
+	if d.idCompliance {
 		buf[4] |= (1 << 6)
 	}
 	// toggle next remaining 6 reserved bits.
@@ -179,7 +183,7 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 		desc.Cancel = true
 	}
 	if buf[4]&0b01000000 > 0 {
-		desc.EventIDCompliance = true
+		desc.idCompliance = true
 	}
 	// next 6 bits are reserved
 

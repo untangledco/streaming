@@ -20,10 +20,10 @@ var samples = []sample{
 			},
 			Descriptors: []SpliceDescriptor{
 				SegmentationDescriptor{
-					EventID:           0x4800008e,
-					EventIDCompliance: true,
-					Restrictions:      NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
-					Duration:          newuint64(0x0001a599b0),
+					EventID:      0x4800008e,
+					idCompliance: true,
+					Restrictions: NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					Duration:     newuint64(0x0001a599b0),
 					UPID: UPID{
 						Type:  UPIDTI,
 						Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
@@ -46,10 +46,10 @@ var samples = []sample{
 			Command: &Command{
 				Type: SpliceInsert,
 				Insert: &Insert{
-					ID:                0x4800008f,
-					EventIDCompliance: true,
-					OutOfNetwork:      true,
-					SpliceTime:        newuint64(0x07369c02e),
+					ID:           0x4800008f,
+					idCompliance: true,
+					OutOfNetwork: true,
+					SpliceTime:   newuint64(0x07369c02e),
 					Duration: &BreakDuration{
 						AutoReturn: true,
 						Duration:   0x00052ccf5,
@@ -75,9 +75,9 @@ var samples = []sample{
 			},
 			Descriptors: []SpliceDescriptor{
 				SegmentationDescriptor{
-					EventID:           0x4800008e,
-					EventIDCompliance: true,
-					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					EventID:      0x4800008e,
+					idCompliance: true,
+					Restrictions: WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
 					UPID: UPID{
 						Type:  UPIDTI,
 						Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
@@ -102,9 +102,9 @@ var samples = []sample{
 			},
 			Descriptors: []SpliceDescriptor{
 				SegmentationDescriptor{
-					EventID:           0x48000018,
-					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
-					EventIDCompliance: true,
+					EventID:      0x48000018,
+					Restrictions: WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					idCompliance: true,
 					UPID: UPID{
 						Type:  UPIDTI,
 						Value: []byte{0, 0, 0, 0, 0x2c, 0xcb, 0xc3, 0x44},
@@ -112,9 +112,9 @@ var samples = []sample{
 					Type: 0x11,
 				},
 				SegmentationDescriptor{
-					EventID:           0x48000019,
-					EventIDCompliance: true,
-					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
+					EventID:      0x48000019,
+					idCompliance: true,
+					Restrictions: WebDeliveryAllowed | NoRegionalBlackout | ArchiveAllowed | DeviceRestrictionsNone,
 					UPID: UPID{
 						Type:  UPIDTI,
 						Value: []byte{0, 0, 0, 0, 0x2c, 0xa4, 0xdb, 0xa0},
@@ -138,9 +138,9 @@ var samples = []sample{
 			},
 			Descriptors: []SpliceDescriptor{
 				SegmentationDescriptor{
-					EventID:           1560886545,
-					EventIDCompliance: true,
-					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | DeviceRestrictionsNone,
+					EventID:      1560886545,
+					idCompliance: true,
+					Restrictions: WebDeliveryAllowed | NoRegionalBlackout | DeviceRestrictionsNone,
 					UPID: UPID{
 						Type:  UPIDType(1),
 						Value: []byte{69, 80, 48, 49, 56, 48, 51, 56, 52, 48, 48, 54, 54, 54},
@@ -150,10 +150,10 @@ var samples = []sample{
 					Expected: 100,
 				},
 				SegmentationDescriptor{
-					EventID:           1560886545,
-					EventIDCompliance: true,
-					Restrictions:      WebDeliveryAllowed | NoRegionalBlackout | DeviceRestrictionsNone,
-					Duration:          newuint64(19803003),
+					EventID:      1560886545,
+					idCompliance: true,
+					Restrictions: WebDeliveryAllowed | NoRegionalBlackout | DeviceRestrictionsNone,
+					Duration:     newuint64(19803003),
 					UPID: UPID{
 						Type:  UPIDType(1),
 						Value: []byte{67, 49, 52, 54, 52},

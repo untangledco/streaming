@@ -230,7 +230,7 @@ func decodeCommand(buf []byte) (*Command, error) {
 			ins.Immediate = true
 		}
 		if buf[6]&(1<<3) > 0 {
-			ins.EventIDCompliance = true
+			ins.idCompliance = true
 		}
 		// next 3 bits are reserved.
 
