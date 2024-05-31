@@ -84,40 +84,10 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintln(w)
 	}
 
-	for _, v := range p.Variants {
-		fmt.Fprint(w, tagVariant+":")
-		if v.Bandwidth > 0 {
-			fmt.Fprintf(w, "BANDWIDTH=%d,", v.Bandwidth)
+	for i, v := range p.Variants {
+		if _, err := writeVariant(w, &v); err != nil {
+			return fmt.Errorf("write variant %d: %w", i, err)
 		}
-		if v.AverageBandwidth > 0 {
-			fmt.Fprintf(w, "AVERAGE-BANDWIDTH=%d,", v.AverageBandwidth)
-		}
-		if len(v.Codecs) > 0 {
-			fmt.Fprintf(w, "CODECS=%q,", strings.Join(v.Codecs, ","))
-		}
-		if v.Resolution != [2]int{0, 0} {
-			fmt.Fprintf(w, "RESOLUTION=%dx%d,", v.Resolution[0], v.Resolution[1])
-		}
-		if v.FrameRate > 0 {
-			fmt.Fprintf(w, "FRAME-RATE=%f,", v.FrameRate)
-		}
-		if v.HDCP != HDCPNone {
-			fmt.Fprintf(w, "HDCP-LEVEL=%s,", v.HDCP)
-		}
-		if v.Audio != "" {
-			fmt.Fprintf(w, "AUDIO=%q,", v.Audio)
-		}
-		if v.Video != "" {
-			fmt.Fprintf(w, "VIDEO=%q,", v.Video)
-		}
-		if v.Subtitles != "" {
-			fmt.Fprintf(w, "SUBTITLES=%q,", v.Subtitles)
-		}
-		if v.ClosedCaptions != "" && v.ClosedCaptions != NoClosedCaptions {
-			fmt.Fprintf(w, "CLOSED-CAPTIONS=%q,", v.ClosedCaptions)
-		}
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, v.URI)
 	}
 
 	for i, sd := range p.SessionData {
@@ -130,6 +100,45 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintln(w, tagEndList)
 	}
 	return nil
+}
+
+func writeVariant(w io.Writer, v *Variant) (n int, err error) {
+	var attrs []string
+	if v.Bandwidth <= 0 {
+		return 0, fmt.Errorf("invalid bandwidth %d: must be larger than zero", v.Bandwidth)
+	}
+	attrs = append(attrs, fmt.Sprintf("BANDWIDTH=%d", v.Bandwidth))
+	if v.AverageBandwidth > 0 {
+		attrs = append(attrs, fmt.Sprintf("AVERAGE-BANDWIDTH=%d,", v.AverageBandwidth))
+	}
+	if len(v.Codecs) > 0 {
+		attrs = append(attrs, fmt.Sprintf("CODECS=%q", strings.Join(v.Codecs, ",")))
+	}
+	if v.Resolution != [2]int{0, 0} {
+		attrs = append(attrs, fmt.Sprintf("RESOLUTION=%dx%d", v.Resolution[0], v.Resolution[1]))
+	}
+	if v.FrameRate > 0 {
+		attrs = append(attrs, fmt.Sprintf("FRAME-RATE=%.03f", v.FrameRate))
+	}
+	if v.HDCP != HDCPNone {
+		attrs = append(attrs, fmt.Sprintf("HDCP-LEVEL=%s", v.HDCP))
+	}
+	if v.Audio != "" {
+		attrs = append(attrs, fmt.Sprintf("AUDIO=%q", v.Audio))
+	}
+	if v.Video != "" {
+		attrs = append(attrs, fmt.Sprintf("VIDEO=%q", v.Video))
+	}
+	if v.Subtitles != "" {
+		attrs = append(attrs, fmt.Sprintf("SUBTITLES=%q", v.Subtitles))
+	}
+	if v.ClosedCaptions != "" && v.ClosedCaptions != NoClosedCaptions {
+		attrs = append(attrs, fmt.Sprintf("CLOSED-CAPTIONS=%q", v.ClosedCaptions))
+	}
+	if v.URI == "" {
+		return 0, fmt.Errorf("empty URI")
+	}
+	return fmt.Fprintf(w, "%s:%s\n%s\n", tagVariant, strings.Join(attrs, ","), v.URI)
 }
 
 func writeDateRange(w io.Writer, dr *DateRange) error {
