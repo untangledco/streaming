@@ -18,10 +18,16 @@ const (
 	TagAudio
 )
 
+// SCTE 35 section 10.3.3.1
 const (
+	ProgramStart                        = 0x10
+	ProgramEnd                          = 0x11
+	ChapterStart                        = 0x20
+	ChapterEnd                          = 0x21
 	ProviderAdStart                     = 0x30
 	DistributorAdStart                  = 0x32
 	ProviderPlacementOppStart           = 0x34
+	ProviderPlacementOppEnd             = 0x35
 	DistributorPlacementOppStart        = 0x36
 	ProviderOverlayPlacementOppStart    = 0x38
 	DistributorOverlayPlacementOppStart = 0x3a
