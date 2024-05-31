@@ -61,7 +61,7 @@ func (s Status) Encode() string {
 		attrs = append(attrs, "bs")
 	}
 	if s.MaxThroughput > 0 {
-		attrs = append(attrs, fmt.Sprintf("mtp=%d", s.MaxThroughput))
+		attrs = append(attrs, fmt.Sprintf("rtp=%d", s.MaxThroughput))
 	}
 	return strings.Join(attrs, ",")
 }
