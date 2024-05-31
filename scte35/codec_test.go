@@ -53,7 +53,7 @@ func ExampleEncode() {
 					Type:  scte35.UPIDTI,
 					Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
 				},
-				Type:     ProviderPlacementOppStart,
+				Type:     scte35.ProviderPlacementOppStart,
 				Number:   2,
 				Expected: 0,
 			},
