@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -64,6 +65,16 @@ func TestParse(t *testing.T) {
 				t.Errorf("info from query: want %+v, got %+v", want, info)
 				t.Log(want.Encode())
 				t.Log(info.Encode())
+			}
+
+			// now try re-encoding to see if we get the same back again.
+			// trim stray commas used for testing parser.
+			swant := strings.Split(strings.Trim(pt.query, ","), ",")
+			sgot := strings.Split(info.Encode(), ",")
+			sort.Strings(swant)
+			sort.Strings(sgot)
+			if !reflect.DeepEqual(sgot, swant) {
+				t.Errorf("re-encode: got %v, want %v", sgot, swant)
 			}
 		})
 	}
