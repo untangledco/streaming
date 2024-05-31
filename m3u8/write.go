@@ -120,6 +120,24 @@ func Encode(w io.Writer, p *Playlist) error {
 		fmt.Fprintln(w, v.URI)
 	}
 
+	for _, sd := range p.SessionData {
+		fmt.Fprintf(w, tagSessionData+":")
+		fmt.Fprintf(w, "DATA-ID=%q,", sd.ID)
+		if sd.URI != "" && sd.Value != "" {
+			return fmt.Errorf("must contain either a VALUE(%s) or URI(%s) attribute", sd.Value, sd.URI)
+		}
+		if sd.Value != "" {
+			fmt.Fprintf(w, "VALUE=%q", sd.Value)
+		}
+		if sd.URI != "" {
+			fmt.Fprintf(w, "URI=%q", sd.URI)
+		}
+		if sd.Language != "" {
+			fmt.Fprintf(w, ",LANGUAGE=%q", sd.Language)
+		}
+		fmt.Fprintln(w)
+	}
+
 	if p.End {
 		fmt.Fprintln(w, tagEndList)
 	}

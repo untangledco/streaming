@@ -283,17 +283,23 @@ type IFrameInfo Variant
 
 // SessionData represents the EXT-X-SESSION-DATA tag.
 type SessionData struct {
-	ID       string
-	Value    string
+	ID       string // This attribute is REQUIRED
+	Value    string // MUST contain either a VALUE or URI attribute, but not both
 	URI      string
-	Language string
+	Language string // This attribute is OPTIONAL.
 }
 
 func (sd *SessionData) String() string {
 	var attrs []string
 	attrs = append(attrs, fmt.Sprintf("DATA-ID=%q", sd.ID))
-	attrs = append(attrs, fmt.Sprintf("VALUE=%q", sd.Value))
-	attrs = append(attrs, fmt.Sprintf("URI=%q", sd.URI))
-	attrs = append(attrs, fmt.Sprintf("LANGUAGE=%q", sd.Language))
+	if sd.Value != "" {
+		attrs = append(attrs, fmt.Sprintf("VALUE=%q", sd.Value))
+	}
+	if sd.URI != "" {
+		attrs = append(attrs, fmt.Sprintf("URI=%q", sd.URI))
+	}
+	if sd.Language != "" {
+		attrs = append(attrs, fmt.Sprintf("LANGUAGE=%q", sd.Language))
+	}
 	return strings.Join(attrs, ",")
 }
