@@ -145,14 +145,14 @@ func writeDateRange(w io.Writer, dr *DateRange) error {
 	// TODO(otl): dr.Custom.
 	// TODO(otl): dr.CueCommand, when to write this versuse cuein, cueout.
 	if dr.CueIn != nil {
-		b, err := scte35.EncodeSpliceInfo(dr.CueIn)
+		b, err := scte35.Encode(dr.CueIn)
 		if err != nil {
 			return fmt.Errorf("encode cue in: %w", err)
 		}
 		attrs = append(attrs, fmt.Sprintf("SCTE35-IN=0x%s", hex.EncodeToString(b)))
 	}
 	if dr.CueOut != nil {
-		b, err := scte35.EncodeSpliceInfo(dr.CueOut)
+		b, err := scte35.Encode(dr.CueOut)
 		if err != nil {
 			return fmt.Errorf("encode cue out: %w", err)
 		}

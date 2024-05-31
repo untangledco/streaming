@@ -3,14 +3,14 @@ package scte35
 type sample struct {
 	name    string
 	encoded string
-	want    SpliceInfo
+	want    Splice
 }
 
 var samples = []sample{
 	{
 		name:    "14.1. time_signal",
 		encoded: "/DA0AAAAAAAA///wBQb+cr0AUAAeAhxDVUVJSAAAjn/PAAGlmbAICAAAAAAsoKGKNAIAmsnRfg==",
-		want: SpliceInfo{
+		want: Splice{
 			SAPType: SAPNone,
 			Tier:    0x0fff,
 			CWIndex: 0xff,
@@ -39,7 +39,7 @@ var samples = []sample{
 	{
 		name:    "14.2. splice_insert",
 		encoded: "/DAvAAAAAAAA///wFAVIAACPf+/+c2nALv4AUsz1AAAAAAAKAAhDVUVJAAABNWLbowo=",
-		want: SpliceInfo{
+		want: Splice{
 			SAPType: SAPNone,
 			CWIndex: 0xff,
 			Tier:    0x0fff,
@@ -65,7 +65,7 @@ var samples = []sample{
 	{
 		name:    "14.3. time_signal",
 		encoded: "/DAvAAAAAAAA///wBQb+dGKQoAAZAhdDVUVJSAAAjn+fCAgAAAAALKChijUCAKnMZ1g=",
-		want: SpliceInfo{
+		want: Splice{
 			SAPType: SAPNone,
 			CWIndex: 0xff,
 			Tier:    0x0fff,
@@ -92,7 +92,7 @@ var samples = []sample{
 	{
 		name:    "14.4. time_signal",
 		encoded: "/DBIAAAAAAAA///wBQb+ek2ItgAyAhdDVUVJSAAAGH+fCAgAAAAALMvDRBEAAAIXQ1VFSUgAABl/nwgIAAAAACyk26AQAACZcuND",
-		want: SpliceInfo{
+		want: Splice{
 			SAPType: SAPNone,
 			CWIndex: 0xff,
 			Tier:    0x0fff,
@@ -129,7 +129,7 @@ var samples = []sample{
 		// from "The Essential Guide to SCTE-35" by Bitmovin (https://bitmovin.com/scte-35-guide)
 		name:    "dtmf",
 		encoded: "/DBcAAAAAAAAAP/wBQb//ciI8QBGAh1DVUVJXQk9EX+fAQ5FUDAxODAzODQwMDY2NiEEZAIZQ1VFSV0JPRF/3wABLit7AQVDMTQ2NDABAQEKQ1VFSQCAMTUwKnPhdcU=",
-		want: SpliceInfo{
+		want: Splice{
 			SAPType: SAPNone,
 			Tier:    0x0fff,
 			Command: &Command{

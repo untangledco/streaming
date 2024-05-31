@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func diffInfo(a, b SpliceInfo) string {
+func diffInfo(a, b Splice) string {
 	buf := &strings.Builder{}
 	if a.SAPType != b.SAPType {
 		fmt.Fprintln(buf, "SAP type differs")
@@ -63,29 +63,29 @@ func diffDescriptors(a, b SpliceDescriptor) string {
 	return buf.String()
 }
 
-func TestDecodeSpliceInfo(t *testing.T) {
+func TestDecode(t *testing.T) {
 	for _, tt := range samples {
 		t.Run(tt.name, func(t *testing.T) {
 			b, err := base64.StdEncoding.DecodeString(tt.encoded)
 			if err != nil {
-				t.Fatal("decode example splice info:", err)
+				t.Fatal("decode example splice:", err)
 			}
-			info, err := DecodeSpliceInfo(b)
+			splice, err := Decode(b)
 			if err != nil {
-				t.Fatalf("decode splice info: %v", err)
+				t.Fatalf("decode splice: %v", err)
 			}
 
 			// test each possible command
 			if tt.want.Command.TimeSignal != nil {
-				if *tt.want.Command.TimeSignal != *info.Command.TimeSignal {
-					t.Errorf("want timesig %x, got %x", *tt.want.Command.TimeSignal, *info.Command.TimeSignal)
+				if *tt.want.Command.TimeSignal != *splice.Command.TimeSignal {
+					t.Errorf("want timesig %x, got %x", *tt.want.Command.TimeSignal, *splice.Command.TimeSignal)
 				}
 			}
 			if tt.want.Command.Insert != nil {
 				want := *tt.want.Command.Insert
-				got := *info.Command.Insert
+				got := *splice.Command.Insert
 				if !reflect.DeepEqual(want, got) {
-					t.Errorf("info command: want %+v, got %+v", want, got)
+					t.Errorf("splice command: want %+v, got %+v", want, got)
 					if *want.SpliceTime != *got.SpliceTime {
 						t.Logf("want splice time %d, got %d", want.SpliceTime, got.SpliceTime)
 					}
@@ -95,9 +95,9 @@ func TestDecodeSpliceInfo(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(tt.want, *info) {
-				t.Errorf("decode splice info: want %+v, got %+v", tt.want, *info)
-				t.Log(diffInfo(tt.want, *info))
+			if !reflect.DeepEqual(tt.want, *splice) {
+				t.Errorf("decode splice splice: want %+v, got %+v", tt.want, *splice)
+				t.Log(diffInfo(tt.want, *splice))
 			}
 		})
 	}
@@ -113,9 +113,9 @@ func TestDecodeSpliceInfo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		splice, err := DecodeSpliceInfo(b)
+		splice, err := Decode(b)
 		if err != nil {
-			t.Fatalf("decode splice info: %v", err)
+			t.Fatalf("decode splice splice: %v", err)
 		}
 		var got time.Duration
 		switch splice.Command.Type {
@@ -132,10 +132,10 @@ func TestDecodeSpliceInfo(t *testing.T) {
 	}
 }
 
-func TestEncodeSpliceInfo(t *testing.T) {
+func TestEncode(t *testing.T) {
 	for _, tt := range samples {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := EncodeSpliceInfo(&tt.want)
+			b, err := Encode(&tt.want)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -157,7 +157,7 @@ func TestEncodeSpliceInfo(t *testing.T) {
 				// our checksum could be different.
 				// Only error if the value of the message *without* the CRC32 is different.
 				if tt.encoded[:len(tt.encoded)-7] != got[:len(got)-7] {
-					t.Errorf("expected encoded splice info differs from calculated")
+					t.Errorf("expected encoded splice differs from calculated")
 				}
 				t.Logf("< %#x", bwant)
 				t.Logf("> %#x", b)

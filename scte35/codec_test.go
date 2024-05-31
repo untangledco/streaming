@@ -13,7 +13,7 @@ func Example() {
 	if err != nil {
 		// handle error...
 	}
-	splice, err := scte35.DecodeSpliceInfo(b)
+	splice, err := scte35.Decode(b)
 	if err != nil {
 		// handle error...
 	}
@@ -23,7 +23,7 @@ func Example() {
 	*dur += 15 * 90000 // add 15 seconds as per 90KHz clock.
 	fmt.Println(*splice.Descriptors[0].(scte35.SegmentationDescriptor).Duration)
 
-	bb, err := scte35.EncodeSpliceInfo(splice)
+	bb, err := scte35.Encode(splice)
 	if err != nil {
 		// handle error...
 	}

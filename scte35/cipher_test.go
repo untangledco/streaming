@@ -4,16 +4,16 @@ import "testing"
 
 func TestPackEncryption(t *testing.T) {
 	type ptest struct {
-		sis  SpliceInfo
+		sis  Splice
 		want uint8
 	}
 	var tests = []ptest{
 		{
-			sis:  SpliceInfo{Encrypted: true, Cipher: DES_CBC},
+			sis:  Splice{Encrypted: true, Cipher: DES_CBC},
 			want: 0b10000100,
 		},
 		{
-			sis:  SpliceInfo{Encrypted: true, Cipher: TripleDES},
+			sis:  Splice{Encrypted: true, Cipher: TripleDES},
 			want: 0b10000110,
 		},
 	}

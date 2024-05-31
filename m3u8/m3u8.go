@@ -139,13 +139,13 @@ type DateRange struct {
 	Planned  time.Duration
 	// value must be a string, float or hex sequence (int?)
 	Custom     map[string]any
-	CueCommand *scte35.SpliceInfo
+	CueCommand *scte35.Splice
 	// Contains the first of the in/out cue pair. Command may be
 	// TimeSignal or Insert, with OutOfNetwork set to true.
-	CueOut *scte35.SpliceInfo
+	CueOut *scte35.Splice
 	// Contains the second of the cue in/out pair. The Command's
 	// Type must match the "out" cue.
-	CueIn     *scte35.SpliceInfo
+	CueIn     *scte35.Splice
 	EndOnNext bool
 }
 

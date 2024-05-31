@@ -31,7 +31,7 @@ func (t SAPType) String() string {
 	return "invalid"
 }
 
-type SpliceInfo struct {
+type Splice struct {
 	SAPType   SAPType
 	Encrypted bool
 	Cipher    Cipher
@@ -57,45 +57,45 @@ const (
 // maximum 12-bit uint (2^12 - 1)
 const maxTier uint16 = 0xfff
 
-func EncodeSpliceInfo(info *SpliceInfo) ([]byte, error) {
+func Encode(splice *Splice) ([]byte, error) {
 	buf := make([]byte, 4)
 	buf[0] = byte(tableID)
 	// next 2 bits (section_syntax_indicator, private_indicator) must be 0.
 	// 0b00000000
-	buf[1] |= byte(info.SAPType)
+	buf[1] |= byte(splice.SAPType)
 
 	// length, buf[1,2] set at the end
 	buf[3] = protocolVersion
 
 	var b byte
-	if info.Encrypted {
+	if splice.Encrypted {
 		b |= (1 << 7)
-		if info.Cipher > maxCipher {
-			return nil, fmt.Errorf("cipher %d larger than max %d", info.Cipher, maxCipher)
+		if splice.Cipher > maxCipher {
+			return nil, fmt.Errorf("cipher %d larger than max %d", splice.Cipher, maxCipher)
 		}
 		// pack cipher, keeping 1 bit for PTSAdjustment.
-		b |= byte(info.Cipher) << 1
+		b |= byte(splice.Cipher) << 1
 	}
 	buf = append(buf, b)
 	buf = append(buf, 0, 0, 0, 0)
-	putPTS(buf[4:], info.PTSAdjustment)
-	if info.Encrypted {
-		buf = append(buf, info.CWIndex)
+	putPTS(buf[4:], splice.PTSAdjustment)
+	if splice.Encrypted {
+		buf = append(buf, splice.CWIndex)
 	} else {
 		// unused; toggle all bits as in the spec.
 		buf = append(buf, 0xff)
 	}
 
-	if info.Tier > maxTier {
-		return nil, fmt.Errorf("tier %d greater than max %d", info.Tier, maxTier)
+	if splice.Tier > maxTier {
+		return nil, fmt.Errorf("tier %d greater than max %d", splice.Tier, maxTier)
 	}
-	tier := info.Tier & 0x0fff // just 12 bits
+	tier := splice.Tier & 0x0fff // just 12 bits
 	// right 4 bits are for command length
 	buf = binary.BigEndian.AppendUint16(buf, tier<<4)
-	if info.Command == nil {
+	if splice.Command == nil {
 		return nil, fmt.Errorf("nil command")
 	}
-	cmd, err := encodeCommand(info.Command)
+	cmd, err := encodeCommand(splice.Command)
 	if err != nil {
 		return nil, fmt.Errorf("encode splice command: %w", err)
 	}
@@ -103,11 +103,11 @@ func EncodeSpliceInfo(info *SpliceInfo) ([]byte, error) {
 	// stuff remaining 4 bits into the last byte.
 	buf[len(buf)-1] |= byte(cmdlen >> 8)
 	buf = append(buf, byte(cmdlen))
-	buf = append(buf, byte(info.Command.Type))
+	buf = append(buf, byte(splice.Command.Type))
 	buf = append(buf, cmd...)
 
 	var buf1 []byte
-	for _, desc := range info.Descriptors {
+	for _, desc := range splice.Descriptors {
 		buf1 = append(buf1, encodeSpliceDescriptor(desc)...)
 	}
 	buf = binary.BigEndian.AppendUint16(buf, uint16(len(buf1)))
@@ -123,15 +123,15 @@ func EncodeSpliceInfo(info *SpliceInfo) ([]byte, error) {
 	return binary.BigEndian.AppendUint32(buf, crc), nil
 }
 
-func DecodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
+func Decode(buf []byte) (*Splice, error) {
 	if len(buf) < 3 {
 		return nil, fmt.Errorf("need at least 2 bytes")
 	}
 	// skip buf[0], we don't store table_id.
 
-	var info SpliceInfo
+	var splice Splice
 	// skip 2 bits, straight to sap_type.
-	info.SAPType = SAPType(buf[1] & 0b00110000)
+	splice.SAPType = SAPType(buf[1] & 0b00110000)
 	length := binary.BigEndian.Uint16([]byte{buf[1], buf[2]})
 	length &= 0x0fff // 12-bit field
 	buf = buf[3:]
@@ -141,9 +141,9 @@ func DecodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 
 	// skip version byte, we don't store version as it's constant.
 	if buf[1]&0b10000000 == 1 {
-		info.Encrypted = true
+		splice.Encrypted = true
 		// right-most bit is used by PTSAdjustment.
-		info.Cipher = Cipher(buf[1] & 0b01111110)
+		splice.Cipher = Cipher(buf[1] & 0b01111110)
 	}
 
 	pts := make([]byte, 8)
@@ -152,14 +152,14 @@ func DecodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	pts[2] = buf[3]
 	pts[3] = buf[4]
 	pts[4] = buf[5]
-	info.PTSAdjustment = binary.BigEndian.Uint64(pts)
-	info.CWIndex = uint8(buf[6])
+	splice.PTSAdjustment = binary.BigEndian.Uint64(pts)
+	splice.CWIndex = uint8(buf[6])
 
 	// want left-most 12 bits, remaining is used by command length.
 	// TODO(otl): still not getting expected values here;
-	// check TestDecodeSpliceInfo
+	// check TestDecode
 	tier := binary.BigEndian.Uint16([]byte{buf[7], buf[8] & 0xf0})
-	info.Tier = tier >> 4
+	splice.Tier = tier >> 4
 
 	// 4-bits out of buf[8], then all of buf[9] for a 12-bit integer.
 	cmdlen := binary.BigEndian.Uint16([]byte{buf[8] & 0x0f, buf[9]})
@@ -167,7 +167,7 @@ func DecodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decode command: %w", err)
 	}
-	info.Command = cmd
+	splice.Command = cmd
 	buf = buf[10+cmdlen+1:]
 
 	desclen := binary.BigEndian.Uint16([]byte{buf[0], buf[1]})
@@ -175,16 +175,16 @@ func DecodeSpliceInfo(buf []byte) (*SpliceInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decode splice descriptors: %w", err)
 	}
-	info.Descriptors = descriptors
+	splice.Descriptors = descriptors
 
 	buf = buf[2+desclen:]
-	if info.Encrypted {
+	if splice.Encrypted {
 		// TODO(otl): handle alignment_stuffing for encrypted packets.
 		// skip past E_CRC_32; we don't store it.
 		buf = buf[1:]
 	}
-	info.CRC32 = binary.BigEndian.Uint32(buf)
-	return &info, nil
+	splice.CRC32 = binary.BigEndian.Uint32(buf)
+	return &splice, nil
 }
 
 func decodeCommand(buf []byte) (*Command, error) {
