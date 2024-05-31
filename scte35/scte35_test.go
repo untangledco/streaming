@@ -28,7 +28,7 @@ var samples = []sample{
 						Type:  UPIDTI,
 						Value: []byte{0x00, 0x00, 0x00, 0x00, 0x2c, 0xa0, 0xa1, 0x8a},
 					},
-					Type:     0x34,
+					Type:     ProviderPlacementOppStart,
 					Number:   2,
 					Expected: 0,
 				},

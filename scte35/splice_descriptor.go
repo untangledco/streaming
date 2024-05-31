@@ -163,8 +163,7 @@ func (d SegmentationDescriptor) Data() []byte {
 
 		buf = append(buf, byte(d.Type), byte(d.Number), byte(d.Expected))
 		switch d.Type {
-		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
-		case 0x34, 0x30, 0x32, 0x36, 0x38, 0x3a, 0x44, 0x46:
+		case ProviderAdStart, DistributorAdStart, ProviderPlacementOppStart, DistributorPlacementOppStart, ProviderOverlayPlacementOppStart, DistributorOverlayPlacementOppStart, ProviderAdBlockStart, DistributorAdBlockStart:
 			if d.SubNumber > 0 {
 				buf = append(buf, d.SubNumber)
 			}
@@ -217,7 +216,6 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 		desc.Number = uint8(buf[1])
 		desc.Expected = uint8(buf[2])
 		switch desc.Type {
-		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
 		case ProviderAdStart, DistributorAdStart, ProviderPlacementOppStart, DistributorPlacementOppStart, ProviderOverlayPlacementOppStart, DistributorOverlayPlacementOppStart, ProviderAdBlockStart, DistributorAdBlockStart:
 			if len(buf[2:]) > 1 {
 				desc.SubNumber = uint8(buf[3])
