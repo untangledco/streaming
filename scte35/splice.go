@@ -1,3 +1,8 @@
+// Package scte35 implements a subset of the
+// Digital Program Insertion Cueing Message standard
+// as specified in [ANSI/SCTE 35].
+//
+// [ANSI/SCTE 35]: https://www.scte.org/standards/library/catalog/scte-35-digital-program-insertion-cueing-message/
 package scte35
 
 import (
@@ -33,15 +38,34 @@ func (t SAPType) String() string {
 
 type Splice struct {
 	SAPType   SAPType
+
+	// If true, indicates that the contents of Command,
+	// Descriptors and CRC32 are encrypted with Cipher.
+	// TODO(otl): encoding and decoding of encrypted splices is not supported.
 	Encrypted bool
 	Cipher    Cipher
-	// Holds a 33-bit unsigned integer representing the number of ticks of a 90KHz clock.
-	PTSAdjustment uint64
+	// The control word (key) used to decrypt the message.
 	CWIndex       uint8
-	// Holds a 12-bit field representing an authorization tier.
+
+	// Holds a 33-bit unsigned integer representing the number of
+	// ticks of a 90KHz clock. The value is an offset added to
+	// timestamps in Descriptors by splice devices when executing the
+	// provided Command.
+	PTSAdjustment uint64
+
+	// Holds a 12-bit field representing an authorization tier. In
+	// most cases, its value should be 0x0fff for backwards
+	// compatibility. See 'tier' in SCTE 35 section 9.6.1.
 	Tier        uint16
+
+	// Command points to this splice's specific instruction for splice devices.
 	Command     *Command
+	// Descriptors holds zero or more parameters to Command.
 	Descriptors []SpliceDescriptor
+
+	// A checksum of the encoded splice. Splices returned from
+	// Decode() will hold a non-zero value. Splices passed to
+	// Encode() will have their checksums calculated automatically.
 	CRC32       uint32
 }
 
