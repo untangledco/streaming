@@ -81,6 +81,39 @@ type Variant struct {
 	ClosedCaptions string
 }
 
+func (v Variant) String() string {
+	var attrs []string
+	attrs = append(attrs, fmt.Sprintf("BANDWIDTH=%d", v.Bandwidth))
+	if v.AverageBandwidth > 0 {
+		attrs = append(attrs, fmt.Sprintf("AVERAGE-BANDWIDTH=%d,", v.AverageBandwidth))
+	}
+	if len(v.Codecs) > 0 {
+		attrs = append(attrs, fmt.Sprintf("CODECS=%q", strings.Join(v.Codecs, ",")))
+	}
+	if v.Resolution != [2]int{0, 0} {
+		attrs = append(attrs, fmt.Sprintf("RESOLUTION=%dx%d", v.Resolution[0], v.Resolution[1]))
+	}
+	if v.FrameRate > 0 {
+		attrs = append(attrs, fmt.Sprintf("FRAME-RATE=%.03f", v.FrameRate))
+	}
+	if v.HDCP != HDCPNone {
+		attrs = append(attrs, fmt.Sprintf("HDCP-LEVEL=%s", v.HDCP))
+	}
+	if v.Audio != "" {
+		attrs = append(attrs, fmt.Sprintf("AUDIO=%q", v.Audio))
+	}
+	if v.Video != "" {
+		attrs = append(attrs, fmt.Sprintf("VIDEO=%q", v.Video))
+	}
+	if v.Subtitles != "" {
+		attrs = append(attrs, fmt.Sprintf("SUBTITLES=%q", v.Subtitles))
+	}
+	if v.ClosedCaptions != "" && v.ClosedCaptions != NoClosedCaptions {
+		attrs = append(attrs, fmt.Sprintf("CLOSED-CAPTIONS=%q", v.ClosedCaptions))
+	}
+	return fmt.Sprintf("%s:%s\n%s", tagVariant, strings.Join(attrs, ","), v.URI)
+}
+
 // NoClosedCaptions may be the value for Variant.ClosedCaptions to
 // explicitly indicate that no closed captions are available for the
 // Variant.
@@ -134,5 +167,5 @@ func (sd SessionData) String() string {
 	if sd.Language != "" {
 		attrs = append(attrs, fmt.Sprintf("LANGUAGE=%q", sd.Language))
 	}
-	return strings.Join(attrs, ",")
+	return tagSessionData + ":" + strings.Join(attrs, ",")
 }

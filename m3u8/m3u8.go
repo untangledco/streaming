@@ -72,8 +72,6 @@ type Key struct {
 	IV [16]byte
 }
 
-const defaultKeyFormat string = "identity"
-
 func (k Key) String() string {
 	var attrs []string
 	attrs = append(attrs, fmt.Sprintf("METHOD=%s", k.Method))
@@ -89,8 +87,10 @@ func (k Key) String() string {
 		}
 		attrs = append(attrs, fmt.Sprintf("KEYFORMATVERSIONS=%q", strings.Join(ss, "/")))
 	}
-	return strings.Join(attrs, ",")
+	return tagKey + ":" + strings.Join(attrs, ",")
 }
+
+const defaultKeyFormat string = "identity"
 
 type EncryptMethod uint8
 
@@ -115,6 +115,13 @@ func (m EncryptMethod) String() string {
 type Map struct {
 	URI       string
 	ByteRange ByteRange
+}
+
+func (m Map) String() string {
+	if m.ByteRange != [2]int{0, 0} {
+		return fmt.Sprintf("%s:URI=%q,BYTERANGE=%s", tagMap, m.URI, m.ByteRange)
+	}
+	return fmt.Sprintf("%s:URI=%q", tagMap, m.URI)
 }
 
 // ByteRange represents...

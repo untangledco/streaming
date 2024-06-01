@@ -86,7 +86,7 @@ func TestWriteKey(t *testing.T) {
 		Format:         defaultKeyFormat,
 		FormatVersions: []uint32{1, 2, 5},
 	}
-	want := `METHOD=AES-128,URI="magic.key",IV=0x1027000000000000780ae30500000000,KEYFORMAT="identity",KEYFORMATVERSIONS="1/2/5"`
+	want := `#EXT-X-KEY:METHOD=AES-128,URI="magic.key",IV=0x1027000000000000780ae30500000000,KEYFORMAT="identity",KEYFORMATVERSIONS="1/2/5"`
 	if k.String() != want {
 		t.Errorf("unexpected segment key text")
 		t.Log("got:", k.String())

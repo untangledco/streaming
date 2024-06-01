@@ -139,10 +139,10 @@ func writeSegments(w io.Writer, segments []Segment) (n int, err error) {
 			fmt.Fprintf(w, "%s:%s\n", tagByteRange, seg.Range)
 		}
 		if seg.Key != nil {
-			fmt.Fprintf(w, "%s:%s\n", tagKey, seg.Key)
+			fmt.Fprintln(w, seg.Key)
 		}
 		if seg.Map != nil {
-			writeMap(w, *seg.Map)
+			fmt.Fprintln(w, seg.Map)
 		}
 		if !seg.DateTime.IsZero() {
 			fmt.Fprintf(w, "%s:%s\n", tagDateTime, seg.DateTime.Format(RFC3339Milli))
