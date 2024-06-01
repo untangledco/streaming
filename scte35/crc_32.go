@@ -41,11 +41,10 @@ func makeCRC32Table(poly uint32) crc32.Table {
 	return tab
 }
 
-// checksum calculates the checksum for the given bytes using tab.
-func checksum(b []byte, tab *crc32.Table) uint32 {
-	crc := int32(-1)
-	for i := range b {
-		crc = (crc << 8) ^ int32(tab[((crc>>24)^int32(b[i]))&0xFF])
+func updateCRC(val uint32, b []byte) uint32 {
+	crc := ^val
+	for _, v := range b {
+		crc = crctab[byte(crc>>24)^v] ^ (crc << 8)
 	}
-	return uint32(crc)
+	return ^crc
 }
