@@ -20,11 +20,7 @@ func packBreakDuration(b *BreakDuration) [5]byte {
 	pts := toPTS(b.Duration)
 	// 1 bit remaining in the first byte, so pack 1 bit from the timestamp
 	p[0] |= pts[0]
-
-	p[1] = pts[1]
-	p[2] = pts[2]
-	p[3] = pts[3]
-	p[4] = pts[4]
+	copy(p[1:], pts[1:])
 	return p
 }
 

@@ -238,8 +238,7 @@ func encodeInsert(ins *Insert) []byte {
 		}
 		buf = append(buf, byte(ins.ProgramID>>8))
 		buf = append(buf, byte(ins.ProgramID))
-		buf = append(buf, byte(ins.AvailNum))
-		buf = append(buf, byte(ins.AvailExpected))
+		buf = append(buf, byte(ins.AvailNum), byte(ins.AvailExpected))
 	}
 	return buf
 }

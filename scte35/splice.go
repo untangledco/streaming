@@ -37,7 +37,7 @@ func (t SAPType) String() string {
 }
 
 type Splice struct {
-	SAPType   SAPType
+	SAPType SAPType
 
 	// If true, indicates that the contents of Command,
 	// Descriptors and CRC32 are encrypted with Cipher.
@@ -45,7 +45,7 @@ type Splice struct {
 	Encrypted bool
 	Cipher    Cipher
 	// The control word (key) used to decrypt the message.
-	CWIndex       uint8
+	CWIndex uint8
 
 	// Holds a 33-bit unsigned integer representing the number of
 	// ticks of a 90KHz clock. The value is an offset added to
@@ -56,17 +56,17 @@ type Splice struct {
 	// Holds a 12-bit field representing an authorization tier. In
 	// most cases, its value should be 0x0fff for backwards
 	// compatibility. See 'tier' in SCTE 35 section 9.6.1.
-	Tier        uint16
+	Tier uint16
 
 	// Command points to this splice's specific instruction for splice devices.
-	Command     *Command
+	Command *Command
 	// Descriptors holds zero or more parameters to Command.
 	Descriptors []SpliceDescriptor
 
 	// A checksum of the encoded splice. Splices returned from
 	// Decode() will hold a non-zero value. Splices passed to
 	// Encode() will have their checksums calculated automatically.
-	CRC32       uint32
+	CRC32 uint32
 }
 
 // fields of Splice Info Section which MUST have their values set...
@@ -172,10 +172,7 @@ func Decode(buf []byte) (*Splice, error) {
 
 	pts := make([]byte, 8)
 	pts[0] = buf[1] & (1 << 1)
-	pts[1] = buf[2]
-	pts[2] = buf[3]
-	pts[3] = buf[4]
-	pts[4] = buf[5]
+	copy(pts[1:], buf[2:6])
 	splice.PTSAdjustment = binary.BigEndian.Uint64(pts)
 	splice.CWIndex = uint8(buf[6])
 
@@ -223,10 +220,7 @@ func decodeCommand(buf []byte) (*Command, error) {
 		if buf[1]&0x80 == 1<<7 {
 			b := make([]byte, 8)
 			b[3] = buf[1] & 0x01 // ignoring flag and reserved bits
-			b[4] = buf[2]
-			b[5] = buf[3]
-			b[6] = buf[4]
-			b[7] = buf[5]
+			copy(b[4:], buf[2:6])
 			t := binary.BigEndian.Uint64(b)
 			cmd.TimeSignal = &t
 		}
