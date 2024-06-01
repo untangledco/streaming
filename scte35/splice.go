@@ -143,7 +143,7 @@ func Encode(splice *Splice) ([]byte, error) {
 	buf[1] |= byte(buflen >> 8)
 	buf[2] = byte(buflen)
 
-	crc := checksum(buf, &crctab)
+	crc := ^updateCRC(0, buf)
 	return binary.BigEndian.AppendUint32(buf, crc), nil
 }
 
