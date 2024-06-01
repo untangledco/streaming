@@ -22,6 +22,43 @@ type Rendition struct {
 	Channels        []string
 }
 
+func (r Rendition) String() string {
+	var attrs []string
+	attrs = append(attrs, fmt.Sprintf("NAME=%q", r.Name))
+	attrs = append(attrs, fmt.Sprintf("TYPE=%s", r.Type))
+	if r.URI != "" {
+		attrs = append(attrs, fmt.Sprintf("URI=%q", r.URI))
+	}
+	attrs = append(attrs, fmt.Sprintf("GROUP-ID=%q", r.Group))
+	if r.Language != "" {
+		attrs = append(attrs, fmt.Sprintf("LANGUAGE=%q", r.Language))
+	}
+	if r.AssocLanguage != "" {
+		attrs = append(attrs, fmt.Sprintf("ASSOC-LANGUAGE=%q", r.AssocLanguage))
+	}
+	if r.Default {
+		attrs = append(attrs, "DEFAULT=YES")
+	}
+	if r.AutoSelect {
+		attrs = append(attrs, "AUTOSELECT=YES")
+	}
+	if r.Forced {
+		attrs = append(attrs, "FORCED=YES")
+	}
+	if r.Type == MediaClosedCaptions && r.InstreamID != nil {
+		attrs = append(attrs, fmt.Sprintf("INSTREAM-ID=%q", r.InstreamID))
+	}
+	if len(r.Characteristics) > 0 {
+		chars := strings.Join(r.Characteristics, ",")
+		attrs = append(attrs, fmt.Sprintf("CHARACTERISTICS=%q", chars))
+	}
+	if len(r.Channels) > 0 {
+		channels := strings.Join(r.Channels, "/")
+		attrs = append(attrs, fmt.Sprintf("CHANNELS=%q", channels))
+	}
+	return tagRendition + ":" + strings.Join(attrs, ",")
+}
+
 type MediaType uint8
 
 const (
