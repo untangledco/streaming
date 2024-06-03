@@ -101,21 +101,61 @@ const (
 	CharacteristicDescribesVideo         = "public.accessibility.describes-video"
 )
 
-// EXT-X-STREAM-INF 4.3.4.2
+// Variant represents the EXT-X-STREAM-INF tag specified in RFC 8216 section 4.3.4.2.
+// The Audio, Video, Subtitles and ClosedCaptions fields each name a
+// [Rendition] which can be combined to play the presentation.
 type Variant struct {
-	URI              string
-	Bandwidth        int
+	// Points to a media playlist carrying a rendition of this stream.
+	URI string
+	// Peak segment bitrate in bits per second.
+	// This must be set.
+	Bandwidth int
+	// Average segment bitrate in bits per second.
 	AverageBandwidth int
-	Codecs           []string
-	Resolution       [2]int
-	FrameRate        float32
-	HDCP             HDCPLevel
-	Audio            string
-	Video            string
-	Subtitles        string
-	// May be NoClosedCaptions or the empty string to indicate
-	// absence of closed captions.
-	ClosedCaptions string
+
+	// Codecs present in the stream in the format defined in ISO
+	// Base Media File Format Name Space RFC6381 section 3.3.
+	// For example: []string{"mp4a.40.2", "avc1.64001f"}
+	Codecs []string
+
+	// The width and height of the video in number of pixels.
+	Resolution [2]int
+
+	// Maximum video frame rate, in frames per second. Values are
+	// rounded to 3 decimal places.
+	FrameRate float32
+
+	// Indicates if the stream is protected by High-bandwidth
+	// Digital Content Protection (HDCP). The zero value
+	// (HDCPLevelNone) indicates no output copy protection is
+	// required for playing.
+	HDCP      HDCPLevel
+
+	// Each remaining field identifies a matching rendition of
+	// the same type in the playlist. The match has its Group set to
+	// the same value, and Type set to corresponding MediaType.
+	// The empty string indicates there is no matching rendition in the playlist.
+	//
+	// For example, if Audio is set to "music", then a matching rendition
+	// would be:
+	//
+	// 	Rendition{
+	// 		Type: MediaAudio,
+	//		Group: "music",
+	//		...
+	// 	}
+	//
+	// Similarly a matching rendition with Subtitles set to "sub1" would be:
+	//
+	// 	Rendition{
+	//		Type: MediaSubtitles,
+	//		Group: "sub1",
+	//		...
+	//	}
+	Audio     string
+	Video     string
+	Subtitles string
+	ClosedCaptions string // May be NoClosedCaptions to explicitly signal no rendition.
 }
 
 func (v Variant) String() string {
