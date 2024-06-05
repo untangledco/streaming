@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestParse(t *testing.T) {
+func TestDecode(t *testing.T) {
 	names, err := filepath.Glob("testdata/*.m3u8")
 	if err != nil {
 		t.Fatal(err)
@@ -20,7 +20,7 @@ func TestParse(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer f.Close()
-			_, err = ParsePlaylist(f)
+			_, err = Decode(f)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -73,7 +73,7 @@ func TestFrameRate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	plist, err := ParsePlaylist(f)
+	plist, err := Decode(f)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,14 +1,12 @@
 package m3u8
 
 import (
-	"bytes"
 	"encoding/binary"
-	"io"
 	"testing"
 	"time"
 )
 
-func TestWriteSegments(t *testing.T) {
+func TestMarshalSegments(t *testing.T) {
 	var cases = []struct {
 		name string
 		seg  Segment
@@ -17,12 +15,12 @@ func TestWriteSegments(t *testing.T) {
 		{
 			"duration",
 			Segment{Duration: 10 * time.Second, URI: "bunny.ts"},
-			"#EXTINF:10.000\nbunny.ts\n",
+			"#EXTINF:10.000\nbunny.ts",
 		},
 		{
 			"duration milliseconds",
 			Segment{URI: "something.ts", Duration: 9967 * time.Millisecond},
-			"#EXTINF:9.967\nsomething.ts\n",
+			"#EXTINF:9.967\nsomething.ts",
 		},
 		{
 			"discontinuity with URI",
@@ -31,7 +29,7 @@ func TestWriteSegments(t *testing.T) {
 				Discontinuity: true,
 				URI:           "adbreak.ts",
 			},
-			"#EXT-X-DISCONTINUITY\n#EXTINF:30.000\nadbreak.ts\n",
+			"#EXT-X-DISCONTINUITY\n#EXTINF:30.000\nadbreak.ts",
 		},
 		{
 			"byte range",
@@ -40,35 +38,37 @@ func TestWriteSegments(t *testing.T) {
 				URI:      "vid.ts",
 				Range:    ByteRange{69, 420},
 			},
-			"#EXT-X-BYTERANGE:69@420\n#EXTINF:2.000\nvid.ts\n",
+			"#EXT-X-BYTERANGE:69@420\n#EXTINF:2.000\nvid.ts",
 		},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			if _, err := writeSegments(buf, []Segment{tt.seg}); err != nil {
+			b, err := tt.seg.MarshalText()
+			if err != nil {
 				t.Fatal(err)
 			}
-			if buf.String() != tt.out {
+			got := string(b)
+			if got != tt.out {
 				t.Errorf("segment text does not match expected")
-				t.Log("got:", buf.String())
+				t.Log("got:", got)
 				t.Log("want:", tt.out)
 			}
 		})
 	}
 }
 
-func TestWriteBadSegments(t *testing.T) {
+func TestMarshalBadSegments(t *testing.T) {
 	var cases = []struct {
 		name string
 		seg  Segment
 	}{
 		{"empty", Segment{}},
 		{"no duration", Segment{URI: "video.ts"}},
+		{"impossible range", Segment{URI: "bbb.ts", Duration: 6 * time.Second, Range: ByteRange{999, 10}}},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := writeSegments(io.Discard, []Segment{tt.seg}); err == nil {
+			if _, err := tt.seg.MarshalText(); err == nil {
 				t.Fatalf("nil error encoding invalid segment")
 			}
 		})

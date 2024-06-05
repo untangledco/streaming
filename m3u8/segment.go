@@ -1,6 +1,7 @@
 package m3u8
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -120,37 +121,56 @@ func parseSegmentDuration(it item) (time.Duration, error) {
 }
 
 func writeSegments(w io.Writer, segments []Segment) (n int, err error) {
-	for _, seg := range segments {
-		if seg.URI == "" {
-			return 0, fmt.Errorf("empty URI")
+	for i, seg := range segments {
+		b, err := seg.MarshalText()
+		if err != nil {
+			return n, fmt.Errorf("segment %d: %w", i, err)
 		}
-		if seg.Duration == 0 {
-			return 0, fmt.Errorf("zero duration")
+		nn, err := fmt.Fprintln(w, string(b))
+		n += nn
+		if err != nil {
+			return n, err
 		}
-		if seg.Discontinuity {
-			fmt.Fprintln(w, tagDiscontinuity)
-		}
-		if seg.DateRange != nil {
-			if err := writeDateRange(w, seg.DateRange); err != nil {
-				return 0, fmt.Errorf("write date range: %w", err)
-			}
-		}
-		if seg.Range != [2]int{0, 0} {
-			fmt.Fprintf(w, "%s:%s\n", tagByteRange, seg.Range)
-		}
-		if seg.Key != nil {
-			fmt.Fprintln(w, seg.Key)
-		}
-		if seg.Map != nil {
-			fmt.Fprintln(w, seg.Map)
-		}
-		if !seg.DateTime.IsZero() {
-			fmt.Fprintf(w, "%s:%s\n", tagDateTime, seg.DateTime.Format(RFC3339Milli))
-		}
-		us := seg.Duration / time.Microsecond
-		// we do .03f for the same precision as test-streams.mux.dev.
-		fmt.Fprintf(w, "%s:%.03f\n", tagSegmentDuration, float32(us)/1e6)
-		fmt.Fprintln(w, seg.URI)
 	}
-	return 0, nil
+	return n, nil
+}
+
+func (seg *Segment) MarshalText() ([]byte, error) {
+	if seg.URI == "" {
+		return nil, fmt.Errorf("empty URI")
+	}
+	if seg.Duration == 0 {
+		return nil, fmt.Errorf("zero duration")
+	}
+	var tags []string
+	if seg.Discontinuity {
+		tags = append(tags, tagDiscontinuity)
+	}
+	if seg.DateRange != nil {
+		buf := &bytes.Buffer{}
+		if err := writeDateRange(buf, seg.DateRange); err != nil {
+			return nil, fmt.Errorf("write date range: %w", err)
+		}
+		tags = append(tags, buf.String())
+	}
+	if seg.Range != [2]int{0, 0} {
+		if seg.Range[0] >= seg.Range[1] {
+			return nil, fmt.Errorf("impossible range: offset (%d) must be smaller than next %d", seg.Range[0], seg.Range[1])
+		}
+		tags = append(tags, fmt.Sprintf("%s:%s", tagByteRange, seg.Range))
+	}
+	if seg.Key != nil {
+		tags = append(tags, seg.Key.String())
+	}
+	if seg.Map != nil {
+		tags = append(tags, seg.Map.String())
+	}
+	if !seg.DateTime.IsZero() {
+		tags = append(tags, fmt.Sprintf("%s:%s", tagDateTime, seg.DateTime.Format(RFC3339Milli)))
+	}
+	us := seg.Duration / time.Microsecond
+	// we do .03f for the same precision as test-streams.mux.dev.
+	tags = append(tags, fmt.Sprintf("%s:%.03f", tagSegmentDuration, float32(us)/1e6))
+	tags = append(tags, seg.URI)
+	return []byte(strings.Join(tags, "\n")), nil
 }

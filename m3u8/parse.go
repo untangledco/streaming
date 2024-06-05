@@ -22,7 +22,7 @@ const (
 	tagSessionData         = "#EXT-X-SESSION-DATA"         // RFC 8216, 4.3.4.4
 )
 
-func ParsePlaylist(rd io.Reader) (*Playlist, error) {
+func Decode(rd io.Reader) (*Playlist, error) {
 	lex := newLexer(rd)
 	go lex.run()
 	it := <-lex.items
