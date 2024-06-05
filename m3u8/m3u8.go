@@ -57,6 +57,7 @@ type Segment struct {
 	DateRange *DateRange
 }
 
+// Key represents the EXT-X-KEY tag specified in RFC 8216 seciton 4.3.2.3.
 // A Key specifies how to decrypt encrypted playlist segments.
 type Key struct {
 	Method EncryptMethod

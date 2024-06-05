@@ -79,19 +79,19 @@ func writeVariant(w io.Writer, v *Variant) (n int, err error) {
 }
 
 func writeDateRange(w io.Writer, dr *DateRange) error {
-	fmt.Fprint(w, tagDateRange+":")
+	if dr.ID == "" {
+		return fmt.Errorf("empty ID")
+	} else if dr.Start.IsZero() {
+		return fmt.Errorf("zero start time")
+	}
 	var attrs []string
-	if dr.ID != "" {
-		attrs = append(attrs, fmt.Sprintf("ID=%q", dr.ID))
+	attrs = append(attrs, fmt.Sprintf("ID=%q", dr.ID))
+	attrs = append(attrs, fmt.Sprintf("START-DATE=%q", dr.Start.Format(time.RFC3339)))
+	if !dr.End.IsZero() {
+		attrs = append(attrs, fmt.Sprintf("END-DATE=%q", dr.End.Format(time.RFC3339)))
 	}
 	if dr.Class != "" {
 		attrs = append(attrs, fmt.Sprintf("CLASS=%q", dr.Class))
-	}
-	if !dr.Start.IsZero() {
-		attrs = append(attrs, fmt.Sprintf("START-DATE=%q", dr.Start.Format(time.RFC3339)))
-	}
-	if !dr.End.IsZero() {
-		attrs = append(attrs, fmt.Sprintf("END-DATE=%q", dr.End.Format(time.RFC3339)))
 	}
 	// TODO(otl): dr.Duration, dr.Planned. Differentiate zero value and user-set zero.
 	// TODO(otl): dr.Custom.
@@ -111,12 +111,18 @@ func writeDateRange(w io.Writer, dr *DateRange) error {
 		attrs = append(attrs, fmt.Sprintf("SCTE35-OUT=0x%s", hex.EncodeToString(b)))
 	}
 	if dr.EndOnNext {
+		if dr.Class == "" {
+			return fmt.Errorf("empty class with end-on-next set")
+		} else if !dr.End.IsZero() {
+			return fmt.Errorf("non-zero end time with end-on-next set")
+		} else if dr.Duration > 0 {
+			return fmt.Errorf("non-zero duration %s with end-on-next set", dr.Duration)
+		}
 		attrs = append(attrs, "END-ON-NEXT:YES")
 	}
-	if _, err := fmt.Fprintln(w, strings.Join(attrs, ",")); err != nil {
-		return err
-	}
-	return nil
+	tag := tagDateRange + ":" + strings.Join(attrs, ",")
+	_, err := fmt.Fprintln(w, tag)
+	return err
 }
 
 func writeMap(w io.Writer, m Map) (n int, err error) {
