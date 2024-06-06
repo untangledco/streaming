@@ -1,3 +1,12 @@
+// Command hlsserve serves a live HLS stream from MPEG-TS video received over TCP.
+// The options are:
+//
+//	-l address
+//		Listen for MPEG-TS streams on address, in host:port format. The
+//		default is ":9000".
+//	-h address
+//		Listen for HTTP clients on address, in host:port format. The
+//		default is ":8080".
 package main
 
 import (
@@ -14,6 +23,7 @@ import (
 	"time"
 
 	"github.com/untangledco/streaming/m3u8"
+	"github.com/untangledco/streaming/mpegts"
 )
 
 func init() {
@@ -27,10 +37,8 @@ func init() {
 	cacheDir = filepath.Join(cacheDir, "hlsserve")
 }
 
-const tsSize int = 188
-
 // rule of thumb for UDP transport
-const maxTSBytes int = 7 * tsSize
+const maxTSBytes int = 7 * mpegts.PacketSize
 
 const segmentDuration = 4 * time.Second
 
