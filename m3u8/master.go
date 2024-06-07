@@ -6,19 +6,34 @@ import (
 )
 
 // Rendition represents a unique rendition as described by a single
-// EXT-X-MEDIA tag.
+// EXT-X-MEDIA tag specified in RFC 8216 section 4.3.4.1.
 type Rendition struct {
+	// Type identifies type of media in the rendition.
 	Type            MediaType
+	// Points to a media playlist carrying a rendition of this stream.
 	URI             string
+	// Group specifies the group to which the rendition belongs.
 	Group           string
+	// Language identifies the primary language used in the rendition.
 	Language        string
+	// AssocLanguage identifies a language that is associated with the rendition.
 	AssocLanguage   string
+	// Name represents the description of the rendition.
 	Name            string
+	// Defaults specifies whether client SHOULD play this Rendition of the content in
+	// the absence of information from the user indicating a different choice.
 	Default         bool
+	// AutoSelect specifies to play this rendition in the absence of explicit user preference.
 	AutoSelect      bool
+	// Forced specifies whether the rendition contains content that is considered essential to play.
 	Forced          bool
+	// InstreamID contains a Line 21 Data Services channel [CEA608] or
+	// Digital Television Closed Captioning [CEA708] service block number.
 	InstreamID      *CCInfo
+	// Characteristics contains one or more Uniform Type Identifiers [UTI]
+	// For example: []string{"public.accessibility.transcribes-spoken-dialog","public.easy-to-read"}
 	Characteristics []string
+	// Channels presents a list audio channels expressed as a decimal-integer.
 	Channels        []string
 }
 
