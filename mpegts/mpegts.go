@@ -18,10 +18,11 @@ type Packet struct {
 	// Identifies the type of the packet.
 	PID PacketID
 	// Specifies which algorithm, if any, is used to encrypt the payload.
-	Scrambling Scramble
-	Continuity uint8
-	Adaptation []byte
-	Payload    []byte
+	Scrambling      Scramble
+	Continuity      uint8
+	Adaptation      *Adaptation
+	Payload         []byte
+	emptyAdaptation bool
 }
 
 type Scramble uint8
@@ -69,8 +70,9 @@ type Adaptation struct {
 	// randomly access other points in the stream.
 	RandomAccess bool
 	// Whether this stream is high priority.
-	Priority bool
-	PCR      *PCR
+	Priority           bool
+	SpliceCountdownSet bool
+	PCR                *PCR
 	// Original program clock reference.
 	OPCR *PCR
 	// The number of packets remaining until a splicing point.
@@ -84,10 +86,16 @@ type Adaptation struct {
 	Stuffing []byte
 }
 
-// PCR represents a Program Clock Reference
+// PCR represents a Program Clock Reference.
 type PCR struct {
-	// Number of ticks of a 27MHz clock as a 33-bit integer.
-	Ticks uint64
-	// 9-bit integer
+	// 33-bit integer holding the number of ticks of a 90KHz clock.
+	Base uint64
+	// 9-bit integer holding 27MHz ticks, intended as a
+	// constant addition to Base.
 	Extension uint16
+}
+
+// Returns the number of ticks of a 27MHz clock in p.
+func (p PCR) Ticks() uint64 {
+	return p.Base*300 + uint64(p.Extension)
 }

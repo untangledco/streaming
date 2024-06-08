@@ -44,10 +44,215 @@ func Decode(r io.Reader) (*Packet, error) {
 	switch afc {
 	case 0x01:
 		p.Payload = buf[4:]
+	case 0x02:
+		p.Adaptation = parseAdaptationField(buf[4:])
 	case 0x03:
-		p.Adaptation = buf[4:]
+		p.Adaptation = parseAdaptationField(buf[4:])
+		if p.Adaptation == nil {
+			p.emptyAdaptation = true
+		}
+		alen := int(buf[4])
+		p.Payload = buf[4+1+alen:]
 	default:
-		return &p, fmt.Errorf("cannot decode both payload and adaptation field")
+		return nil, fmt.Errorf("neither adaptation field or payload present")
 	}
 	return &p, nil
+}
+
+func parseAdaptationField(buf []byte) *Adaptation {
+	length := int(buf[0])
+	if length == 0 {
+		return nil
+	}
+	buf = buf[1 : length+1]
+	var af Adaptation
+	flags := buf[0]
+	buf = buf[1:]
+	if flags&0x80 > 0 {
+		af.Discontinuous = true
+	}
+	if flags&0x40 > 0 {
+		af.RandomAccess = true
+	}
+	if flags&0x20 > 0 {
+		af.Priority = true
+	}
+	if flags&0x10 > 0 {
+		var p [6]byte
+		copy(p[:], buf[:6])
+		pcr := parsePCR(p)
+		af.PCR = &pcr
+		buf = buf[6:]
+	}
+	if flags&0x08 > 0 {
+		var p [6]byte
+		copy(p[:], buf[:6])
+		pcr := parsePCR(p)
+		af.OPCR = &pcr
+		buf = buf[6:]
+	}
+	if flags&0x04 > 0 {
+		af.SpliceCountdownSet = true
+		af.SpliceCountdown = buf[0]
+		buf = buf[1:]
+	}
+	if flags&0x02 > 0 {
+		tlen := int(buf[0])
+		af.Private = buf[1:tlen]
+		buf = buf[tlen:]
+	}
+	if flags&0x01 > 0 {
+		extlen := int(buf[0])
+		af.Extension = buf[1:extlen]
+		buf = buf[extlen:]
+	}
+	if len(buf) > 0 {
+		af.Stuffing = buf
+	}
+	return &af
+}
+
+func parsePCR(a [6]byte) PCR {
+	b := []byte{0, 0, 0, a[4] & 0x80, a[3], a[2], a[1], a[0]}
+	//copy(b[:4], a[:4])
+	// b[4] &= 0x80 // only want left-most bit
+	//var base uint64 = uint64(a[0] >>
+	base := binary.BigEndian.Uint64(b)
+	// next 6 bits reserved, so remaining 1 bit in a[5] and all of a[6] have the extension.
+	ext := binary.BigEndian.Uint16([]byte{a[4] & 0x01, a[5]})
+	return PCR{base, ext}
+}
+
+func Encode(w io.Writer, p *Packet) error {
+	buf := make([]byte, 4)
+	buf[0] = Sync
+	if p.Error {
+		buf[1] |= 0x80
+	}
+	if p.PayloadStart {
+		buf[1] |= 0x40
+	}
+	if p.Priority {
+		buf[1] |= 0x20
+	}
+	binary.BigEndian.PutUint16(buf[1:3], uint16(p.PID))
+	buf[3] |= byte(p.Scrambling)
+	if p.Adaptation != nil || p.emptyAdaptation {
+		buf[3] |= 0x20
+	}
+	if p.Payload != nil {
+		buf[3] |= 0x10
+	}
+	if p.Continuity > 15 {
+		return fmt.Errorf("continuity %d larger than max 4-bit integer %d", p.Continuity, 15)
+	}
+	buf[3] |= p.Continuity
+
+	if p.Adaptation != nil {
+		alen := 1 // just flags
+		if p.Adaptation.PCR != nil {
+			alen += 6
+		}
+		if p.Adaptation.OPCR != nil {
+			alen += 6
+		}
+		if p.Adaptation.SpliceCountdownSet {
+			alen++ // single byte
+		}
+		if p.Adaptation.Private != nil {
+			alen++ // 1 byte to store length of private
+			alen += len(p.Adaptation.Private)
+		}
+		alen += len(p.Adaptation.Extension)
+		alen += len(p.Adaptation.Stuffing)
+		if alen > 255 {
+			return fmt.Errorf("adaptation field too long: have %d bytes, max %d", alen, 255)
+		}
+
+		abuf := make([]byte, 1+alen) // length + total
+		abuf[0] = uint8(alen)
+		var i int = 2 // cursor; after length and flags
+		if p.Adaptation.Discontinuous {
+			abuf[1] |= 0x80
+		}
+		if p.Adaptation.RandomAccess {
+			abuf[1] |= 0x40
+		}
+		if p.Adaptation.Priority {
+			abuf[1] |= 0x20
+		}
+		if p.Adaptation.PCR != nil {
+			abuf[1] |= 0x10
+			if err := putPCR(abuf[i:i+6], p.Adaptation.PCR); err != nil {
+				return fmt.Errorf("pack PCR: %w", err)
+			}
+			i += 6
+		}
+		if p.Adaptation.OPCR != nil {
+			abuf[1] |= 0x08
+			if err := putPCR(abuf[i:i+6], p.Adaptation.OPCR); err != nil {
+				return fmt.Errorf("pack OPCR: %w", err)
+			}
+			i += 6
+		}
+		if p.Adaptation.SpliceCountdownSet {
+			abuf[1] |= 0x04
+			abuf[i] = p.Adaptation.SpliceCountdown
+			i++
+		}
+		if p.Adaptation.Private != nil {
+			abuf[1] |= 0x02
+			if len(p.Adaptation.Private) > 255 {
+				return fmt.Errorf("private data length %d longer than max %d", len(p.Adaptation.Private), 255)
+			}
+			abuf[i] = byte(len(p.Adaptation.Private))
+			i++
+			copy(abuf[i:], p.Adaptation.Private)
+			i += len(p.Adaptation.Private)
+		}
+		if p.Adaptation.Extension != nil {
+			abuf[1] |= 0x01
+			copy(abuf[i:], p.Adaptation.Extension)
+			i += len(p.Adaptation.Extension)
+		}
+		if p.Adaptation.Stuffing != nil {
+			copy(abuf[i:], p.Adaptation.Stuffing)
+		}
+		buf = append(buf, abuf...)
+	} else if p.emptyAdaptation {
+		// no adaptation field to encode, but we need to store an adaptation field length of 0.
+		buf = append(buf, 0)
+	}
+	if p.Payload != nil {
+		buf = append(buf, p.Payload...)
+	}
+	if len(buf) != PacketSize {
+		return fmt.Errorf("bad encoded packet length %d", len(buf))
+	}
+	_, err := w.Write(buf)
+	return err
+}
+
+func putPCR(b []byte, pcr *PCR) error {
+	if len(b) != 6 {
+		return fmt.Errorf("need %d bytes, got %d", 6, len(b))
+	}
+	max := uint64(8589934592 - 1) // max 33-bit int
+	if pcr.Base > max {
+		return fmt.Errorf("base %d larger than max %d", pcr.Base, max)
+	}
+	b[0] = byte(pcr.Base)
+	b[1] = byte(pcr.Base >> 8)
+	b[2] = byte(pcr.Base >> 16)
+	b[3] = byte(pcr.Base >> 24)
+	b[4] = byte(pcr.Base >> 32)
+	// next 6 bits are reserved
+
+	var emax uint16 = 512 - 1 // max 9-bit int
+	if pcr.Extension > emax {
+		return fmt.Errorf("extension %d larger than max %d", pcr.Extension, emax)
+	}
+	b[4] |= byte(pcr.Extension >> 8)
+	b[5] = byte(pcr.Extension)
+	return nil
 }
