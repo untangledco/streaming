@@ -7,33 +7,44 @@ import (
 
 // Rendition represents a unique rendition as described by a single
 // EXT-X-MEDIA tag specified in RFC 8216 section 4.3.4.1.
+//
+// Each Rendition must belong to a named Group specified by the Group field.
+// Each member must have a unique Name set.
+// Only one member may have Default set.
+// Members with AutoSelect set must have unique values for Language,
+// AssocLanguage, Forced, and Characteristics in their Group.
 type Rendition struct {
-	// Type identifies type of media in the rendition.
+	// Type is a required field identifying the type of media in the rendition.
 	Type            MediaType
-	// Points to a media playlist carrying a rendition of this stream.
+	// URI is a required field pointing to a media playlist carrying the rendition.
 	URI             string
-	// Group specifies the group to which the rendition belongs.
+	// Group names the group in which this Rendition belongs.
+	// It corresponds to the "GROUP-ID" attribute.
 	Group           string
-	// Language identifies the primary language used in the rendition.
+	// Language contains a RFC 5646-formatted tag identifying
+	// the primary language used in the rendition.
 	Language        string
-	// AssocLanguage identifies a language that is associated with the rendition.
+	// AssocLanguage contains a RFC 5646-formatted tag identifying
+	// an associated language used in a different role than the one set in Language.
 	AssocLanguage   string
-	// Name represents the description of the rendition.
+	// Name describes the rendition.
 	Name            string
-	// Defaults specifies whether client SHOULD play this Rendition of the content in
-	// the absence of information from the user indicating a different choice.
+	// Default specifies whether players should play this
+	// Rendition when a user has not indicated otherwise.
 	Default         bool
-	// AutoSelect specifies to play this rendition in the absence of explicit user preference.
+	// AutoSelect indicates that this Rendition may be
+	// automatically played based on the playback environment, such
+	// as a matching system language.
 	AutoSelect      bool
-	// Forced specifies whether the rendition contains content that is considered essential to play.
+	// Forced indicates that the rendition contains essential content for playing.
 	Forced          bool
-	// InstreamID contains a Line 21 Data Services channel [CEA608] or
-	// Digital Television Closed Captioning [CEA708] service block number.
+	// InstreamID points to closed-caption information.
 	InstreamID      *CCInfo
-	// Characteristics contains one or more Uniform Type Identifiers [UTI]
-	// For example: []string{"public.accessibility.transcribes-spoken-dialog","public.easy-to-read"}
+	// Characteristics contains Uniform Type Identifiers.
+	// For example []string{CharacteristicTranscribesDialog, ChractersticEasyToRead}
 	Characteristics []string
-	// Channels presents a list audio channels expressed as a decimal-integer.
+	// Channels contains the different counts of audio channels available in the Rendition.
+	// For example []string{"2,6"} represents stereo (2) and 5.1 surround-sound (5 + 1) channels.
 	Channels        []string
 }
 
