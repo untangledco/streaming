@@ -1,12 +1,59 @@
 package m3u8
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
+
+func ExampleEncode() {
+	p := &Playlist{
+		Version: 7,
+		Segments: []Segment{
+			{URI: "001.ts", Duration: 4 * time.Second},
+		},
+
+		TargetDuration: 4 * time.Second,
+		Sequence:       0,
+		Type:           PlaylistEvent,
+	}
+
+	sb := &strings.Builder{}
+	_ = Encode(sb, p)
+
+	fmt.Println(sb)
+
+	// Output: #EXTM3U
+	// #EXT-X-VERSION:7
+	// #EXT-X-PLAYLIST-TYPE:EVENT
+	// #EXT-X-TARGETDURATION:4
+	// #EXT-X-MEDIA-SEQUENCE:0
+	// #EXTINF:4.000
+	// 001.ts
+}
+
+func ExampleDecode() {
+	m3u8Data := `#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=640x360
+url_0/low.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2560000,RESOLUTION=1280x720
+url_0/mid.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=7680000,RESOLUTION=1920x1080
+url_0/high.m3u8`
+	rd := strings.NewReader(m3u8Data)
+
+	p, _ := Decode(rd)
+	fmt.Printf("%+v", p)
+
+	// Output: &{Version:0 Segments:[] IndependentSegments:false Start:<nil> TargetDuration:0s Sequence:0 DiscontinuitySequence:0 End:false Type:invalid IFramesOnly:false Media:[] Variants:[#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=640x360
+	// url_0/low.m3u8 #EXT-X-STREAM-INF:BANDWIDTH=2560000,RESOLUTION=1280x720
+	// url_0/mid.m3u8 #EXT-X-STREAM-INF:BANDWIDTH=7680000,RESOLUTION=1920x1080
+	// url_0/high.m3u8] SessionData:[] SessionKey:<nil>}
+}
 
 func TestDecode(t *testing.T) {
 	names, err := filepath.Glob("testdata/*.m3u8")
