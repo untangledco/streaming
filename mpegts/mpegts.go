@@ -41,8 +41,8 @@ const (
 	CAT                  // Conditional access table
 	TSDT                 // Transport stream description table
 	IPMP
-	_          // reserved through to
-	PacketNull = 8191
+	_                          // reserved through to
+	PacketNull PacketID = 8191 // max 13-bit integer
 )
 
 func (id PacketID) String() string {

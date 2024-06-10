@@ -135,7 +135,12 @@ func Encode(w io.Writer, p *Packet) error {
 	if p.Priority {
 		buf[1] |= 0x20
 	}
-	binary.BigEndian.PutUint16(buf[1:3], uint16(p.PID))
+	if p.PID > PacketNull {
+		return fmt.Errorf("packet id %s greater than max %s", p.PID, PacketNull)
+	}
+	buf[1] |= byte(p.PID >> 8)
+	buf[2] = byte(p.PID)
+
 	buf[3] |= byte(p.Scrambling)
 	if p.Adaptation != nil || p.emptyAdaptation {
 		buf[3] |= 0x20
