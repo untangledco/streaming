@@ -251,7 +251,8 @@ func putPCR(b []byte, pcr *PCR) error {
 	b[2] = byte(pcr.Base >> 16)
 	b[3] = byte(pcr.Base >> 24)
 	b[4] = byte(pcr.Base >> 32)
-	// next 6 bits are reserved
+
+	b[4] |= 0x7e // toggle 6 reserved bits
 
 	var emax uint16 = 512 - 1 // max 9-bit int
 	if pcr.Extension > emax {
