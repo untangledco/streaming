@@ -177,8 +177,6 @@ func Decode(buf []byte) (*Splice, error) {
 	splice.CWIndex = uint8(buf[6])
 
 	// want left-most 12 bits, remaining is used by command length.
-	// TODO(otl): still not getting expected values here;
-	// check TestDecode
 	tier := binary.BigEndian.Uint16([]byte{buf[7], buf[8] & 0xf0})
 	splice.Tier = tier >> 4
 

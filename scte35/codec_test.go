@@ -39,7 +39,6 @@ func ExampleEncode() {
 	duration := uint64(60 * 90000)       // 60 seconds as 90KHz ticks
 	splice := scte35.Splice{
 		SAPType: scte35.SAPNone,
-		Tier:    0x0fff,
 		Command: &scte35.Command{
 			Type:       scte35.TimeSignal,
 			TimeSignal: &when,

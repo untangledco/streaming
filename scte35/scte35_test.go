@@ -12,7 +12,7 @@ var samples = []sample{
 		encoded: "/DA0AAAAAAAA///wBQb+cr0AUAAeAhxDVUVJSAAAjn/PAAGlmbAICAAAAAAsoKGKNAIAmsnRfg==",
 		want: Splice{
 			SAPType: SAPNone,
-			Tier:    0x0fff,
+			Tier:    maxTier,
 			CWIndex: 0xff,
 			Command: &Command{
 				Type:       TimeSignal,
@@ -42,7 +42,7 @@ var samples = []sample{
 		want: Splice{
 			SAPType: SAPNone,
 			CWIndex: 0xff,
-			Tier:    0x0fff,
+			Tier:    maxTier,
 			Command: &Command{
 				Type: SpliceInsert,
 				Insert: &Insert{
@@ -68,7 +68,7 @@ var samples = []sample{
 		want: Splice{
 			SAPType: SAPNone,
 			CWIndex: 0xff,
-			Tier:    0x0fff,
+			Tier:    maxTier,
 			Command: &Command{
 				Type:       TimeSignal,
 				TimeSignal: newuint64(0x0746290a0),
@@ -95,7 +95,7 @@ var samples = []sample{
 		want: Splice{
 			SAPType: SAPNone,
 			CWIndex: 0xff,
-			Tier:    0x0fff,
+			Tier:    maxTier,
 			Command: &Command{
 				Type:       TimeSignal,
 				TimeSignal: newuint64(0x07a4d88b6),
@@ -131,7 +131,7 @@ var samples = []sample{
 		encoded: "/DBcAAAAAAAAAP/wBQb//ciI8QBGAh1DVUVJXQk9EX+fAQ5FUDAxODAzODQwMDY2NiEEZAIZQ1VFSV0JPRF/3wABLit7AQVDMTQ2NDABAQEKQ1VFSQCAMTUwKnPhdcU=",
 		want: Splice{
 			SAPType: SAPNone,
-			Tier:    0x0fff,
+			Tier:    maxTier,
 			Command: &Command{
 				Type:       TimeSignal,
 				TimeSignal: newuint64(8552745201),
