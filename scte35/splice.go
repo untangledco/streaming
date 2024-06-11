@@ -163,9 +163,9 @@ func Decode(buf []byte) (*Splice, error) {
 		return nil, fmt.Errorf("message declares %d bytes but have %d", length, len(buf))
 	}
 
-	// skip version byte, we don't store version as it's constant.
-	if buf[1]&0b10000000 == 1 {
-		splice.Encrypted = true
+	// skip version byte at buf[0]. We don't store version as it's constant.
+	splice.Encrypted = buf[1]&0b10000000 > 0
+	if splice.Encrypted {
 		// right-most bit is used by PTSAdjustment.
 		splice.Cipher = Cipher(buf[1] & 0b01111110)
 	}
@@ -227,29 +227,18 @@ func decodeCommand(buf []byte) (*Command, error) {
 	case SpliceInsert:
 		var ins Insert
 		ins.ID = binary.BigEndian.Uint32(buf[1:5])
-		if buf[5]&0x80 > 0 {
-			ins.Cancel = true
+		ins.Cancel = buf[5]&0x80 > 0
+		if ins.Cancel {
 			cmd.Insert = &ins
 			// rebelelder told us to do this.
 			return &cmd, nil
 		}
-		if buf[6]&(1<<7) > 0 {
-			ins.OutOfNetwork = true
-		}
-
+		ins.OutOfNetwork = buf[6]&(1<<7) > 0
 		// assume program_splice is set at bit 6;
-
-		var durflag bool
-		if buf[6]&(1<<5) > 0 {
-			durflag = true
-		}
 		// we don't support deprecated component mode.
-		if buf[6]&(1<<4) > 0 {
-			ins.Immediate = true
-		}
-		if buf[6]&(1<<3) > 0 {
-			ins.idCompliance = true
-		}
+		durflag := buf[6]&(1<<5) > 0
+		ins.Immediate = buf[6]&(1<<4) > 0
+		ins.idCompliance = buf[6]&(1<<3) > 0
 		// next 3 bits are reserved.
 
 		if !ins.Immediate {

@@ -184,12 +184,8 @@ func (d SegmentationDescriptor) Data() []byte {
 func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 	var desc SegmentationDescriptor
 	desc.EventID = binary.BigEndian.Uint32(buf[:4])
-	if buf[4]&0b10000000 > 0 {
-		desc.Cancel = true
-	}
-	if buf[4]&0b01000000 > 0 {
-		desc.idCompliance = true
-	}
+	desc.Cancel = buf[4]&(1<<7) > 0
+	desc.idCompliance = buf[4]&(1<<6) > 0
 	// next 6 bits are reserved
 
 	// always assume program_segmentation_flag is set at 0b10000000
@@ -217,7 +213,6 @@ func unmarshalSegDescriptor(buf []byte) SegmentationDescriptor {
 		}
 		buf = buf[2+uplen:]
 
-		// TODO(otl): use named constants from section 10.3.3.1 Table 23 - segmentation_type_id
 		desc.Type = uint8(buf[0])
 		desc.Number = uint8(buf[1])
 		desc.Expected = uint8(buf[2])

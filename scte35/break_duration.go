@@ -26,9 +26,7 @@ func packBreakDuration(b *BreakDuration) [5]byte {
 
 func readBreakDuration(a [5]byte) *BreakDuration {
 	var bd BreakDuration
-	if a[0]&(1<<7) > 0 {
-		bd.AutoReturn = true
-	}
+	bd.AutoReturn = a[0]&(1<<7) > 0
 	a[0] &= 0x01
 	// first, allocate 3 empty bytes, then add the remaining 5;
 	// enough for the uint64 (8 bytes).
