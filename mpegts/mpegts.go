@@ -18,9 +18,11 @@ type Packet struct {
 	// Identifies the type of the packet.
 	PID PacketID
 	// Specifies which algorithm, if any, is used to encrypt the payload.
-	Scrambling      Scramble
-	Continuity      uint8
-	Adaptation      *Adaptation
+	Scrambling Scramble
+	Continuity uint8
+	Adaptation *Adaptation
+	PES        *PESPacket
+	// Payload contains the raw bytes of any payload we do not support decoding.
 	Payload         []byte
 	emptyAdaptation bool
 }

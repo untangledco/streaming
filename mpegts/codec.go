@@ -43,18 +43,19 @@ func Decode(r io.Reader) (*Packet, error) {
 	afc := buf[3] >> 4
 	switch afc {
 	case 0x01:
-		p.Payload = buf[4:]
-	case 0x02:
-		p.Adaptation = parseAdaptationField(buf[4:])
-	case 0x03:
+		buf = buf[4:]
+	case 0x02, 0x03:
 		p.Adaptation = parseAdaptationField(buf[4:])
 		if p.Adaptation == nil {
 			p.emptyAdaptation = true
 		}
 		alen := int(buf[4])
-		p.Payload = buf[4+1+alen:]
+		buf = buf[4+1+alen:]
 	default:
 		return nil, fmt.Errorf("neither adaptation field or payload present")
+	}
+	if err := unmarshalPayload(buf, &p); err != nil {
+		return nil, fmt.Errorf("unmarshal payload: %w", err)
 	}
 	return &p, nil
 }
@@ -123,6 +124,19 @@ func parsePCR(a [6]byte) PCR {
 	return PCR{base, ext}
 }
 
+func unmarshalPayload(payload []byte, p *Packet) error {
+	if isPESPayload(payload) {
+		pes, err := decodePES(payload)
+		if err != nil {
+			return fmt.Errorf("decode PES packet: %w", err)
+		}
+		p.PES = pes
+	} else {
+		p.Payload = payload
+	}
+	return nil
+}
+
 func Encode(w io.Writer, p *Packet) error {
 	buf := make([]byte, 4)
 	buf[0] = Sync
@@ -145,7 +159,7 @@ func Encode(w io.Writer, p *Packet) error {
 	if p.Adaptation != nil || p.emptyAdaptation {
 		buf[3] |= 0x20
 	}
-	if p.Payload != nil {
+	if p.Payload != nil || p.PES != nil {
 		buf[3] |= 0x10
 	}
 	if p.Continuity > 15 {
@@ -227,6 +241,13 @@ func Encode(w io.Writer, p *Packet) error {
 	} else if p.emptyAdaptation {
 		// no adaptation field to encode, but we need to store an adaptation field length of 0.
 		buf = append(buf, 0)
+	}
+	if p.PES != nil {
+		b, err := encodePESPacket(p.PES)
+		if err != nil {
+			return fmt.Errorf("encode PES packet: %w", err)
+		}
+		buf = append(buf, b...)
 	}
 	if p.Payload != nil {
 		buf = append(buf, p.Payload...)
