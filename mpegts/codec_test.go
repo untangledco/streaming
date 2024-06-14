@@ -10,7 +10,8 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	f, err := os.Open("testdata/193039199_mp4_h264_aac_hq_7.ts")
+	// f, err := os.Open("testdata/193039199_mp4_h264_aac_hq_7.ts")
+	f, err := os.Open("testdata/bbb.ts")
 	if err != nil {
 		t.Fatal(err)
 	}

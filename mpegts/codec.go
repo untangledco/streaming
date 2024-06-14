@@ -13,15 +13,9 @@ func Unmarshal(buf []byte, p *Packet) error {
 	if buf[0] != Sync {
 		return fmt.Errorf("expected sync byte, got %x", buf[0])
 	}
-	if buf[1]&0x80 > 0 {
-		p.Error = true
-	}
-	if buf[1]&0x40 > 0 {
-		p.PayloadStart = true
-	}
-	if buf[1]&0x20 > 0 {
-		p.Priority = true
-	}
+	p.Error = (buf[1] & 0x80) > 0
+	p.PayloadStart = (buf[1] & 0x40) > 0
+	p.Priority = (buf[1] & 0x20) > 0
 	// Want next 13 bits. 5 from buf[1] and all of buf[2].
 	pid := binary.BigEndian.Uint16([]byte{buf[1] & 0x1f, buf[2]})
 	p.PID = PacketID(pid)
@@ -79,15 +73,9 @@ func parseAdaptationField(buf []byte) *Adaptation {
 	var af Adaptation
 	flags := buf[0]
 	buf = buf[1:]
-	if flags&0x80 > 0 {
-		af.Discontinuous = true
-	}
-	if flags&0x40 > 0 {
-		af.RandomAccess = true
-	}
-	if flags&0x20 > 0 {
-		af.Priority = true
-	}
+	af.Discontinuous = flags&0x80 > 0
+	af.RandomAccess = flags&0x40 > 0
+	af.Priority = flags&0x20 > 0
 	if flags&0x10 > 0 {
 		var p [6]byte
 		copy(p[:], buf[:6])
