@@ -6,22 +6,13 @@ import (
 	"io"
 )
 
-func Decode(r io.Reader) (*Packet, error) {
-	buf := make([]byte, PacketSize)
-	n, err := r.Read(buf)
-	if n != PacketSize {
-		if err != nil {
-			return nil, fmt.Errorf("short read (%d bytes): %w", n, err)
-		}
-		return nil, fmt.Errorf("short read (%d bytes)", n)
-	}
-	if err != nil {
-		return nil, err
+func Unmarshal(buf []byte, p *Packet) error {
+	if len(buf) != PacketSize {
+		return fmt.Errorf("need exactly %d bytes, have %d", PacketSize, len(buf))
 	}
 	if buf[0] != Sync {
-		return nil, fmt.Errorf("expected sync byte, got %x", buf[0])
+		return fmt.Errorf("expected sync byte, got %x", buf[0])
 	}
-	var p Packet
 	if buf[1]&0x80 > 0 {
 		p.Error = true
 	}
@@ -52,10 +43,29 @@ func Decode(r io.Reader) (*Packet, error) {
 		alen := int(buf[4])
 		buf = buf[4+1+alen:]
 	default:
-		return nil, fmt.Errorf("neither adaptation field or payload present")
+		return fmt.Errorf("neither adaptation field or payload present")
 	}
-	if err := unmarshalPayload(buf, &p); err != nil {
-		return nil, fmt.Errorf("unmarshal payload: %w", err)
+	if err := unmarshalPayload(buf, p); err != nil {
+		return fmt.Errorf("unmarshal payload: %w", err)
+	}
+	return nil
+}
+
+func Decode(r io.Reader) (*Packet, error) {
+	buf := make([]byte, PacketSize)
+	n, err := r.Read(buf)
+	if n != PacketSize {
+		if err != nil {
+			return nil, fmt.Errorf("short read (%d bytes): %w", n, err)
+		}
+		return nil, fmt.Errorf("short read (%d bytes)", n)
+	}
+	if err != nil {
+		return nil, err
+	}
+	var p Packet
+	if err := Unmarshal(buf, &p); err != nil {
+		return &p, fmt.Errorf("unmarshal packet: %w", err)
 	}
 	return &p, nil
 }
