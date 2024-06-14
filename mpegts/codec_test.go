@@ -2,6 +2,7 @@ package mpegts
 
 import (
 	"bytes"
+	"crypto/md5"
 	"errors"
 	"io"
 	"os"
@@ -70,27 +71,48 @@ func TestDecode(t *testing.T) {
 	}
 }
 
-func TestOnePacket(t *testing.T) {
-	tstamp := Timestamp{
-		PTS:   true,
-		Ticks: 900909,
-	}
-	var want = [5]byte{0x21, 0x00, 0x37, 0x7e, 0x5b}
-
-	unpacked, err := unpackTimestamp(want)
+func TestScanner(t *testing.T) {
+	name := "testdata/193039199_mp4_h264_aac_hq_7.ts"
+	data, err := os.ReadFile(name)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if unpacked.Ticks != tstamp.Ticks {
-		t.Errorf("unpacked ticks %d, want %d", unpacked.Ticks, tstamp.Ticks)
-		t.Logf("want\t%#033b", tstamp.Ticks)
-		t.Logf("got\t%#033b", unpacked.Ticks)
-	}
+	sum := md5.Sum(data)
 
-	packed := packTimestamp(tstamp)
-	if packed != want {
-		t.Errorf("packTimestamp(%v) = %#x, want %#x", tstamp, packed, want)
-		t.Logf("got\t%08b", packed)
-		t.Logf("want\t%08b", want)
+	f, err := os.Open(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	buf := &bytes.Buffer{}
+	sc := NewScanner(f)
+	var i int
+	for sc.Scan() {
+		i++
+		p := sc.Packet()
+		if err := Encode(buf, p); err != nil {
+			t.Fatalf("packet %d: encode: %v", i, err)
+		}
+	}
+	if sc.Err() != nil {
+		t.Fatalf("scan: %v", sc.Err())
+	}
+	got := md5.Sum(buf.Bytes())
+	if got != sum {
+		t.Errorf("re-encoded stream differs from source: got checksum %x, want %x", got, sum)
+	}
+}
+
+func TestPCR(t *testing.T) {
+	a := [6]byte{0x00, 0x24, 0x52, 0xd4, 0x7e, 0x00}
+	pcr := parsePCR(a)
+
+	var got [6]byte
+	if err := putPCR(got[:], &pcr); err != nil {
+		t.Errorf("put pcr: %v", err)
+	}
+	if got != a {
+		t.Errorf("PCR differs after decode, re-encode")
+		t.Errorf("putPCR(buf, %v) = %08b, want %08b", pcr, got, a)
 	}
 }

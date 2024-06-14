@@ -123,11 +123,14 @@ func parseAdaptationField(buf []byte) *Adaptation {
 	return &af
 }
 
+// 0 pppp pppp
+// 1 pppp pppp
+// 2 pppp pppp
+// 3 pppp pppp
+// 4 prrr rrre
+// 5 eeee eeee
 func parsePCR(a [6]byte) PCR {
-	b := []byte{0, 0, 0, a[4] & 0x80, a[3], a[2], a[1], a[0]}
-	//copy(b[:4], a[:4])
-	// b[4] &= 0x80 // only want left-most bit
-	//var base uint64 = uint64(a[0] >>
+	b := []byte{0, 0, 0, a[0], a[1], a[2], a[3], a[4] & 0x80}
 	base := binary.BigEndian.Uint64(b)
 	// next 6 bits reserved, so remaining 1 bit in a[5] and all of a[6] have the extension.
 	ext := binary.BigEndian.Uint16([]byte{a[4] & 0x01, a[5]})
@@ -135,7 +138,7 @@ func parsePCR(a [6]byte) PCR {
 }
 
 func unmarshalPayload(payload []byte, p *Packet) error {
-	if isPESPayload(payload) {
+	if isPESPayload(payload) && p.PayloadStart {
 		pes, err := decodePES(payload)
 		if err != nil {
 			return fmt.Errorf("decode PES packet: %w", err)
@@ -277,12 +280,10 @@ func putPCR(b []byte, pcr *PCR) error {
 	if pcr.Base > max {
 		return fmt.Errorf("base %d larger than max %d", pcr.Base, max)
 	}
-	b[0] = byte(pcr.Base)
-	b[1] = byte(pcr.Base >> 8)
-	b[2] = byte(pcr.Base >> 16)
-	b[3] = byte(pcr.Base >> 24)
-	b[4] = byte(pcr.Base >> 32)
-
+	ubuf := make([]byte, 8)
+	binary.BigEndian.PutUint64(ubuf, pcr.Base)
+	ubuf = ubuf[3:] // we only want 33 bits, so get 4 + 1 bytes (32+1 bits)
+	copy(b, ubuf)
 	b[4] |= 0x7e // toggle 6 reserved bits
 
 	var emax uint16 = 512 - 1 // max 9-bit int
