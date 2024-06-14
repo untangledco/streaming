@@ -68,9 +68,10 @@ func removeOld(dir string, maxAge time.Duration) error {
 	return nil
 }
 
-func dumpMedia(dir string, r io.Reader, ch <-chan time.Time) error {
+func writeSegments(dir string, r io.Reader, ch <-chan time.Time) error {
 	var segment int
 	segments := &bytes.Buffer{}
+	sc := mpegts.NewScanner(r)
 	for {
 		select {
 		case <-ch:
@@ -82,9 +83,13 @@ func dumpMedia(dir string, r io.Reader, ch <-chan time.Time) error {
 			segments.Reset()
 			segment++
 		default:
-			_, err := io.CopyN(segments, r, int64(maxTSBytes))
-			if err != nil {
-				return err
+			if sc.Scan() {
+				if err := mpegts.Encode(segments, sc.Packet()); err != nil {
+					return fmt.Errorf("segment %d: encode packet: %w", segment, err)
+				}
+			}
+			if sc.Err() != nil {
+				return fmt.Errorf("segment %d: scan: %w", segment, sc.Err())
 			}
 		}
 	}
@@ -154,8 +159,8 @@ func main() {
 
 	go func() {
 		ticker := time.NewTicker(segmentDuration)
-		if err := dumpMedia(cacheDir, conn, ticker.C); err != nil {
-			log.Fatalln("dump media:", err)
+		if err := writeSegments(cacheDir, conn, ticker.C); err != nil {
+			log.Fatalln("write segments:", err)
 		}
 	}()
 
