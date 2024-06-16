@@ -26,8 +26,11 @@ type Header struct {
 	Extension     *Extension
 }
 
-const VersionRFC3550 uint8 = 2
-const VersionDraft uint8 = 1
+const (
+	versionPreSpec uint8 = 0
+	VersionDraft   uint8 = 1 << 6
+	VersionRFC3550       = 1 << 7
+)
 
 type PayloadType uint8
 
@@ -35,6 +38,14 @@ const (
 	PayloadMP2T PayloadType = 33
 	// ...
 )
+
+func (t PayloadType) String() string {
+	switch t {
+	case PayloadMP2T:
+		return "MP2T"
+	}
+	return "unknown"
+}
 
 type Extension struct {
 	Profile [2]byte
@@ -49,6 +60,7 @@ func Unmarshal(data []byte, p *Packet) error {
 	// sequence (16)
 	// timestamp (32)
 	// syncsource (32)
+	// TODO(otl): set this as a constant - headerSize? minPacketSize?
 	need := 1 + 1 + 2 + 4 + 4
 	if len(data) < need {
 		return fmt.Errorf("need %d bytes, have %d", need, len(data))
@@ -64,7 +76,7 @@ func Unmarshal(data []byte, p *Packet) error {
 
 	// m t t t t t t t
 	p.Header.Marker = data[1]&0x80 > 0
-	p.Header.Type = PayloadType(uint8(data[1] & 0x7f))
+	p.Header.Type = PayloadType(data[1] & 0x7f)
 
 	p.Header.Sequence = binary.BigEndian.Uint16(data[2:4])
 	p.Header.Timestamp = binary.BigEndian.Uint32(data[4:8])
@@ -75,6 +87,7 @@ func Unmarshal(data []byte, p *Packet) error {
 	}
 	data = data[12:]
 
+	// is the extension bit set?
 	if data[0]&0b00010000 > 0 {
 		if len(data) < 4 {
 			return fmt.Errorf("header extension: %d bytes after header, need %d", len(data), 4)
@@ -109,4 +122,50 @@ func Unmarshal(data []byte, p *Packet) error {
 	}
 	p.Payload = data[n:]
 	return nil
+}
+
+func Marshal(p *Packet) ([]byte, error) {
+	if p.Header.Version > VersionRFC3550 {
+		return nil, fmt.Errorf("bad version %v", p.Header.Version)
+	}
+	buf := make([]byte, 12) // see Unmarshal() for size
+	buf[0] |= p.Header.Version
+	if p.Header.padding {
+		buf[0] |= 0b00100000
+	}
+	if p.Header.Extension != nil {
+		buf[0] |= 0b00010000
+	}
+	maxContribCount := 0x0f // max 4-bit integer
+	if len(p.Header.ContribSource) > maxContribCount {
+		return nil, fmt.Errorf("contribution source count %d greater than max %d", len(p.Header.ContribSource), maxContribCount)
+	}
+	buf[0] |= uint8(len(p.Header.ContribSource))
+
+	if p.Header.Marker {
+		buf[1] |= 0b10000000
+	}
+	if p.Header.Type > 0x7f {
+		return nil, fmt.Errorf("payload type %s (%d) greater than max %d", p.Header.Type, p.Header.Type, 0x7f)
+	}
+	buf[1] |= byte(p.Header.Type)
+
+	binary.BigEndian.PutUint16(buf[2:4], p.Header.Sequence)
+	binary.BigEndian.PutUint32(buf[4:8], p.Header.Timestamp)
+	binary.BigEndian.PutUint32(buf[8:12], p.Header.SyncSource)
+
+	if p.Header.Extension != nil {
+		buf = append(buf, p.Header.Extension.Profile[:]...)
+		if len(p.Header.Extension.Data) > 0xffff { // max uint16
+			return buf, fmt.Errorf("extension data length %d greater than max %d", len(p.Header.Extension.Data), 0xffff)
+		}
+		buf = binary.BigEndian.AppendUint16(buf, uint16(len(p.Header.Extension.Data)))
+		buf = append(buf, p.Header.Extension.Data...)
+	}
+
+	for _, src := range p.Header.ContribSource {
+		buf = binary.BigEndian.AppendUint32(buf, src)
+	}
+
+	return append(buf, p.Payload...), nil
 }
