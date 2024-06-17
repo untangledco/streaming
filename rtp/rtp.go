@@ -8,21 +8,65 @@ import (
 	"fmt"
 )
 
+// Packet represents a single RTP data packet.
 type Packet struct {
+	// Header is the RTP fixed header present at the beginning of
+	// every packet.
 	Header  Header
+	// Payload contains the raw bytes, excluding the header,
+	// transported in a packet.
 	Payload []byte
 }
 
+// Header represents the "Fixed Header" specified in RFC 3550 section 5.1.
 type Header struct {
+	// Version specifies the version of RTP used in the Packet.
+	// In practice, the only version in use is VersionRFC3550.
 	Version uint8
+
 	// TODO(otl): do we store padding bytes? how many?
 	padding       bool
+
+	// Marker indicates the marker bit is set. The payload type
+	// determines how this value is interpreted.
 	Marker        bool
+
+	// Type specifies the format of the payload transported in the Packet.
+	// In general, each type has its own IETF RFC specifying how the payload is encoded.
+	// For example, PayloadMP2T is detailed in RFC 2250.
 	Type          PayloadType
+
+	// Sequence is a monotonically incremented number used by
+	// receivers to manage packet loss. The first packet's Sequence
+	// should be randomly assigned, then incremented by one for each
+	// RTP packet transmitted.
 	Sequence      uint16
+
+	// Timestamp is the instant sampled of the first byte of the packet.
+	// The first packet in a session should have a randomly assigned
+	// timestamp. Subsequent timestamps are calculated according to a
+	// monotonically incrementing clock. The clock frequency, and how the
+	// timestamp should be interpreted, is dictated by the payload type. For
+	// instance, the Timestamp field of RTP packets with MPEG payloads
+	// represents the number of ticks of a 90KHz clock. Timestamps of GSM
+	// audio RTP packets represent ticks of a 8KHz clock.
 	Timestamp     uint32
+
+	// SyncSource identifies the synchronisation source of the RTP
+	// session. It should be randomly assigned at the start of a
+	// session and remain unchanged throughout to prevent
+	// collisions with other sessions.
 	SyncSource    uint32
+
+	// ContribSource lists a maximum of 15 contribution sources
+	// used to generate the payload. For example, a RTP session for
+	// audio transport may list each SyncSource in ContribSource.
 	ContribSource []uint32
+
+	// Extension is an optional field which may be used by certain
+	// payloads to transmit extra information. The RTP specification
+	// discourages the use of Extension. Instead it recommendeds to
+	// store extra information in leading bytes of the payload.
 	Extension     *Extension
 }
 
