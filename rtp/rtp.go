@@ -126,6 +126,7 @@ func Unmarshal(data []byte, p *Packet) error {
 
 	p.Header.Version = uint8(data[0] & 0b11000000)
 	p.Header.padding = data[0]&0b00100000 > 0
+	hasExtension := data[0]&0b00010000 > 0
 	// extension bit, ignore til later, 0b00010000
 	cc := data[0] & 0b00001111
 	if cc > 0 {
@@ -145,8 +146,7 @@ func Unmarshal(data []byte, p *Packet) error {
 	}
 	data = data[12:]
 
-	// is the extension bit set?
-	if data[0]&0b00010000 > 0 {
+	if hasExtension {
 		if len(data) < 4 {
 			return fmt.Errorf("header extension: %d bytes after header, need %d", len(data), 4)
 		}
