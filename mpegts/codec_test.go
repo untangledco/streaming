@@ -10,8 +10,7 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	// f, err := os.Open("testdata/193039199_mp4_h264_aac_hq_7.ts")
-	f, err := os.Open("testdata/bbb.ts")
+	f, err := os.Open("testdata/193039199_mp4_h264_aac_hq_7.ts")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,6 +68,21 @@ func TestDecode(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestBadData(t *testing.T) {
+	m := map[string][]byte{
+		"garbage":         []byte("0123456789"),
+		"only sync bytes": bytes.Repeat([]byte{Sync}, PacketSize),
+	}
+	for name, in := range m {
+		t.Run(name, func(t *testing.T) {
+			var p Packet
+			if err := Unmarshal(in, &p); err == nil {
+				t.Errorf("Unmarshal(%s): nil error", string(in))
+			}
+		})
 	}
 }
 
