@@ -8,6 +8,9 @@ Patches are preferred via email so that we're not too locked in to GitHub.
 Post them to the mailing list
 [~otl/untangledco@lists.sr.ht](mailto:~otl/untangledco@lists.sr.ht),
 or to [Oliver Lowe](mailto:o@olowe.co).
+See [git-send-email.io](https://git-send-email.io) if you're unfamiliar with the workflow.
+
+	git config sendemail.to '~otl/untangledco@lists.sr.ht'
 
 We also accept changes via [pull requests](https://github.com/untangledco/streaming/pulls).
 
