@@ -15,37 +15,37 @@ import (
 // AssocLanguage, Forced, and Characteristics in their Group.
 type Rendition struct {
 	// Type is a required field identifying the type of media in the rendition.
-	Type            MediaType
+	Type MediaType
 	// URI is a required field pointing to a media playlist carrying the rendition.
-	URI             string
+	URI string
 	// Group names the group in which this Rendition belongs.
 	// It corresponds to the "GROUP-ID" attribute.
-	Group           string
+	Group string
 	// Language contains a RFC 5646-formatted tag identifying
 	// the primary language used in the rendition.
-	Language        string
+	Language string
 	// AssocLanguage contains a RFC 5646-formatted tag identifying
 	// an associated language used in a different role than the one set in Language.
-	AssocLanguage   string
+	AssocLanguage string
 	// Name describes the rendition.
-	Name            string
+	Name string
 	// Default specifies whether players should play this
 	// Rendition when a user has not indicated otherwise.
-	Default         bool
+	Default bool
 	// AutoSelect indicates that this Rendition may be
 	// automatically played based on the playback environment, such
 	// as a matching system language.
-	AutoSelect      bool
+	AutoSelect bool
 	// Forced indicates that the rendition contains essential content for playing.
-	Forced          bool
+	Forced bool
 	// InstreamID points to closed-caption information.
-	InstreamID      *CCInfo
+	InstreamID *CCInfo
 	// Characteristics contains Uniform Type Identifiers.
 	// For example []string{CharacteristicTranscribesDialog, ChractersticEasyToRead}
 	Characteristics []string
 	// Channels contains the different counts of audio channels available in the Rendition.
 	// For example []string{"2,6"} represents stereo (2) and 5.1 surround-sound (5 + 1) channels.
-	Channels        []string
+	Channels []string
 }
 
 func (r Rendition) String() string {
@@ -123,7 +123,7 @@ func (info *CCInfo) String() string {
 const (
 	CharacteristicTranscribesDialog      = "public.accessibility.transcribes-spoken-dialog"
 	CharacteristicDescribesMusicAndSound = "public.accessibility.transcribes-spoken-dialog"
-	ChractersticEasyToRead               = "public.easy-to-read"
+	CharactersticEasyToRead              = "public.easy-to-read"
 	CharacteristicDescribesVideo         = "public.accessibility.describes-video"
 )
 
@@ -155,7 +155,7 @@ type Variant struct {
 	// Digital Content Protection (HDCP). The zero value
 	// (HDCPLevelNone) indicates no output copy protection is
 	// required for playing.
-	HDCP      HDCPLevel
+	HDCP HDCPLevel
 
 	// Each remaining field identifies a matching rendition of
 	// the same type in the playlist. The match has its Group set to
@@ -178,9 +178,9 @@ type Variant struct {
 	//		Group: "sub1",
 	//		...
 	//	}
-	Audio     string
-	Video     string
-	Subtitles string
+	Audio          string
+	Video          string
+	Subtitles      string
 	ClosedCaptions string // May be NoClosedCaptions to explicitly signal no rendition.
 }
 
