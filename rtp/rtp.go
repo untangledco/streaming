@@ -6,13 +6,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math/rand"
 )
 
 // Packet represents a single RTP data packet.
 type Packet struct {
 	// Header is the RTP fixed header present at the beginning of
 	// every packet.
-	Header  Header
+	Header Header
 	// Payload contains the raw bytes, excluding the header,
 	// transported in a packet.
 	Payload []byte
@@ -25,22 +26,22 @@ type Header struct {
 	Version uint8
 
 	// TODO(otl): do we store padding bytes? how many?
-	padding       bool
+	padding bool
 
 	// Marker indicates the marker bit is set. The payload type
 	// determines how this value is interpreted.
-	Marker        bool
+	Marker bool
 
 	// Type specifies the format of the payload transported in the Packet.
 	// In general, each type has its own IETF RFC specifying how the payload is encoded.
 	// For example, PayloadMP2T is detailed in RFC 2250.
-	Type          PayloadType
+	Type PayloadType
 
 	// Sequence is a monotonically incremented number used by
 	// receivers to manage packet loss. The first packet's Sequence
 	// should be randomly assigned, then incremented by one for each
 	// RTP packet transmitted.
-	Sequence      uint16
+	Sequence uint16
 
 	// Timestamp is the instant sampled of the first byte of the packet.
 	// The first packet in a session should have a randomly assigned
@@ -50,13 +51,13 @@ type Header struct {
 	// instance, the Timestamp field of RTP packets with MPEG payloads
 	// represents the number of ticks of a 90KHz clock. Timestamps of GSM
 	// audio RTP packets represent ticks of a 8KHz clock.
-	Timestamp     uint32
+	Timestamp uint32
 
 	// SyncSource identifies the synchronisation source of the RTP
 	// session. It should be randomly assigned at the start of a
 	// session and remain unchanged throughout to prevent
 	// collisions with other sessions.
-	SyncSource    uint32
+	SyncSource uint32
 
 	// ContribSource lists a maximum of 15 contribution sources
 	// used to generate the payload. For example, a RTP session for
@@ -67,7 +68,7 @@ type Header struct {
 	// payloads to transmit extra information. The RTP specification
 	// discourages the use of Extension. Instead it recommendeds to
 	// store extra information in leading bytes of the payload.
-	Extension     *Extension
+	Extension *Extension
 }
 
 const (
@@ -83,7 +84,20 @@ const (
 	// ...
 )
 
+// DynamicPayloadType returns a randomly generated PayloadType from
+// the range of allowed values for payloads with non-static PayloadType
+// values. For example, transporting text and JPEG XS with RTP requires
+// the use of a dynamic payload type.
+func DynamicPayloadType() PayloadType {
+	floor := 96
+	ceil := 127
+	return PayloadType(floor + rand.Intn(ceil-floor))
+}
+
 func (t PayloadType) String() string {
+	if t >= 96 && t <= 127 {
+		return "dynamic"
+	}
 	switch t {
 	case PayloadMP2T:
 		return "MP2T"
