@@ -105,6 +105,11 @@ func (t PayloadType) String() string {
 	return "unknown"
 }
 
+const (
+	ClockMP2T = 90000 // 90KHz
+	ClockText = 1000  // 1KHz
+)
+
 type Extension struct {
 	Profile [2]byte
 	Data    []byte
