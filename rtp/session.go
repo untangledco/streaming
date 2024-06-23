@@ -20,7 +20,6 @@ func Dial(network, addr string) (*Session, error) {
 // Session represents a RTP session... TODO(otl)
 // When a Session is established with Dial(), ...
 type Session struct {
-	Type PayloadType
 	// Clock is the rate of the... in hertz.
 	// If zero, automatic detection attempted...
 	Clock int
@@ -38,24 +37,21 @@ func (s *Session) init() {
 	s.timestamp = rand.Uint32()
 }
 
-// Transmit sends the encoded form of packet to the destination address in s.
-// The Session will manage
+// Transmit sends the packet to the destination address in s.
 func (s *Session) Transmit(packet *Packet) error {
 	if packet.Header.Version == 0 {
 		packet.Header.Version = VersionRFC3550
 	}
 
-	packet.Header.Sequence = s.sequence
 	s.sequence++
+	packet.Header.Sequence = s.sequence
 
 	ticks := ticksSince(s.previous, s.Clock)
 	packet.Header.Timestamp = s.timestamp + ticks
 	s.previous = time.Now()
 	s.timestamp += ticks
 
-	if packet.Header.SyncSource == 0 {
-		packet.Header.SyncSource = s.syncSource
-	}
+	packet.Header.SyncSource = s.syncSource
 
 	b, err := Marshal(packet)
 	if err != nil {
