@@ -1,0 +1,64 @@
+package main
+
+import (
+	"rtp"
+	"jxs"
+)
+
+func transmit(session *rtp.Session, payload chan *jxs.Payload) {
+	for p := range payload {
+		packets, err := jxs.Packets(p)
+		if err != nil {
+			log.Printf("payload to RTP packets: %v", err)
+			continue
+		}
+		for _, packet := range packets {
+			if err := session.Transmit(p); err != nil {
+				log.Printf("transmit: %v", err)
+			}
+		}
+	}
+}
+
+func main() {
+	session, err := rtp.Dial("udp", "[::1]:5004")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ch := make(chan *jxs.Payload)
+	go transmit(session, ch)
+
+	for i := 0; ; i++ {
+		frame, err := jxs.DecodeFrame(os.Stdin)
+		if errors.Is(err, io.EOF) {
+			close(ch)
+			break
+		} else if err != nil {
+			log.Fatal(err)
+		}
+		mtu := 1492 // typical network
+		pus, err := jxs.Packetize(&frame, mtu)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for j, pu := range pus {
+			payload := &jxs.Payload{
+				Header: &jxs.Header{
+					Sequential: true,
+					PacketMode: true,
+					FrameCount: uint8(i),
+					SEPCount: 0, // TODO(otl)
+					PacketCount: j, // TODO(otl)
+				},
+				PacketizationUnit: &jxs.PacketizationUnit{
+					frame.VideoBox,
+					frame.ColorBox,
+				},
+			},
+			ch <- payload
+		}
+	}
+}
+
+
