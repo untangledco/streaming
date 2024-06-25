@@ -37,22 +37,26 @@ func ExampleEncode() {
 }
 
 func ExampleDecode() {
-	m3u8Data := `#EXTM3U
+	s := `
+#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=640x360
 url_0/low.m3u8
 #EXT-X-STREAM-INF:BANDWIDTH=2560000,RESOLUTION=1280x720
 url_0/mid.m3u8
 #EXT-X-STREAM-INF:BANDWIDTH=7680000,RESOLUTION=1920x1080
 url_0/high.m3u8`
-	rd := strings.NewReader(m3u8Data)
 
-	p, _ := Decode(rd)
-	fmt.Printf("%+v", p)
-
-	// Output: &{Version:0 Segments:[] IndependentSegments:false Start:<nil> TargetDuration:0s Sequence:0 DiscontinuitySequence:0 End:false Type:invalid IFramesOnly:false Media:[] Variants:[#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=640x360
-	// url_0/low.m3u8 #EXT-X-STREAM-INF:BANDWIDTH=2560000,RESOLUTION=1280x720
-	// url_0/mid.m3u8 #EXT-X-STREAM-INF:BANDWIDTH=7680000,RESOLUTION=1920x1080
-	// url_0/high.m3u8] SessionData:[] SessionKey:<nil>}
+	p, err := Decode(strings.NewReader(s))
+	if err != nil {
+		// handle error
+	}
+	for _, v := range p.Variants {
+		fmt.Printf("%s %dp@%dkbps\n", v.URI, v.Resolution[1], v.Bandwidth/1e3)
+	}
+	// Output:
+	// url_0/low.m3u8 360p@1280kbps
+	// url_0/mid.m3u8 720p@2560kbps
+	// url_0/high.m3u8 1080p@7680kbps
 }
 
 func TestDecode(t *testing.T) {
