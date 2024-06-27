@@ -3,8 +3,10 @@ package mpegts
 
 import "fmt"
 
+// PacketSize is the length of a MPEG-TS packet in bytes.
 const PacketSize int = 188
 
+// Sync is the first byte of a MPEG-TS packet.
 const Sync byte = 'G'
 
 type Packet struct {
