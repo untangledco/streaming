@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="true"?>
+<List>
+	<Item Duration="00:15:38.200" ScheduledAt="2022-06-30T06:33:03.776Z" ProxyProgress="100" EpgId="30977690" SubtitleId="151615542" ThirdPartyId="T00068883" Description="" Name="Global bike race 1" Id="{34E7F37C-9ED2-4A9F-86C4-1B2D2190F82E}"/>
+	<Item Duration="00:00:05.000" ScheduledAt="2022-06-30T06:48:41.976Z" ProxyProgress="100" EpgId="30977690" SubtitleId="225019213" ThirdPartyId="E00101118" Description="[DYNAMIC NAVIGATION BOARD]" Name="Coming up" Id="{89C0B4F4-2A54-41AB-B88D-6E1EBA0EF7BC}" OutOfNetwork="y" AvailId="4164841"/>
+	<Item Duration="00:00:30.000" ScheduledAt="2022-06-30T06:48:46.976Z" ProxyProgress="100" EpgId="30977690" SubtitleId="138838730" ThirdPartyId="P00148614" Description="[PROMO]" Name="Global bike race promo" Id="{282EB03E-5904-4115-BFBA-F53F8DDBFB69}" OutOfNetwork="y" AvailId="4164841"/>
+	<Item Duration="00:00:30.000" ScheduledAt="2022-06-30T06:49:16.976Z" ProxyProgress="100" EpgId="30977690" SubtitleId="138838729" ThirdPartyId="P00148893" Description="[PROMO]" Name="Cooking show promo" Id="{3D830614-D1A8-42A3-97D6-55982BBAAA76}" OutOfNetwork="y" AvailId="4164841"/>
+	<Item Duration="00:00:30.000" ScheduledAt="2022-06-30T06:49:46.976Z" ProxyProgress="100" EpgId="30977690" SubtitleId="209120795" ThirdPartyId="C00152398" Description="[PAID]" Name="Car insurance" Id="{E448A8E6-0276-4B43-96DA-E59B81CE0E55}" OutOfNetwork="y" AvailId="4164841"/>
+	<Item Duration="00:00:45.000" ScheduledAt="2022-06-30T06:50:16.976Z" ProxyProgress="100" EpgId="30977690" SubtitleId="209120794" ThirdPartyId="C00142010" Description="[PAID]" Name="Wildlife charity fund" Id="{DED4135D-1A41-41E0-9903-2E0A492DE2EE}" OutOfNetwork="y" AvailId="4164841"/>
+	<Item Duration="00:00:15.000" ScheduledAt="2022-06-30T06:51:01.976Z" ProxyProgress="100" EpgId="30977690" SubtitleId="209120792" ThirdPartyId="C00153278" Description="[PAID]" Name="Some other insurance" Id="{2D6D3D6C-F927-40D0-8011-5F93EDFE3881}" OutOfNetwork="y" AvailId="4164841"/>
+</List>
