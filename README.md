@@ -1,8 +1,37 @@
-This repository contains packages for developing media streaming systems in Go.
-
 [![pkgsite](https://pkg.go.dev/badge/github.com/untangledco/streaming)](https://pkg.go.dev/github.com/untangledco/streaming)
 
+This repository contains packages for developing media streaming systems in Go.
+Watch it being developed live!
+
+- [twitch.tv/untangledco]
+- [youtube.com/@untangledco]
+
+We use these packages to self-host the livestream at [olowe.co/live].
+
+[twitch.tv/untangledco]: https://twitch.tv/untangledco
+[youtube.com/@untangledco]: https://youtube.com/@untangledco
+[olowe.co/live]: https://olowe.co/live
+
 ## Contributing
+
+### Stuff to do
+
+Larger, fleshed-out tasks are managed in
+[issues](https://github.com/untangledco/streaming/issues).
+
+We can put `TODO` notes in the source code, too.
+[godoc] provides a graphic interface to view these
+with the `-notes` flag:
+
+	godoc -notes TODO
+
+Of course `grep` works too:
+
+	git grep -n TODO
+
+[godoc]: https://pkg.go.dev/golang.org/x/tools/cmd/godoc
+
+### Patches
 
 Patches are preferred via email so that we're not too locked in to GitHub.
 Post them to the mailing list
