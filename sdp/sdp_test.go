@@ -1,6 +1,9 @@
 package sdp
 
 import (
+	"net/mail"
+	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -21,11 +24,30 @@ m=audio 49180 RTP/AVP 0
 m=video 51372 RTP/AVP 99
 c=IN IP6 2001:db8::2
 a=rtpmap:99 h263-1998/90000`
+	want := Session{
+		Name: "Call to John Smith",
+		Origin: Origin{
+			Username:    "jdoe",
+			ID:          3724394400,
+			Version:     3724394405,
+			Network:     "IN",
+			AddressType: "IP4",
+			Address:     "198.51.100.1",
+		},
+		Info: "SDP Offer #1",
+		URI: &url.URL{Scheme: "http",
+			Host: "www.jdoe.example.com",
+			Path: "/home.html",
+		},
+		Email: &mail.Address{"Jane Doe", "jane@jdoe.example.com"},
+		Phone: "+1 617 555-6011",
+	}
 	session, err := ReadSession(strings.NewReader(s))
 	if err != nil {
 		t.Fatalf("read session: %v", err)
 	}
-	if session.Name != "Call to John Smith" {
-		t.Errorf("bad name bla bla TODO")
+	if !reflect.DeepEqual(*session, want) {
+		t.Errorf("got %+v\nwant %+v\n", *session, want)
 	}
+	t.Errorf("TODO still not parsing all fields")
 }

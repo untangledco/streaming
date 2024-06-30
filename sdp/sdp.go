@@ -18,10 +18,12 @@ type Session struct {
 	Origin  Origin
 	Name    string
 
-	Info    string
-	URI     *url.URL
-	Email   *mail.Address
-	Phone   string
+	Info  string
+	URI   *url.URL
+	Email *mail.Address
+	// TODO(otl): can we do any sanitisation here? at least delete spaces or something...?
+	// The number "+1 617 555-6011" is semantically equal to "+16175556011"
+	Phone string
 	// TODO(otl): add rest of fields
 }
 
@@ -31,13 +33,17 @@ type Origin struct {
 	Version     int
 	Network     string // TODO(otl): only "IN" is valid... so int type?
 	AddressType string // TODO(otl): only "IP4", "IP6" valid... new int type?
-	Address     string
+	Address     string // IPv4, IPv6 literal or a hostname
 }
+
+var fchars = [...]string{"i", "u", "e", "p"}
 
 func ReadSession(rd io.Reader) (*Session, error) {
 	sc := bufio.NewScanner(rd)
 	next := "v"
 	var session Session
+First:
+	// read the mandatory fields first
 	for sc.Scan() {
 		if sc.Text() == "" {
 			continue // TODO(otl): empty lines allowed?
@@ -72,25 +78,49 @@ func ReadSession(rd io.Reader) (*Session, error) {
 				return nil, fmt.Errorf("empty name")
 			}
 			session.Name = v
+			break First
+		default:
+			return nil, fmt.Errorf("expected key %q, found %q", next, v)
+		}
+	}
+
+	// Time for the optional fields. We keep a slice...
+	// TODO(otl): document in plain language what's going on here.
+	onext := fchars[:]
+	for sc.Scan() {
+		if onext == nil {
+			break
+		}
+		if sc.Text() == "" {
+			continue // TODO(otl): empty lines allowed?
+		}
+		k, v, found := strings.Cut(sc.Text(), "=")
+		if !found {
+			return nil, fmt.Errorf("parse field %q: missing %q", next, "=")
+		}
+		switch k {
 		case "i":
 			session.Info = v
-			// TODO(otl): what do we expect next?
+			onext = fchars[1:]
 		case "u":
 			u, err := url.Parse(v)
 			if err != nil {
 				return nil, fmt.Errorf("parse uri: %w", err)
 			}
 			session.URI = u
-			// TODO(otl): what do we expect next?
+			onext = fchars[2:]
 		case "e":
 			addr, err := parseEmail(v)
 			if err != nil {
 				return nil, fmt.Errorf("parse email: %w", err)
 			}
 			session.Email = addr
-			// TODO(otl): what do we expect next?
+			onext = fchars[3:]
+		case "p":
+			session.Phone = v
+			onext = nil
 		default:
-			return &session, fmt.Errorf("unsupported field %q", k)
+			return nil, fmt.Errorf("expected one of %v, found %q", onext, k)
 		}
 	}
 	return &session, sc.Err()
