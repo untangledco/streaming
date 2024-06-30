@@ -1,0 +1,8 @@
+v=0
+o=jdoe 3724394400 3724394405 IN IP4 198.51.100.1
+s=Call to John Smith
+i=SDP Offer #1
+p=+1 617 555-6011
+u=http://www.jdoe.example.com/home.html
+e=Jane Doe <jane@jdoe.example.com>
+c=IN IP4 198.51.100.1
