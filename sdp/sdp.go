@@ -44,7 +44,7 @@ First:
 	// read the mandatory fields first
 	for sc.Scan() {
 		if sc.Text() == "" {
-			continue // TODO(otl): empty lines allowed?
+			return nil, fmt.Errorf("illegal empty line")
 		}
 		k, v, found := strings.Cut(sc.Text(), "=")
 		if !found {
@@ -90,7 +90,7 @@ First:
 			break
 		}
 		if sc.Text() == "" {
-			continue // TODO(otl): empty lines allowed?
+			return nil, fmt.Errorf("illegal empty line")
 		}
 		k, v, found := strings.Cut(sc.Text(), "=")
 		if !found {

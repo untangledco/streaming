@@ -11,6 +11,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -40,7 +41,7 @@ func init() {
 // rule of thumb for UDP transport
 const maxTSBytes int = 7 * mpegts.PacketSize
 
-const segmentDuration = 4 * time.Second
+const segmentDuration = 3 * time.Second
 
 var cacheDir string
 var sequence int
@@ -137,18 +138,25 @@ func setCache(seconds int, next http.Handler) http.HandlerFunc {
 	}
 }
 
+var listen = ":9000"
+
+func init() {
+	flag.StringVar(&listen, "l", ":9000", "listen")
+	flag.Parse()
+}
+
 func main() {
-	if len(os.Args) > 2 {
+	if len(flag.Args()) > 1 {
 		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(2)
-	} else if len(os.Args) == 2 {
-		cacheDir = os.Args[1]
+	} else if len(flag.Args()) == 1 {
+		cacheDir = flag.Args()[0]
 	}
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		log.Fatal(err)
 	}
 
-	ln, err := net.Listen("tcp", ":9000")
+	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		log.Fatal(err)
 	}
