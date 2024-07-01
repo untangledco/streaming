@@ -14,9 +14,8 @@ import (
 )
 
 type Session struct {
-	Version int
-	Origin  Origin
-	Name    string
+	Origin Origin
+	Name   string
 
 	Info  string
 	URI   *url.URL
@@ -60,9 +59,8 @@ First:
 				return nil, fmt.Errorf("parse version: %w", err)
 			}
 			if i != 0 {
-				return nil, fmt.Errorf("parse version: unsupported version %d", i)
+				return nil, fmt.Errorf("unsupported version %d", i)
 			}
-			session.Version = i
 			next = "o"
 		case "o":
 			o, err := parseOrigin(v)
