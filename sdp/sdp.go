@@ -21,8 +21,6 @@ type Session struct {
 	Info  string
 	URI   *url.URL
 	Email *mail.Address
-	// TODO(otl): can we do any sanitisation here? at least delete spaces or something...?
-	// The number "+1 617 555-6011" is semantically equal to "+16175556011"
 	Phone string
 	// TODO(otl): add rest of fields
 }
@@ -117,13 +115,22 @@ First:
 			session.Email = addr
 			onext = fchars[3:]
 		case "p":
-			session.Phone = v
+			session.Phone = cleanPhone(v)
 			onext = nil
 		default:
 			return nil, fmt.Errorf("expected one of %v, found %q", onext, k)
 		}
 	}
 	return &session, sc.Err()
+}
+
+// cleanPhone returns the phone number in s stripped of "-" and space
+// characters. Since "+1 617 555-6011" is semantically equal to
+// "+16175556011", storing the number in the latter form lets us test for
+// equality more easily.
+func cleanPhone(s string) string {
+	s = strings.ReplaceAll(s, " ", "")
+	return strings.ReplaceAll(s, "-", "")
 }
 
 func parseOrigin(line string) (Origin, error) {

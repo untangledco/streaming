@@ -26,7 +26,7 @@ func TestReadSession(t *testing.T) {
 					Path:   "/home.html",
 				},
 				Email: &mail.Address{"Jane Doe", "jane@jdoe.example.com"},
-				Phone: "+1 617 555-6011",
+				Phone: "+16175556011",
 			},
 		},
 		{
