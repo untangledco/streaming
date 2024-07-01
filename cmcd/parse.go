@@ -13,19 +13,19 @@ func parseInfo(tokens map[string]string) (Info, error) {
 	var err error
 	info.Request, err = parseRequest(tokens)
 	if err != nil {
-		// TODO
+		return info, fmt.Errorf("request: %w", err)
 	}
 	info.Object, err = parseObject(tokens)
 	if err != nil {
-		// TODO
+		return info, fmt.Errorf("object: %w", err)
 	}
 	info.Status, err = parseStatus(tokens)
 	if err != nil {
-		// TODO
+		return info, fmt.Errorf("status: %w", err)
 	}
 	info.Session, err = parseSession(tokens)
 	if err != nil {
-		// TODO
+		return info, fmt.Errorf("session: %w", err)
 	}
 	if custom := parseCustom(tokens); custom != nil {
 		info.Custom = custom
@@ -94,7 +94,7 @@ func parseObject(attrs map[string]string) (Object, error) {
 			}
 			obj.Duration = time.Duration(i) * time.Millisecond
 		case "ot":
-			// TODO validate value
+			// TODO(otl): validate value
 			obj.Type = ObjectType(v)
 		case "tb":
 			i, err := strconv.Atoi(v)
@@ -131,6 +131,7 @@ func parseSession(attrs map[string]string) (Session, error) {
 		case "sid":
 			ses.ID = strings.Trim(v, `"`)
 		case "st":
+			// TODO(otl): what if it's not "l"?
 			if v == "l" {
 				ses.Live = true
 			}
@@ -139,22 +140,24 @@ func parseSession(attrs map[string]string) (Session, error) {
 		case "pr":
 			i, err := strconv.Atoi(v)
 			if err != nil {
-				// TODO
+				return ses, fmt.Errorf("play rate: %w", err)
 			}
+			// TODO(otl): what is this max value? why?
+			// Include in the error message.
 			if i > 2 {
-				return ses, fmt.Errorf("TODO")
+				return ses, fmt.Errorf("play rate: %d greater than max %d", i, 2)
 			}
 			ses.PlayRate = PlayRate(i)
 		case "sf":
 			if len(v) != 1 {
-				return ses, fmt.Errorf("TODO")
+				return ses, fmt.Errorf("stream format: %s is not a single character", v)
 			}
 			c := StreamFormat([]byte(v)[0])
 			switch c {
 			case FormatDASH, FormatHLS, FormatSmooth, FormatOther:
 				ses.Format = c
 			default:
-				return ses, fmt.Errorf("TODO")
+				return ses, fmt.Errorf("stream format: unknown format %c", c)
 			}
 		}
 	}
