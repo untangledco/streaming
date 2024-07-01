@@ -117,16 +117,16 @@ type Extension struct {
 
 var ErrNoPayload = errors.New("no payload")
 
+// minHeaderLength is the minimum number of bytes in a packet header.
+// It is calculated from the sum of the following components:
+// - 1 byte (version, padding, extension, contrib count)
+// - 1 byte (marker + type)
+// - 2 bytes (sequence)
+const minHeaderLength = 12
+
 func Unmarshal(data []byte, p *Packet) error {
-	// version (2), padding (1), ext (1), contribcount (4)
-	// marker (1), type (7)
-	// sequence (16)
-	// timestamp (32)
-	// syncsource (32)
-	// TODO(otl): set this as a constant - headerSize? minPacketSize?
-	need := 1 + 1 + 2 + 4 + 4
-	if len(data) < need {
-		return fmt.Errorf("need %d bytes, have %d", need, len(data))
+	if len(data) < minHeaderLength {
+		return fmt.Errorf("need at least %d bytes, have %d", minHeaderLength, len(data))
 	}
 
 	p.Header.Version = uint8(data[0] & 0b11000000)
@@ -146,7 +146,7 @@ func Unmarshal(data []byte, p *Packet) error {
 	p.Header.Timestamp = binary.BigEndian.Uint32(data[4:8])
 	p.Header.SyncSource = binary.BigEndian.Uint32(data[8:12])
 
-	if len(data) == 12 {
+	if len(data) == minHeaderLength {
 		return ErrNoPayload
 	}
 	data = data[12:]
@@ -170,7 +170,7 @@ func Unmarshal(data []byte, p *Packet) error {
 		p.Header.Extension = ext
 	}
 
-	need = len(p.Header.ContribSource) * 4 // 32-bit uints * 4 for number of bytes needed
+	need := len(p.Header.ContribSource) * 4 // uint32 count * 4 for number of bytes needed
 	if len(data) < need {
 		return fmt.Errorf("contribution sources: need %d bytes, only have %d", need, len(data))
 	}
@@ -191,7 +191,7 @@ func Marshal(p *Packet) ([]byte, error) {
 	if p.Header.Version > VersionRFC3550 {
 		return nil, fmt.Errorf("bad version %v", p.Header.Version)
 	}
-	buf := make([]byte, 12) // see Unmarshal() for size
+	buf := make([]byte, minHeaderLength)
 	buf[0] |= p.Header.Version
 	if p.Header.padding {
 		buf[0] |= 0b00100000
