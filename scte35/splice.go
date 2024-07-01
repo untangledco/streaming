@@ -264,7 +264,10 @@ func decodeCommand(buf []byte) (*Command, error) {
 		ins.AvailExpected = uint8(buf[3])
 		cmd.Insert = &ins
 	default:
-		return nil, fmt.Errorf("TODO: cannot decode command type %s", cmd.Type)
+		// TODO(otl): we could support more commands but we
+		// just haven't written the code yet. See issues
+		// #28 and #29.
+		return nil, fmt.Errorf("cannot decode command type %s", cmd.Type)
 	}
 	return &cmd, nil
 }
