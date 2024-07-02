@@ -9,7 +9,7 @@ Watch it being developed live!
 We use these packages to self-host the livestream at [olowe.co/live].
 
 [twitch.tv/untangledco]: https://twitch.tv/untangledco
-[youtube.com/@untangledco]: https://youtube.com/@untangledco
+[youtube.com/@untangledco]: https://www.youtube.com/@untangledco
 [olowe.co/live]: https://olowe.co/live
 
 ## Contributing
