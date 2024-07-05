@@ -27,6 +27,11 @@ func TestReadSession(t *testing.T) {
 				},
 				Email: &mail.Address{"Jane Doe", "jane@jdoe.example.com"},
 				Phone: "+16175556011",
+				Media: []Media{
+					{"audio", 49170, 0, ProtoRTP, []string{"0"}},
+					{"audio", 49180, 0, ProtoRTP, []string{"0"}},
+					{"video", 51372, 0, ProtoRTP, []string{"99"}},
+				},
 			},
 		},
 		{

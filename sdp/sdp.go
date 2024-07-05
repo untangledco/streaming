@@ -22,7 +22,7 @@ type Session struct {
 	Email     *mail.Address
 	Phone     string
 	Bandwidth *Bandwidth
-	Media     []MediaInfo
+	Media     []Media
 	// TODO(otl): add rest of fields
 }
 
@@ -220,8 +220,54 @@ func parseBandwidth(s string) (Bandwidth, error) {
 	return Bandwidth{t, kbps * 1e3}, nil
 }
 
-type MediaInfo struct{}
+type Media struct {
+	Type      string // TODO(otl): new type mediaType?
+	Port      int
+	PortCount int
+	Protocol  uint8
+	Format    []string
+}
 
-func parseMedia(s string) (MediaInfo, error) {
-	return MediaInfo{}, fmt.Errorf("not yet implemented")
+const (
+	ProtoUDP uint8 = iota
+	ProtoRTP
+	ProtoRTPSecure
+	ProtoRTPSecureFeedback
+)
+
+func parseMedia(s string) (Media, error) {
+	fields := strings.Fields(s)
+	if len(fields) < 4 {
+		return Media{}, fmt.Errorf("found %d fields, need at least %d", len(fields), 4)
+	}
+	m := Media{Type: fields[0]}
+
+	p, n, found := strings.Cut(fields[1], "/")
+	var err error
+	m.Port, err = strconv.Atoi(p)
+	if err != nil {
+		return Media{}, fmt.Errorf("parse port: %w", err)
+	}
+	if found {
+		m.PortCount, err = strconv.Atoi(n)
+		if err != nil {
+			return Media{}, fmt.Errorf("parse port count: %w", err)
+		}
+	}
+
+	switch fields[2] {
+	case "udp":
+		m.Protocol = ProtoUDP
+	case "RTP/AVP":
+		m.Protocol = ProtoRTP
+	case "RTP/SAVP":
+		m.Protocol = ProtoRTPSecure
+	case "RTP/SAVPF":
+		m.Protocol = ProtoRTPSecureFeedback
+	default:
+		return Media{}, fmt.Errorf("unknown protocol %s", fields[2])
+	}
+
+	m.Format = fields[3:]
+	return m, nil
 }
