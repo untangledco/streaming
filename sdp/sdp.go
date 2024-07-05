@@ -209,6 +209,9 @@ func parseBandwidth(s string) (Bandwidth, error) {
 		return Bandwidth{}, fmt.Errorf("missing %s separator", ":")
 	}
 	// TODO(otl): check bandwith type is actually one specified in section 5.8.
+	if t == "" {
+		return Bandwidth{}, fmt.Errorf("missing bandwidth type")
+	}
 	kbps, err := strconv.Atoi(b)
 	if err != nil {
 		return Bandwidth{}, fmt.Errorf("parse bitrate: %w", err)

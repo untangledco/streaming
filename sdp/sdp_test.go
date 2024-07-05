@@ -72,17 +72,27 @@ func TestReadSession(t *testing.T) {
 }
 
 func TestBandwidth(t *testing.T) {
-	var cases = []struct{
-		name string
-		s string
-		err bool
+	var cases = []struct {
+		name    string
+		s       string
+		wantErr bool
 	}{
 		{"conference total", "CT:2048", false},
 		{"app specific", "AS:87654321", false},
 		{"custom", "69something:12345", false},
 		{"missing modifier", ":12345", true},
-		{"missing separator" "CT2048", true},
+		{"missing separator", "CT2048", true},
 	}
 	for _, tt := range cases {
-		t.Errorf("TODO ", tt.name)
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parseBandwidth(tt.s)
+			if err != nil && tt.wantErr {
+				// no worries, we got what we expected
+			} else if err != nil && !tt.wantErr {
+				t.Errorf("parseBandwidth(%q): unexpected error %v", tt.s, err)
+			} else if err == nil && tt.wantErr {
+				t.Errorf("parseBandwidth(%q): unexpected nil error", tt.s)
+			}
+		})
 	}
+}
