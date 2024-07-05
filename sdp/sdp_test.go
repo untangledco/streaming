@@ -18,7 +18,7 @@ func TestReadSession(t *testing.T) {
 			name: "good.sdp",
 			want: Session{
 				Name:   "Call to John Smith",
-				Origin: Origin{"jdoe", 3724394400, 3724394405, "IN", "IP4", "198.51.100.1"},
+				Origin: Origin{"jdoe", 3724394400, 3724394405, "IP4", "198.51.100.1"},
 				Info:   "SDP Offer #1",
 				URI: &url.URL{
 					Scheme: "http",
@@ -37,7 +37,7 @@ func TestReadSession(t *testing.T) {
 		{
 			name: "some_optional.sdp",
 			want: Session{
-				Origin: Origin{"jdoe", 3724394400, 3724394405, "IN", "IP4", "198.51.100.1"},
+				Origin: Origin{"jdoe", 3724394400, 3724394405, "IP4", "198.51.100.1"},
 				Name:   "Call to John Smith",
 				Email:  &mail.Address{"Jane Doe", "jane@jdoe.example.com"},
 			},

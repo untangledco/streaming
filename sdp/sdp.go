@@ -30,7 +30,6 @@ type Origin struct {
 	Username    string
 	ID          int
 	Version     int
-	Network     string // TODO(otl): only "IN" is valid... so int type?
 	AddressType string // TODO(otl): only "IP4", "IP6" valid... new int type?
 	Address     string // IPv4, IPv6 literal or a hostname
 }
@@ -173,7 +172,9 @@ func parseOrigin(line string) (Origin, error) {
 	if err != nil {
 		return o, fmt.Errorf("parse version: %w", err)
 	}
-	o.Network = fields[3]
+	if fields[3] != "IN" {
+		return o, fmt.Errorf("unknown network class %q", fields[3])
+	}
 	o.AddressType = fields[4]
 	o.Address = fields[5]
 	return o, nil
