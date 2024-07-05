@@ -69,7 +69,7 @@ func main() {
 	if resp.StatusCode != http.StatusOK {
 		log.Fatal("get playlist: remote status:", resp.Status)
 	}
-	source, err := m3u8.ParsePlaylist(resp.Body)
+	source, err := m3u8.Decode(resp.Body)
 	if err != nil {
 		log.Fatal("parse playlist:", err)
 	}
