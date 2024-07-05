@@ -70,3 +70,19 @@ func TestReadSession(t *testing.T) {
 		})
 	}
 }
+
+func TestBandwidth(t *testing.T) {
+	var cases = []struct{
+		name string
+		s string
+		err bool
+	}{
+		{"conference total", "CT:2048", false},
+		{"app specific", "AS:87654321", false},
+		{"custom", "69something:12345", false},
+		{"missing modifier", ":12345", true},
+		{"missing separator" "CT2048", true},
+	}
+	for _, tt := range cases {
+		t.Errorf("TODO ", tt.name)
+	}
