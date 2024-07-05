@@ -23,8 +23,8 @@ type Session struct {
 	Phone      string
 	Connection *ConnInfo
 	Bandwidth  *Bandwidth
-	Media      []Media
 	Attributes []string
+	Media      []Media
 	// TODO(otl): add rest of fields
 }
 
@@ -36,189 +36,12 @@ type Origin struct {
 	Address     string // IPv4, IPv6 literal or a hostname
 }
 
-var fchars = [...]string{"i", "u", "e", "p", "c", "b", "t", "r", "z", "m", "a"}
-
-var mchars = [...]string{"i", "c", "b", "a", "m"}
-
 func ReadSession(rd io.Reader) (*Session, error) {
-	session, sc, err := readSession(rd)
-	if err != nil {
-		return nil, err
+	parser := &parser{Scanner: bufio.NewScanner(rd)}
+	if err := parser.parse(); err != nil {
+		return nil, fmt.Errorf("parse session: %w", err)
 	}
-
-	// Time for optional fields. We keep a slice...
-	// TODO(otl): document in plain language what's going on here.
-	next := fchars[:]
-	for sc.Scan() {
-		if sc.Text() == "" {
-			return nil, fmt.Errorf("illegal empty line")
-		}
-		k, v, found := strings.Cut(sc.Text(), "=")
-		if !found {
-			return nil, fmt.Errorf("parse field %q: missing %q", k, "=")
-		}
-
-		var allowed bool
-		for i := range next {
-			if next[i] == k {
-				allowed = true
-			}
-		}
-		if !allowed {
-			return nil, fmt.Errorf("unexpected field %q: expected one of %q", k, next)
-		}
-
-		switch k {
-		case "i":
-			session.Info = v
-			next = fchars[1:]
-		case "u":
-			u, err := url.Parse(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse uri: %w", err)
-			}
-			session.URI = u
-			next = fchars[2:]
-		case "e":
-			addr, err := parseEmail(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse email: %w", err)
-			}
-			session.Email = addr
-			next = fchars[3:]
-		case "p":
-			session.Phone = cleanPhone(v)
-			next = fchars[4:]
-		case "c":
-			conn, err := parseConnInfo(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse connection info: %w", err)
-			}
-			session.Connection = &conn
-			next = fchars[5:]
-		case "b":
-			bw, err := parseBandwidth(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse bandwidth line %q: %w", v, err)
-			}
-			session.Bandwidth = &bw
-			next = fchars[6:]
-		case "a":
-			session.Attributes = strings.Fields(v)
-			next = fchars[7:]
-		case "m":
-			m, err := parseMedia(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse media info from %q: %w", v, err)
-			}
-			session.Media = append(session.Media, m)
-			next = mchars[:]
-			goto Media
-		}
-	}
-
-Media:
-	var media *Media
-	if len(session.Media) > 0 {
-		media = &session.Media[len(session.Media)-1]
-	}
-	for sc.Scan() {
-		if sc.Text() == "" {
-			return nil, fmt.Errorf("illegal empty line")
-		}
-		k, v, found := strings.Cut(sc.Text(), "=")
-		if !found {
-			return nil, fmt.Errorf("parse field %q: missing %q", k, "=")
-		}
-
-		var allowed bool
-		for i := range next {
-			if next[i] == k {
-				allowed = true
-			}
-		}
-		if !allowed {
-			return nil, fmt.Errorf("unexpected field %q: expected one of %q", k, next)
-		}
-
-		switch k {
-		case "i":
-			media.Title = v
-			next = mchars[1:]
-		case "c":
-			conn, err := parseConnInfo(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse connection info: %w", err)
-			}
-			media.Connection = &conn
-			next = mchars[2:]
-		case "b":
-			bw, err := parseBandwidth(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse bandwidth: %w", err)
-			}
-			media.Bandwidth = &bw
-			next = mchars[3:]
-		case "a":
-			media.Attributes = strings.Fields(v)
-			next = mchars[4:]
-		case "m":
-			m, err := parseMedia(v)
-			if err != nil {
-				return nil, fmt.Errorf("parse media description: %w", err)
-			}
-			session.Media = append(session.Media, m)
-			media = &session.Media[len(session.Media)-1]
-			next = mchars[:]
-		default:
-			return nil, fmt.Errorf("unsupported field char %s", k)
-		}
-	}
-	return session, sc.Err()
-}
-
-func readSession(r io.Reader) (*Session, *bufio.Scanner, error) {
-	sc := bufio.NewScanner(r)
-	var session Session
-	next := "v"
-Loop:
-	for sc.Scan() {
-		if strings.TrimSpace(sc.Text()) == "" {
-			return nil, nil, fmt.Errorf("illegal empty line")
-		}
-		k, v, found := strings.Cut(sc.Text(), "=")
-		if !found {
-			return nil, nil, fmt.Errorf("parse field %q: missing %q", next, "=")
-		}
-		if k != next {
-			return nil, nil, fmt.Errorf("expected field %q, found %q", next, k)
-		}
-		switch k {
-		case "v":
-			i, err := strconv.Atoi(v)
-			if err != nil {
-				return nil, nil, fmt.Errorf("parse version: %w", err)
-			}
-			if i != 0 {
-				return nil, nil, fmt.Errorf("unsupported version %d", i)
-			}
-			next = "o"
-		case "o":
-			o, err := parseOrigin(v)
-			if err != nil {
-				return nil, nil, fmt.Errorf("parse origin: %w", err)
-			}
-			session.Origin = o
-			next = "s"
-		case "s":
-			if v == "" {
-				return nil, nil, fmt.Errorf("empty name")
-			}
-			session.Name = v
-			break Loop
-		}
-	}
-	return &session, sc, sc.Err()
+	return &parser.session, nil
 }
 
 // cleanPhone returns the phone number in s stripped of "-" and space
