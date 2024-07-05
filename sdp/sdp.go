@@ -272,3 +272,54 @@ func parseMedia(s string) (Media, error) {
 	m.Format = fields[3:]
 	return m, nil
 }
+
+type ConnInfo struct {
+	Type    string // TODO(otl): only "IP4", "IP6" valid... new int type?
+	Address string // IPv4, IPv6 literal or a hostname
+	TTL     int    // time to live
+	Count   int    // number of addresses after Address
+}
+
+func parseConnInfo(s string) (ConnInfo, error) {
+	fields := strings.Fields(s)
+	if len(fields) != 3 {
+		return ConnInfo{}, fmt.Errorf("expected %d fields, got %d", 3, len(fields))
+	}
+	if fields[0] != "IN" {
+		return ConnInfo{}, fmt.Errorf("unsupported class %q, expected IN", fields[0])
+	}
+
+	conn := ConnInfo{Type: fields[1]}
+	if fields[1] != "IP4" && fields[1] != "IP6" {
+		return conn, fmt.Errorf("unsupported network type %s", fields[2])
+	}
+	conn.Type = fields[1]
+	addr := strings.Split(fields[2], "/")
+	conn.Address = addr[0]
+	if len(addr) == 1 {
+		return conn, nil
+	}
+
+	subfields := make([]int, len(addr[1:]))
+	for i := range subfields {
+		var err error
+		subfields[i], err = strconv.Atoi(addr[i+1])
+		if err != nil {
+			return conn, fmt.Errorf("parse address subfield %d: %w", i, err)
+		}
+	}
+
+	if conn.Type == "IP4" && len(subfields) == 2 {
+		conn.TTL = subfields[0]
+		conn.Count = subfields[1]
+	} else if conn.Type == "IP4" && len(subfields) == 1 {
+		conn.TTL = subfields[0]
+	}
+
+	if conn.Type == "IP6" && len(subfields) > 1 {
+		return conn, fmt.Errorf("parse address: only 1 subfield allowed, read %d", len(subfields))
+	} else if conn.Type == "IP6" && len(subfields) == 1 {
+		conn.Count = subfields[0]
+	}
+	return conn, nil
+}

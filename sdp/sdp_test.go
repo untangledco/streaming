@@ -101,3 +101,29 @@ func TestBandwidth(t *testing.T) {
 		})
 	}
 }
+
+func TestConnInfo(t *testing.T) {
+	var cases = []struct {
+		name string
+		line string
+		want ConnInfo
+	}{
+		{"ipv4", "IN IP4 192.0.2.1", ConnInfo{"IP4", "192.0.2.1", 0, 0}},
+		{"ipv4 ttl", "IN IP4 233.252.0.1/127", ConnInfo{"IP4", "233.252.0.1", 127, 0}},
+		{"ipv4 ttl count", "IN IP4 233.252.0.1/127/3", ConnInfo{"IP4", "233.252.0.1", 127, 3}},
+		{"ipv6", "IN IP6 2001:db8::1", ConnInfo{"IP6", "2001:db8::1", 0, 0}},
+		{"ipv6 count", "IN IP6 ff00::db8:0:101/3", ConnInfo{"IP6", "ff00::db8:0:101", 0, 3}},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseConnInfo(tt.line)
+			if err != nil {
+				t.Fatalf("parse %s: %v", tt.line, err)
+			}
+			if !reflect.DeepEqual(tt.want, got) {
+				t.Errorf("parseConnInfo(%q) = %+v, want %+v", tt.line, got, tt.want)
+			}
+		})
+	}
+}
