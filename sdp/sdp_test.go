@@ -27,10 +27,31 @@ func TestReadSession(t *testing.T) {
 				},
 				Email: &mail.Address{"Jane Doe", "jane@jdoe.example.com"},
 				Phone: "+16175556011",
+				Connection: &ConnInfo{
+					Type:    "IP4",
+					Address: "198.51.100.1",
+				},
 				Media: []Media{
-					{"audio", 49170, 0, ProtoRTP, []string{"0"}},
-					{"audio", 49180, 0, ProtoRTP, []string{"0"}},
-					{"video", 51372, 0, ProtoRTP, []string{"99"}},
+					Media{
+						Type:     "audio",
+						Port:     49170,
+						Protocol: ProtoRTP,
+						Format:   []string{"0"},
+					},
+					Media{
+						Type:     "audio",
+						Port:     49180,
+						Protocol: ProtoRTP,
+						Format:   []string{"0"},
+					},
+					Media{
+						Type:       "video",
+						Port:       51372,
+						Protocol:   ProtoRTP,
+						Format:     []string{"99"},
+						Connection: &ConnInfo{"IP6", "2001:db8::2", 0, 0},
+						Attributes: []string{"rtpmap:99", "h263-1998/90000"},
+					},
 				},
 			},
 		},
@@ -71,7 +92,6 @@ func TestReadSession(t *testing.T) {
 			if !reflect.DeepEqual(*session, tt.want) {
 				t.Errorf("got %+v\nwant %+v\n", *session, tt.want)
 			}
-			t.Errorf("TODO still not parsing all fields")
 		})
 	}
 }

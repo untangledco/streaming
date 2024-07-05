@@ -17,12 +17,14 @@ type Session struct {
 	Origin Origin
 	Name   string
 
-	Info      string
-	URI       *url.URL
-	Email     *mail.Address
-	Phone     string
-	Bandwidth *Bandwidth
-	Media     []Media
+	Info       string
+	URI        *url.URL
+	Email      *mail.Address
+	Phone      string
+	Connection *ConnInfo
+	Bandwidth  *Bandwidth
+	Media      []Media
+	Attributes []string
 	// TODO(otl): add rest of fields
 }
 
@@ -34,7 +36,9 @@ type Origin struct {
 	Address     string // IPv4, IPv6 literal or a hostname
 }
 
-var fchars = [...]string{"i", "u", "e", "p", "c", "b", "t", "r", "z", "m"}
+var fchars = [...]string{"i", "u", "e", "p", "c", "b", "t", "r", "z", "m", "a"}
+
+var mchars = [...]string{"i", "c", "b", "a", "m"}
 
 func ReadSession(rd io.Reader) (*Session, error) {
 	session, sc, err := readSession(rd)
@@ -44,7 +48,7 @@ func ReadSession(rd io.Reader) (*Session, error) {
 
 	// Time for optional fields. We keep a slice...
 	// TODO(otl): document in plain language what's going on here.
-	onext := fchars[:]
+	next := fchars[:]
 	for sc.Scan() {
 		if sc.Text() == "" {
 			return nil, fmt.Errorf("illegal empty line")
@@ -55,52 +59,121 @@ func ReadSession(rd io.Reader) (*Session, error) {
 		}
 
 		var allowed bool
-		for i := range onext {
-			if onext[i] == k {
+		for i := range next {
+			if next[i] == k {
 				allowed = true
 			}
 		}
 		if !allowed {
-			return nil, fmt.Errorf("unexpected field %q: expected one of %q", k, onext)
+			return nil, fmt.Errorf("unexpected field %q: expected one of %q", k, next)
 		}
 
 		switch k {
 		case "i":
 			session.Info = v
-			onext = fchars[1:]
+			next = fchars[1:]
 		case "u":
 			u, err := url.Parse(v)
 			if err != nil {
 				return nil, fmt.Errorf("parse uri: %w", err)
 			}
 			session.URI = u
-			onext = fchars[2:]
+			next = fchars[2:]
 		case "e":
 			addr, err := parseEmail(v)
 			if err != nil {
 				return nil, fmt.Errorf("parse email: %w", err)
 			}
 			session.Email = addr
-			onext = fchars[3:]
+			next = fchars[3:]
 		case "p":
 			session.Phone = cleanPhone(v)
-			onext = fchars[4:]
+			next = fchars[4:]
+		case "c":
+			conn, err := parseConnInfo(v)
+			if err != nil {
+				return nil, fmt.Errorf("parse connection info: %w", err)
+			}
+			session.Connection = &conn
+			next = fchars[5:]
 		case "b":
 			bw, err := parseBandwidth(v)
 			if err != nil {
 				return nil, fmt.Errorf("parse bandwidth line %q: %w", v, err)
 			}
 			session.Bandwidth = &bw
-			onext = fchars[5:]
+			next = fchars[6:]
+		case "a":
+			session.Attributes = strings.Fields(v)
+			next = fchars[7:]
 		case "m":
 			m, err := parseMedia(v)
 			if err != nil {
 				return nil, fmt.Errorf("parse media info from %q: %w", v, err)
 			}
 			session.Media = append(session.Media, m)
+			next = mchars[:]
+			goto Media
 		}
 	}
 
+Media:
+	var media *Media
+	if len(session.Media) > 0 {
+		media = &session.Media[len(session.Media)-1]
+	}
+	for sc.Scan() {
+		if sc.Text() == "" {
+			return nil, fmt.Errorf("illegal empty line")
+		}
+		k, v, found := strings.Cut(sc.Text(), "=")
+		if !found {
+			return nil, fmt.Errorf("parse field %q: missing %q", k, "=")
+		}
+
+		var allowed bool
+		for i := range next {
+			if next[i] == k {
+				allowed = true
+			}
+		}
+		if !allowed {
+			return nil, fmt.Errorf("unexpected field %q: expected one of %q", k, next)
+		}
+
+		switch k {
+		case "i":
+			media.Title = v
+			next = mchars[1:]
+		case "c":
+			conn, err := parseConnInfo(v)
+			if err != nil {
+				return nil, fmt.Errorf("parse connection info: %w", err)
+			}
+			media.Connection = &conn
+			next = mchars[2:]
+		case "b":
+			bw, err := parseBandwidth(v)
+			if err != nil {
+				return nil, fmt.Errorf("parse bandwidth: %w", err)
+			}
+			media.Bandwidth = &bw
+			next = mchars[3:]
+		case "a":
+			media.Attributes = strings.Fields(v)
+			next = mchars[4:]
+		case "m":
+			m, err := parseMedia(v)
+			if err != nil {
+				return nil, fmt.Errorf("parse media description: %w", err)
+			}
+			session.Media = append(session.Media, m)
+			media = &session.Media[len(session.Media)-1]
+			next = mchars[:]
+		default:
+			return nil, fmt.Errorf("unsupported field char %s", k)
+		}
+	}
 	return session, sc.Err()
 }
 
@@ -227,6 +300,12 @@ type Media struct {
 	PortCount int
 	Protocol  uint8
 	Format    []string
+	// Optional fields
+	Title      string
+	Connection *ConnInfo
+	Bandwidth  *Bandwidth
+	// TODO(otl): store as k, v pairs
+	Attributes []string
 }
 
 const (
