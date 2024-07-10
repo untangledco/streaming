@@ -23,9 +23,9 @@ type Session struct {
 	Phone      string
 	Connection *ConnInfo
 	Bandwidth  *Bandwidth
+	// TODO(otl): add time description fields
 	Attributes []string
 	Media      []Media
-	// TODO(otl): add rest of fields
 }
 
 type Origin struct {
