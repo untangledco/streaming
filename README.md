@@ -36,6 +36,7 @@ Of course `grep` works too:
 Patches are preferred via email so that we're not too locked in to GitHub.
 Post them to the mailing list
 [~otl/untangledco@lists.sr.ht](mailto:~otl/untangledco@lists.sr.ht),
+([archives](https://lists.sr.ht/~otl/untangledco))
 or to [Oliver Lowe](mailto:o@olowe.co).
 See [git-send-email.io](https://git-send-email.io) if you're unfamiliar with the workflow.
 
