@@ -209,18 +209,66 @@ func TestParseRepeat(t *testing.T) {
 
 func TestDuration(t *testing.T) {
 	var cases = []struct {
-		s    string
-		want time.Duration
+		name    string
+		s       string
+		want    time.Duration
+		wantErr bool
 	}{
-		{"86400", 24 * time.Hour},
-		{"24h", 24 * time.Hour},
-		{"1d", 24 * time.Hour},
-		{"69s", 69 * time.Second},
+		{
+			name: "dayOfSeconds",
+			s:    "86400",
+			want: 24 * time.Hour,
+		},
+		{
+			name: "twentyFourHours",
+			s:    "24h",
+			want: 24 * time.Hour,
+		},
+		{
+			name: "oneDay",
+			s:    "1d",
+			want: 24 * time.Hour,
+		},
+		{
+			name: "nice",
+			s:    "69s",
+			want: 69 * time.Second,
+		},
+		{
+			name:    "negative",
+			s:       "-01s",
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "decimal",
+			s:       "1.5h",
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "badSuffix",
+			s:       "13k",
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name: "2Days",
+			s:    "2d",
+			want: 48 * time.Hour,
+		},
+		{
+			name:    "aDay",
+			s:       "Ad",
+			want:    0,
+			wantErr: true,
+		},
 	}
+
 	for _, tt := range cases {
 		t.Run(tt.s, func(t *testing.T) {
 			got, err := parseDuration(tt.s)
-			if err != nil {
+			if (err != nil) != tt.wantErr {
 				t.Fatal(err)
 			}
 			if got != tt.want {
