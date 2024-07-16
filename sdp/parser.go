@@ -234,6 +234,12 @@ type Repeat struct {
 }
 
 func parseRepeat(s string) (Repeat, error) {
+	// guard against negative durations, decimals.
+	// these are valid for time.ParseDuration, but not for our Repeat.
+	if strings.Contains(s, "-") || strings.Contains(s, ".") {
+		return Repeat{}, errors.New("invalid duration")
+	}
+
 	fields := strings.Fields(s)
 	if len(fields) < 3 {
 		return Repeat{}, fmt.Errorf("short line: have %d, want at least %d fields", len(fields), 3)
@@ -260,12 +266,6 @@ func parseRepeat(s string) (Repeat, error) {
 }
 
 func parseDuration(s string) (time.Duration, error) {
-	// guard against negative durations, decimals.
-	// these are valid for time.ParseDuration, but not for our Repeat.
-	if strings.Contains(s, "-") || strings.Contains(s, ".") {
-		return 0, errors.New("invalid duration")
-	}
-
 	// a bare int, like 86400
 	i, err := strconv.Atoi(s)
 	if err == nil {

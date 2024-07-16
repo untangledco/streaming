@@ -235,16 +235,14 @@ func TestDuration(t *testing.T) {
 			want: 69 * time.Second,
 		},
 		{
-			name:    "negative",
-			s:       "-01s",
-			want:    0,
-			wantErr: true,
+			name: "negative",
+			s:    "-01s",
+			want: time.Duration(-1) * time.Second,
 		},
 		{
-			name:    "decimal",
-			s:       "1.5h",
-			want:    0,
-			wantErr: true,
+			name: "decimal",
+			s:    "1.5h",
+			want: time.Duration(5400) * time.Second,
 		},
 		{
 			name:    "badSuffix",
