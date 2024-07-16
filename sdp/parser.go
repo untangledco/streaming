@@ -234,10 +234,12 @@ func parseTimes(s string) ([2]time.Time, error) {
 	return times, nil
 }
 
+// Repeat represents a session's repetition cycle as described in
+// RFC 8866 section 5.10.
 type Repeat struct {
-	Interval time.Duration
-	Active   time.Duration
-	Offsets  []time.Duration
+	Interval time.Duration   // duration between each repetition cycle
+	Active   time.Duration   // planned duration of each session
+	Offsets  []time.Duration // duration(s) between each session
 }
 
 func parseRepeat(s string) (Repeat, error) {

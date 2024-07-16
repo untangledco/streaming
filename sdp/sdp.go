@@ -26,13 +26,19 @@ type Session struct {
 	Bandwidth  *Bandwidth
 	// Time holds the start time and stop time of the Session, at
 	// the first and second index respectively.
-	Time        [2]time.Time
-	Repeat      *Repeat
+	Time [2]time.Time
+	// Repeat points to a repetition cycle describing for how long
+	// and when the session may reoccur.
+	Repeat *Repeat
+	// Adjustments holds any time adjustments that may occur, for
+	// example daylight savings, throughout the period a repetition
+	// cycle is active.
 	Adjustments []TimeAdjustment
 	Attributes  []string
 	Media       []Media
 }
 
+// Origin represents the originator of the session as described in RFC 8866 section 5.2.
 type Origin struct {
 	Username    string
 	ID          int
@@ -121,6 +127,7 @@ func parseBandwidth(s string) (Bandwidth, error) {
 	return Bandwidth{t, kbps * 1e3}, nil
 }
 
+// Media represents a media description.
 type Media struct {
 	Type      string // TODO(otl): new type mediaType?
 	Port      int
@@ -179,6 +186,7 @@ func parseMedia(s string) (Media, error) {
 	return m, nil
 }
 
+// ConnInfo represents connection information.
 type ConnInfo struct {
 	Type    string // TODO(otl): only "IP4", "IP6" valid... new int type?
 	Address string // IPv4, IPv6 literal or a hostname
