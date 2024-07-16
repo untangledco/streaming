@@ -24,6 +24,8 @@ type Session struct {
 	Phone      string
 	Connection *ConnInfo
 	Bandwidth  *Bandwidth
+	// Time holds the start time and stop time of the Session, at
+	// the first and second index respectively.
 	Time       [2]time.Time
 	Repeat     *Repeat
 	Attributes []string
@@ -81,8 +83,7 @@ func parseOrigin(line string) (Origin, error) {
 // parseEmail returns the parsed email address from s.
 // Addresses should be in RFC 5322 form, for instance
 // "Oliver Lowe <o@olowe.co>" or just "o@olowe.co".
-// They can also be in the form detailed in the SDP specification,
-// for instance
+// They can also be in the form detailed in the SDP specification, for instance
 // "Oliver Lowe (o@olowe.co)".
 func parseEmail(s string) (*mail.Address, error) {
 	// Oliver Lowe (o@olowe.co) to RFC 5322 format

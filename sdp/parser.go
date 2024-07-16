@@ -200,7 +200,8 @@ func (p *parser) parseMedia() error {
 	return p.err
 }
 
-// number of seconds since the zero time used in SDP 1900-01-01T00:00Z.
+// number of seconds from the zero time used in SDP; 1900-01-01T00:00Z
+// to the Unix epoch.
 const sinceTimeZero = 2208988800
 
 func parseTimes(s string) ([2]time.Time, error) {
