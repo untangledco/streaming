@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Session struct {
@@ -23,7 +24,8 @@ type Session struct {
 	Phone      string
 	Connection *ConnInfo
 	Bandwidth  *Bandwidth
-	// TODO(otl): add time description fields
+	Time       [2]time.Time
+	Repeat     *Repeat
 	Attributes []string
 	Media      []Media
 }

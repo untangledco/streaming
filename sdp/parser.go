@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type parser struct {
@@ -19,7 +20,7 @@ type parser struct {
 	session Session
 }
 
-var ftab = [...]string{"i", "u", "e", "p", "c", "b", "t", "r", "z", "m", "a"}
+var ftab = [...]string{"i", "u", "e", "p", "c", "b", "t", "r", "z", "a", "m", "a"}
 
 var mtab = [...]string{"i", "c", "b", "a", "m"}
 
@@ -125,9 +126,25 @@ func (p *parser) parseOptional() error {
 			}
 			p.session.Bandwidth = &bw
 			p.next = ftab[6:]
+		case "t":
+			when, err := parseTimes(p.value)
+			if err != nil {
+				return fmt.Errorf("parse time description: %w", err)
+			}
+			p.session.Time = when
+			p.next = ftab[7:]
+		case "r":
+			repeat, err := parseRepeat(p.value)
+			if err != nil {
+				return fmt.Errorf("parse repeat: %w", err)
+			}
+			p.session.Repeat = &repeat
+			p.next = ftab[8:]
+		case "z":
+			return fmt.Errorf("parse time desc %s not yet implemented", p.value)
 		case "a":
 			p.session.Attributes = strings.Fields(p.value)
-			p.next = ftab[7:]
+			p.next = ftab[9:]
 		case "m":
 			m, err := parseMedia(p.value)
 			if err != nil {
@@ -181,4 +198,92 @@ func (p *parser) parseMedia() error {
 		}
 	}
 	return p.err
+}
+
+// number of seconds since the zero time used in SDP 1900-01-01T00:00Z.
+const sinceTimeZero = 2208988800
+
+func parseTimes(s string) ([2]time.Time, error) {
+	var times [2]time.Time
+	fields := strings.Fields(s)
+	if len(fields) != 2 {
+		return times, fmt.Errorf("bad number of fields %d: need 2", len(fields))
+	}
+	start, err := strconv.Atoi(fields[0])
+	if err != nil {
+		return times, fmt.Errorf("parse start time: %w", err)
+	}
+	if start != 0 {
+		times[0] = time.Unix(int64(start-sinceTimeZero), 0).UTC()
+	}
+	end, err := strconv.Atoi(fields[1])
+	if err != nil {
+		return times, fmt.Errorf("parse end time: %w", err)
+	}
+	if end != 0 {
+		times[1] = time.Unix(int64(end-sinceTimeZero), 0).UTC()
+	}
+	return times, nil
+}
+
+type Repeat struct {
+	Interval time.Duration
+	Active   time.Duration
+	Offsets  []time.Duration
+}
+
+func parseRepeat(s string) (Repeat, error) {
+	// guard against negative durations, decimals.
+	// these are valid for time.ParseDuration, but not for our Repeat.
+	if i := strings.IndexAny(s, "-."); i > 0 {
+		return Repeat{}, fmt.Errorf("illegal character %c", s[i])
+	}
+	fields := strings.Fields(s)
+	if len(fields) < 3 {
+		return Repeat{}, fmt.Errorf("short line: have %d, want at least %d fields", len(fields), 3)
+	}
+
+	var repeat Repeat
+	var err error
+	repeat.Interval, err = parseDuration(fields[0])
+	if err != nil {
+		return Repeat{}, fmt.Errorf("parse interval %s: %w", fields[0], err)
+	}
+	repeat.Active, err = parseDuration(fields[1])
+	if err != nil {
+		return Repeat{}, fmt.Errorf("parse active duration %s: %w", fields[1], err)
+	}
+	for _, s := range fields[2:] {
+		offset, err := parseDuration(s)
+		if err != nil {
+			return Repeat{}, fmt.Errorf("parse offset %s: %w", s, err)
+		}
+		repeat.Offsets = append(repeat.Offsets, offset)
+	}
+	return repeat, nil
+}
+
+func parseDuration(s string) (time.Duration, error) {
+	// a bare int, like 86400
+	i, err := strconv.Atoi(s)
+	if err == nil {
+		return time.Duration(i) * time.Second, nil
+	}
+
+	// a duration string like 24h
+	dur, err := time.ParseDuration(s)
+	if err == nil {
+		return dur, nil
+	}
+
+	// a duration string with days suffix, like 1d
+	// [0-9]+d
+	if !strings.HasSuffix(s, "d") {
+		return 0, fmt.Errorf("bad duration: expected d suffix for days")
+	}
+	j, err := strconv.Atoi(s[:len(s)-1])
+	if err != nil {
+		return 0, fmt.Errorf("parse days: %w", err)
+	}
+	return time.Duration(j) * 24 * time.Hour, nil
 }
