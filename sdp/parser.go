@@ -20,7 +20,7 @@ type parser struct {
 	session Session
 }
 
-var ftab = [...]string{"i", "u", "e", "p", "c", "b", "t", "r", "z", "a", "m", "a"}
+var ftab = [...]string{"i", "u", "e", "p", "c", "b", "t", "r", "z", "a", "m"}
 
 var mtab = [...]string{"i", "c", "b", "a", "m"}
 
@@ -141,10 +141,15 @@ func (p *parser) parseOptional() error {
 			p.session.Repeat = &repeat
 			p.next = ftab[8:]
 		case "z":
-			return fmt.Errorf("parse time desc %s not yet implemented", p.value)
+			var err error
+			p.session.Adjustments, err = parseAdjustments(p.value)
+			if err != nil {
+				return fmt.Errorf("parse time adjustments: %w", err)
+			}
+			p.next = ftab[9:]
 		case "a":
 			p.session.Attributes = strings.Fields(p.value)
-			p.next = ftab[9:]
+			p.next = ftab[10:]
 		case "m":
 			m, err := parseMedia(p.value)
 			if err != nil {
@@ -153,6 +158,8 @@ func (p *parser) parseOptional() error {
 			p.session.Media = append(p.session.Media, m)
 			p.next = mtab[:]
 			return p.parseMedia()
+		default:
+			return fmt.Errorf("unknown field key %s", p.key)
 		}
 	}
 	return p.err
@@ -237,7 +244,7 @@ func parseRepeat(s string) (Repeat, error) {
 	// guard against negative durations, decimals.
 	// these are valid for time.ParseDuration, but not for our Repeat.
 	if i := strings.IndexAny(s, "-."); i > 0 {
-		return Repeat{}, fmt.Errorf("illegal character %c", s[i])
+		return Repeat{}, fmt.Errorf("illegal character in duration: %c", s[i])
 	}
 	fields := strings.Fields(s)
 	if len(fields) < 3 {

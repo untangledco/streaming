@@ -26,7 +26,10 @@ func TestReadSession(t *testing.T) {
 					Host:   "www.jdoe.example.com",
 					Path:   "/home.html",
 				},
-				Email: &mail.Address{"Jane Doe", "jane@jdoe.example.com"},
+				Email: &mail.Address{
+					Name:    "Jane Doe",
+					Address: "jane@jdoe.example.com",
+				},
 				Phone: "+16175556011",
 				Connection: &ConnInfo{
 					Type:    "IP4",
@@ -61,7 +64,10 @@ func TestReadSession(t *testing.T) {
 			want: Session{
 				Origin: Origin{"jdoe", 3724394400, 3724394405, "IP4", "198.51.100.1"},
 				Name:   "Call to John Smith",
-				Email:  &mail.Address{"Jane Doe", "jane@jdoe.example.com"},
+				Email: &mail.Address{
+					Name:    "Jane Doe",
+					Address: "jane@jdoe.example.com",
+				},
 			},
 		},
 		{
@@ -225,6 +231,41 @@ func TestDuration(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("parseDuration(%q) = %s, want %s", tt.s, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseAdjustments(t *testing.T) {
+	var cases = []struct {
+		name    string
+		line    string
+		want    []TimeAdjustment
+		wantErr bool
+	}{
+		{"uneven", "3730922900 -2h 123456789", nil, true},
+		{"missing offset", "3730922900 ", nil, true},
+		{"garbage", "hello world!", nil, true},
+		{
+			"from rfc",
+			"3730928400 -1h 3749680800 0",
+			[]TimeAdjustment{
+				{time.Date(2018, time.March, 25, 1, 0, 0, 0, time.UTC), -time.Hour},
+				{time.Date(2018, time.October, 28, 2, 0, 0, 0, time.UTC), 0},
+			},
+			false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseAdjustments(tt.line)
+			if err != nil && !tt.wantErr {
+				t.Fatal(err)
+			} else if err == nil && tt.wantErr {
+				t.Error("unexpected nil error")
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseAdjustments(%q) = %v, want %v", tt.line, got, tt.want)
 			}
 		})
 	}
