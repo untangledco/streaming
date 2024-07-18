@@ -237,30 +237,3 @@ func parseConnInfo(s string) (ConnInfo, error) {
 	}
 	return conn, nil
 }
-
-type TimeAdjustment struct {
-	When   time.Time
-	Offset time.Duration
-}
-
-func parseAdjustments(line string) ([]TimeAdjustment, error) {
-	fields := strings.Fields(line)
-	if len(fields)%2 != 0 {
-		return nil, fmt.Errorf("odd field count %d", len(fields))
-	}
-	var adjustments []TimeAdjustment
-	for i := 0; i < len(fields); i += 2 {
-		var adj TimeAdjustment
-		t, err := strconv.Atoi(fields[i])
-		if err != nil {
-			return nil, fmt.Errorf("time %s: %w", fields[i], err)
-		}
-		adj.When = time.Unix(int64(t-sinceTimeZero), 0).UTC()
-		adj.Offset, err = parseDuration(fields[i+1])
-		if err != nil {
-			return nil, fmt.Errorf("offset %s: %w", fields[i+1], err)
-		}
-		adjustments = append(adjustments, adj)
-	}
-	return adjustments, nil
-}
