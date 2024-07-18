@@ -265,8 +265,8 @@ type ConnInfo struct {
 	// TODO(otl): can this be a hostname? if not, maybe use netip.Addr
 	Address string // IPv4, IPv6 literal
 	// TODO(otl): what are these units? seconds?
-	TTL   int // time to live
-	Count int // number of addresses after Address
+	TTL   uint8 // time to live
+	Count int   // number of addresses after Address
 }
 
 func (c *ConnInfo) String() string {
@@ -309,11 +309,14 @@ func parseConnInfo(s string) (ConnInfo, error) {
 		}
 	}
 
-	if conn.Type == "IP4" && len(subfields) == 2 {
-		conn.TTL = subfields[0]
-		conn.Count = subfields[1]
-	} else if conn.Type == "IP4" && len(subfields) == 1 {
-		conn.TTL = subfields[0]
+	if conn.Type == "IP4" {
+		if subfields[0] < 0 || subfields[0] > 255 {
+			return conn, fmt.Errorf("ttl: %d is outside uint8 range", subfields[0])
+		}
+		conn.TTL = uint8(subfields[0])
+		if len(subfields) == 2 {
+			conn.Count = subfields[1]
+		}
 	}
 
 	if conn.Type == "IP6" && len(subfields) > 1 {
