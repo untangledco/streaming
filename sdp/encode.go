@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (s *Session) String() string {
+func (s Session) String() string {
 	buf := &strings.Builder{}
 	fmt.Fprintln(buf, "v=0")
 	fmt.Fprintf(buf, "o=%s %d %d IN %s %s\n", s.Origin.Username, s.Origin.ID, s.Origin.Version, s.Origin.AddressType, s.Origin.Address)

@@ -64,7 +64,7 @@ type Origin struct {
 	// almost always a literal IPv4 or IPv6 address such as
 	// "192.0.2.1" or "2001:db8::1".
 	// TODO(otl): is a hostname valid? if not, use netip.Addr, then can drop AddressType.
-	Address string // IPv4, IPv6 literal or a hostname
+	Address string
 }
 
 func ReadSession(rd io.Reader) (*Session, error) {
