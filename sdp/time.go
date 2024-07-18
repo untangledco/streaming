@@ -143,3 +143,9 @@ func parseAdjustments(line string) ([]TimeAdjustment, error) {
 	}
 	return adjustments, nil
 }
+
+// Now returns the current SDP timestamp; the number of seconds
+// since 1900-01-01T00:00Z.
+func Now() int64 {
+	return time.Now().Unix() + sinceTimeZero
+}

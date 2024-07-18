@@ -1,4 +1,4 @@
-// Package sdp implements a decoder and encoder for
+// Package sdp implements encoding and decoding of
 // Session Description Protocol formatted data as specified in
 // RFC 8866.
 package sdp
@@ -38,13 +38,33 @@ type Session struct {
 	Media       []Media
 }
 
+const NoUsername string = "-"
+
 // Origin represents the originator of the session as described in RFC 8866 section 5.2.
 type Origin struct {
-	Username    string
-	ID          int
-	Version     int
+	// Username is a named identity on the originating host. If
+	// the host does not support usernames, this value should be set
+	// to NoUsername.
+	Username string
+
+	// ID is a globally unique identifier for the session.
+	// The recommended value is a timestamp from Now().
+	ID int
+
+	// Version is a version number of the session. It should be
+	// incremented each time the session is modified. The recommended
+	// value is a timestamp from Now().
+	Version int
+
+	// AddressType describes the type of Address. This is almost
+	// always "IP4" or "IP6" for IPv4 and IPv6 respectively.
 	AddressType string // TODO(otl): only "IP4", "IP6" valid... new int type?
-	Address     string // IPv4, IPv6 literal or a hostname
+
+	// Address is the originating address of the session. This is
+	// almost always a literal IPv4 or IPv6 address such as
+	// "192.0.2.1" or "2001:db8::1".
+	// TODO(otl): is a hostname valid? if not, use netip.Addr, then can drop AddressType.
+	Address string // IPv4, IPv6 literal or a hostname
 }
 
 func ReadSession(rd io.Reader) (*Session, error) {
@@ -100,9 +120,17 @@ func parseEmail(s string) (*mail.Address, error) {
 	return mail.ParseAddress(s)
 }
 
+const (
+	BandwidthConferenceTotal = "CT"
+	BandwidthAppSpecific     = "AS"
+)
+
 type Bandwidth struct {
-	Type    string
-	Bitrate int // bits per second
+	// Type describes the value of Bitrate, usually one of
+	// BandwidthConferenceTotal or BandwidthAppSpecific.
+	Type string
+	// Bitrate is the measure of bits per second.
+	Bitrate int
 }
 
 func (b Bandwidth) String() string {
@@ -130,10 +158,16 @@ func parseBandwidth(s string) (Bandwidth, error) {
 // Media represents a media description.
 type Media struct {
 	Type      string // TODO(otl): new type mediaType?
-	Port      int
-	PortCount int
+	Port      int    // IP port
+	PortCount int    // count of subsequent ports from Port
 	Transport TransportProto
-	Format    []string
+	// Format describes the media format. Interpretation of the
+	// entries depends on the value of Transport. For example, if
+	// Transport is ProtoRTP, Format contains RTP payload type
+	// numbers. For more, see the <fmt> description in section 5.14
+	// of RFC 8866.
+	Format []string
+
 	// Optional fields
 	Title      string
 	Connection *ConnInfo
@@ -227,10 +261,12 @@ func parseMedia(s string) (Media, error) {
 
 // ConnInfo represents connection information.
 type ConnInfo struct {
-	Type    string // TODO(otl): only "IP4", "IP6" valid... new int type?
-	Address string // IPv4, IPv6 literal TODO(otl): or a hostname?
-	TTL     int    // time to live
-	Count   int    // number of addresses after Address
+	Type string // TODO(otl): only "IP4", "IP6" valid... new int type?
+	// TODO(otl): can this be a hostname? if not, maybe use netip.Addr
+	Address string // IPv4, IPv6 literal
+	// TODO(otl): what are these units? seconds?
+	TTL   int // time to live
+	Count int // number of addresses after Address
 }
 
 func (c *ConnInfo) String() string {
