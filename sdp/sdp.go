@@ -107,7 +107,7 @@ type Bandwidth struct {
 
 func (b Bandwidth) String() string {
 	// need kilobits per second as per section 5.8.
-	return fmt.Sprintf("%s:%d", b.Type, b.Bitrate/1e3)
+	return fmt.Sprintf("b=%s:%d", b.Type, b.Bitrate/1e3)
 }
 
 func parseBandwidth(s string) (Bandwidth, error) {
@@ -132,7 +132,7 @@ type Media struct {
 	Type      string // TODO(otl): new type mediaType?
 	Port      int
 	PortCount int
-	Protocol  uint8
+	Transport TransportProto
 	Format    []string
 	// Optional fields
 	Title      string
@@ -142,12 +142,51 @@ type Media struct {
 	Attributes []string
 }
 
+func (m Media) String() string {
+	buf := &strings.Builder{}
+	if m.PortCount == 0 {
+		fmt.Fprintf(buf, "m=%s %d %s %s\n", m.Type, m.Port, m.Transport, strings.Join(m.Format, " "))
+	} else {
+		fmt.Fprintf(buf, "m=%s %d/%d %s %s\n", m.Type, m.Port, m.PortCount, m.Transport, strings.Join(m.Format, " "))
+	}
+
+	if m.Title != "" {
+		fmt.Fprintf(buf, "i=%s\n", m.Title)
+	}
+	if m.Connection != nil {
+		fmt.Fprintln(buf, m.Connection)
+	}
+	if m.Bandwidth != nil {
+		fmt.Fprintln(buf, m.Bandwidth)
+	}
+	if m.Attributes != nil {
+		fmt.Fprintf(buf, "a=%s", strings.Join(m.Attributes, " "))
+	}
+	return strings.TrimSpace(buf.String())
+}
+
+type TransportProto uint8
+
 const (
-	ProtoUDP uint8 = iota
+	ProtoUDP TransportProto = iota
 	ProtoRTP
 	ProtoRTPSecure
 	ProtoRTPSecureFeedback
 )
+
+func (tp TransportProto) String() string {
+	switch tp {
+	case ProtoUDP:
+		return "udp"
+	case ProtoRTP:
+		return "RTP/AVP"
+	case ProtoRTPSecure:
+		return "RTP/SAVP"
+	case ProtoRTPSecureFeedback:
+		return "RTP/SAVPF"
+	}
+	return "unknown"
+}
 
 func parseMedia(s string) (Media, error) {
 	fields := strings.Fields(s)
@@ -170,14 +209,14 @@ func parseMedia(s string) (Media, error) {
 	}
 
 	switch fields[2] {
-	case "udp":
-		m.Protocol = ProtoUDP
-	case "RTP/AVP":
-		m.Protocol = ProtoRTP
-	case "RTP/SAVP":
-		m.Protocol = ProtoRTPSecure
-	case "RTP/SAVPF":
-		m.Protocol = ProtoRTPSecureFeedback
+	case ProtoUDP.String():
+		m.Transport = ProtoUDP
+	case ProtoRTP.String():
+		m.Transport = ProtoRTP
+	case ProtoRTPSecure.String():
+		m.Transport = ProtoRTPSecure
+	case ProtoRTPSecureFeedback.String():
+		m.Transport = ProtoRTPSecureFeedback
 	default:
 		return Media{}, fmt.Errorf("unknown protocol %s", fields[2])
 	}
@@ -189,9 +228,20 @@ func parseMedia(s string) (Media, error) {
 // ConnInfo represents connection information.
 type ConnInfo struct {
 	Type    string // TODO(otl): only "IP4", "IP6" valid... new int type?
-	Address string // IPv4, IPv6 literal or a hostname
+	Address string // IPv4, IPv6 literal TODO(otl): or a hostname?
 	TTL     int    // time to live
 	Count   int    // number of addresses after Address
+}
+
+func (c *ConnInfo) String() string {
+	s := fmt.Sprintf("c=%s %s %s", "IN", c.Type, c.Address)
+	if c.TTL > 0 {
+		s += fmt.Sprintf("/%d", c.TTL)
+	}
+	if c.Count > 0 {
+		s += fmt.Sprintf("/%d", c.Count)
+	}
+	return s
 }
 
 func parseConnInfo(s string) (ConnInfo, error) {
