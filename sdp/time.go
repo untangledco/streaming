@@ -88,6 +88,9 @@ func parseRepeat(s string) (Repeat, error) {
 	return repeat, nil
 }
 
+// parseDuration wraps time.ParseDuration to account for
+// bare integers (seconds) and
+// the day prefix ("d").
 func parseDuration(s string) (time.Duration, error) {
 	// a bare int, like 86400
 	i, err := strconv.Atoi(s)
