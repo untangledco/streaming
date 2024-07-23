@@ -4,18 +4,17 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func (r Request) Encode() string {
 	var attrs []string
 	if r.BufLength > 0 {
-		// TODO(otl): round to nearest 100ms
-		a := fmt.Sprintf("bl=%d", r.BufLength.Milliseconds())
+		a := fmt.Sprintf("bl=%d", r.BufLength.Round(100*time.Millisecond).Milliseconds())
 		attrs = append(attrs, a)
 	}
 	if r.Deadline > 0 {
-		// TODO(otl): round to nearest 100ms
-		a := fmt.Sprintf("dl=%d", r.Deadline.Milliseconds())
+		a := fmt.Sprintf("dl=%d", r.Deadline.Round(100*time.Millisecond).Milliseconds())
 		attrs = append(attrs, a)
 	}
 	if r.Throughput > 0 {
@@ -41,7 +40,6 @@ func (o Object) Encode() string {
 		attrs = append(attrs, fmt.Sprintf("br=%d", o.Bitrate))
 	}
 	if o.Duration > 0 {
-		// TODO(otl): round to nearest 100ms
 		a := fmt.Sprintf("d=%d", o.Duration.Milliseconds())
 		attrs = append(attrs, a)
 	}

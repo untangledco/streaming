@@ -100,10 +100,11 @@ func ExtractInfo(header http.Header) (Info, error) {
 // Request represents data relating to the client's...
 type Request struct {
 	// Playback duration of the requested content. When encoded,
-	// values are rounded to the nearest millisecond.
+	// values are rounded to the nearest 100 milliseconds.
 	BufLength time.Duration
-	// Time limit, in milliseconds, to receive a response to the
-	// request before the client may experience playback problems.
+	// Time limit to receive a response to the request before the
+	// client may experience playback problems.
+	// When encoded, values are rounded to the nearest 100 milliseconds.
 	Deadline time.Duration
 	// Kilobits per second between client and server, as measured by the client.
 	Throughput int
