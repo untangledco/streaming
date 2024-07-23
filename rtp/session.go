@@ -17,8 +17,10 @@ func Dial(network, addr string) (*Session, error) {
 	return &s, nil
 }
 
-// Session represents a RTP session... TODO(otl)
+// Session represents a RTP session...
 // When a Session is established with Dial(), ...
+// TODO(otl): what does session automatically handle? what do we not
+// need to set in each packets header?
 type Session struct {
 	// Clock is the rate of the... in hertz.
 	// If zero, automatic detection attempted...
@@ -38,6 +40,9 @@ func (s *Session) init() {
 }
 
 // Transmit sends the packet to the destination address in s.
+//
+// TODO(otl): some fields in packet's header are set by Transmit.
+// Which ones? Otherwise people are going to get surprised!
 func (s *Session) Transmit(packet *Packet) error {
 	if packet.Header.Version == 0 {
 		packet.Header.Version = VersionRFC3550
