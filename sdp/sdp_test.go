@@ -37,19 +37,19 @@ func TestReadSession(t *testing.T) {
 				},
 				Media: []Media{
 					Media{
-						Type:      "audio",
+						Type:      MediaTypeAudio,
 						Port:      49170,
 						Transport: ProtoRTP,
 						Format:    []string{"0"},
 					},
 					Media{
-						Type:      "audio",
+						Type:      MediaTypeAudio,
 						Port:      49180,
 						Transport: ProtoRTP,
 						Format:    []string{"0"},
 					},
 					Media{
-						Type:       "video",
+						Type:       MediaTypeVideo,
 						Port:       51372,
 						Transport:  ProtoRTP,
 						Format:     []string{"99"},

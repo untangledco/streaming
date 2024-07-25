@@ -157,9 +157,9 @@ func parseBandwidth(s string) (Bandwidth, error) {
 
 // Media represents a media description.
 type Media struct {
-	Type      string // TODO(otl): new type mediaType?
-	Port      int    // IP port
-	PortCount int    // count of subsequent ports from Port
+	Type      MediaType
+	Port      int // IP port
+	PortCount int // count of subsequent ports from Port
 	Transport TransportProto
 	// Format describes the media format. Interpretation of the
 	// entries depends on the value of Transport. For example, if
@@ -199,6 +199,53 @@ func (m Media) String() string {
 	return strings.TrimSpace(buf.String())
 }
 
+type MediaType uint8
+
+const (
+	MediaTypeAudio MediaType = iota
+	MediaTypeVideo
+	MediaTypeText
+	MediaTypeApplication
+	MediaTypeMessage
+	MediaTypeImage
+)
+
+func (t MediaType) String() string {
+	switch t {
+	case MediaTypeAudio:
+		return "audio"
+	case MediaTypeVideo:
+		return "video"
+	case MediaTypeText:
+		return "text"
+	case MediaTypeApplication:
+		return "application"
+	case MediaTypeMessage:
+		return "message"
+	case MediaTypeImage:
+		return "image"
+	}
+	return "unknown"
+}
+
+func parseMediaType(s string) (MediaType, error) {
+	switch s {
+	case MediaTypeAudio.String():
+		return MediaTypeAudio, nil
+	case MediaTypeVideo.String():
+		return MediaTypeVideo, nil
+	case MediaTypeText.String():
+		return MediaTypeText, nil
+	case MediaTypeApplication.String():
+		return MediaTypeApplication, nil
+	case MediaTypeMessage.String():
+		return MediaTypeMessage, nil
+	case MediaTypeImage.String():
+		return MediaTypeImage, nil
+	}
+	return 0, fmt.Errorf("unknown media type %s", s)
+}
+
 type TransportProto uint8
 
 const (
@@ -227,10 +274,14 @@ func parseMedia(s string) (Media, error) {
 	if len(fields) < 4 {
 		return Media{}, fmt.Errorf("found %d fields, need at least %d", len(fields), 4)
 	}
-	m := Media{Type: fields[0]}
+
+	mtyp, err := parseMediaType(fields[0])
+	if err != nil {
+		return Media{}, fmt.Errorf("media type: %w", err)
+	}
+	m := Media{Type: mtyp}
 
 	p, n, found := strings.Cut(fields[1], "/")
-	var err error
 	m.Port, err = strconv.Atoi(p)
 	if err != nil {
 		return Media{}, fmt.Errorf("parse port: %w", err)
