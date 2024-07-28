@@ -1,4 +1,4 @@
-\[![pkgsite](https://pkg.go.dev/badge/github.com/untangledco/streaming)](https://pkg.go.dev/github.com/untangledco/streaming)
+[![pkgsite](https://pkg.go.dev/badge/github.com/untangledco/streaming)](https://pkg.go.dev/github.com/untangledco/streaming)
 
 This repository contains packages for developing media streaming systems in Go.
 Watch it being developed live!
