@@ -1,8 +1,10 @@
 package pcap
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -35,9 +37,8 @@ type File struct {
 
 func decode(reader io.Reader) (*File, error) {
 	var header GlobalHeader
-	err := binary.Read(reader, binary.LittleEndian, &header)
 
-	if err != nil {
+	if err := binary.Read(reader, binary.LittleEndian, &header); err != nil {
 		return nil, err
 	}
 
@@ -58,8 +59,7 @@ func decode(reader io.Reader) (*File, error) {
 		}
 
 		data := make([]byte, header.InclLen)
-		_, err = io.ReadFull(reader, data)
-		if err != nil {
+		if _, err = io.ReadFull(reader, data); err != nil {
 			return nil, err
 		}
 
@@ -73,4 +73,23 @@ func decode(reader io.Reader) (*File, error) {
 		Header:  header,
 		Packets: packets,
 	}, nil
+}
+
+func encode(file *File) ([]byte, error) {
+	buf := new(bytes.Buffer)
+
+	if err := binary.Write(buf, binary.LittleEndian, &file.Header); err != nil {
+		return nil, fmt.Errorf("global header: %v", err)
+	}
+
+	for _, packet := range file.Packets {
+		if err := binary.Write(buf, binary.LittleEndian, &packet.Header); err != nil {
+			return nil, fmt.Errorf("Packet Header: %v", err)
+		}
+		if err := binary.Write(buf, binary.LittleEndian, &packet.Data); err != nil {
+			return nil, fmt.Errorf("Packet Data: %v", err)
+		}
+	}
+
+	return buf.Bytes(), nil
 }
