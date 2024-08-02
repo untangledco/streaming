@@ -31,9 +31,11 @@ import (
 	"github.com/untangledco/streaming/sdp"
 )
 
-// 1441kbps in bytes per 20 milliseconds
-const bufSize int = 1411 / 8 * 20
-const packetInterval = 20 * time.Millisecond // from RFC 3xxx
+const sampleRate = 4000
+const bitsPerSample = 8
+const tick = 500 // milliseconds
+const packetInterval = tick * time.Millisecond
+const bufSize = sampleRate * bitsPerSample / 8 / 1000 * tick
 
 const usage string = "usage: autx address"
 
@@ -47,7 +49,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	session.Clock = 44100 // 44.1KHz
+	session.Clock = 44100 // 44.1KHz, not the audio sample rate.
 
 	description := sdp.Session{
 		Origin: sdp.Origin{
@@ -55,7 +57,7 @@ func main() {
 			ID:          sdp.Now(),
 			Version:     sdp.Now(),
 			AddressType: "IP6",
-			Address:     "[::1]",
+			Address:     "::1",
 		},
 		Name: "test",
 		Media: []sdp.Media{
@@ -63,10 +65,10 @@ func main() {
 				Type:      sdp.MediaTypeAudio,
 				Port:      9999,
 				Transport: sdp.ProtoRTP,
-				Format:    []string{fmt.Sprintf("%d", rtp.PayloadL16)},
+				Format:    []string{fmt.Sprintf("%d", rtp.PayloadType(99))},
 				Attributes: []string{
-					fmt.Sprintf("rtpmap:%d", rtp.PayloadL16),
-					fmt.Sprintf("L16/%d", session.Clock),
+					fmt.Sprintf("rtpmap:%d", rtp.PayloadType(99)),
+					fmt.Sprintf("L8/%d", sampleRate),
 				},
 			},
 		},
@@ -97,12 +99,7 @@ func main() {
 		}
 	}()
 
-	ticker := time.NewTicker(packetInterval)
-	for range ticker.C {
-		p, ok := <-out
-		if !ok {
-			return
-		}
+	for p := range out {
 		if err := session.Transmit(&p); err != nil {
 			log.Println(err)
 		}
