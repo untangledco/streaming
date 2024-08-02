@@ -80,7 +80,8 @@ const (
 type PayloadType uint8
 
 const (
-	PayloadL16  PayloadType = 10
+	PayloadL16Stereo  PayloadType = 10
+	PayloadL16Mono PayloadType = 11
 	PayloadMP2T PayloadType = 33
 	// ...
 )
