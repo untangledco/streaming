@@ -1,9 +1,9 @@
 // Command autx transmits audio over the network via RTP.
 // It reads raw audio from the standard input
-// and transmits it to the provided address.
+// and transmits it to the provided address every 30 milliseconds.
 // Audio must be single-channel (mono),
 // signed 16-bit linear PCM data in big-endian byte order.
-// The sample rate must be 44.1KHz.
+// The sample rate must be 22.05KHz.
 //
 // Its usage is:
 //
@@ -24,16 +24,19 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/untangledco/streaming/rtp"
 	"github.com/untangledco/streaming/sdp"
 )
 
-const sampleRate = 4000
-const bitsPerSample = 8
-const tick = 500 // milliseconds
+const sampleRate = 22050
+const bitsPerSample = 16
+const tick = 30 // milliseconds
 const packetInterval = tick * time.Millisecond
 const bufSize = sampleRate * bitsPerSample / 8 / 1000 * tick
 
@@ -51,24 +54,41 @@ func main() {
 	}
 	session.Clock = 44100 // 44.1KHz, not the audio sample rate.
 
+	ipv := "IP4"
+	origin := "127.0.0.1"
+	if strings.HasPrefix(os.Args[1], "[") {
+		ipv = "IP6"
+		origin = "::1"
+	}
+	_, port, err := net.SplitHostPort(os.Args[1])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	nport, err := strconv.Atoi(port)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "parse port:", err)
+		os.Exit(1)
+	}
+
 	description := sdp.Session{
 		Origin: sdp.Origin{
 			Username:    sdp.NoUsername,
 			ID:          sdp.Now(),
 			Version:     sdp.Now(),
-			AddressType: "IP6",
-			Address:     "::1",
+			AddressType: ipv,
+			Address:     origin,
 		},
 		Name: "test",
 		Media: []sdp.Media{
 			{
 				Type:      sdp.MediaTypeAudio,
-				Port:      9999,
+				Port:      nport,
 				Transport: sdp.ProtoRTP,
-				Format:    []string{fmt.Sprintf("%d", rtp.PayloadType(99))},
+				Format:    []string{fmt.Sprintf("%d", rtp.PayloadType(11))},
 				Attributes: []string{
-					fmt.Sprintf("rtpmap:%d", rtp.PayloadType(99)),
-					fmt.Sprintf("L8/%d", sampleRate),
+					fmt.Sprintf("rtpmap:%d", rtp.PayloadType(11)),
+					fmt.Sprintf("L16/%d", sampleRate),
 				},
 			},
 		},
@@ -80,7 +100,7 @@ func main() {
 		buf := &bytes.Buffer{}
 		p := rtp.Packet{
 			Header: rtp.Header{
-				Type: rtp.PayloadL16,
+				Type: rtp.PayloadType(11),
 			},
 		}
 		for {
@@ -94,12 +114,16 @@ func main() {
 			} else if err != nil {
 				log.Println(err)
 			}
-			p.Payload = buf.Bytes()
+			p.Payload = bytes.Clone(buf.Bytes())
 			out <- p
 		}
 	}()
 
-	for p := range out {
+	for range time.NewTicker(packetInterval).C {
+		p, ok := <-out
+		if !ok {
+			return
+		}
 		if err := session.Transmit(&p); err != nil {
 			log.Println(err)
 		}
