@@ -3,13 +3,16 @@ package pcap
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 )
 
+const (
+	magicLittleEndian uint32 = 0xa1b2c3d4
+	magicBigEndian    uint32 = 0xd4c3b2a1
+)
+
 type GlobalHeader struct {
-	MagicNumber  uint32
 	VersionMajor uint16
 	VersionMinor uint16
 	ThisZone     int32
@@ -36,18 +39,21 @@ type File struct {
 }
 
 func decode(reader io.Reader) (*File, error) {
-	var header GlobalHeader
+	b := make([]byte, 4)
+	if _, err := io.ReadFull(reader, b); err != nil {
+		return nil, fmt.Errorf("read magic number: %w", err)
+	}
+	magic := binary.NativeEndian.Uint32(b)
+	if magic != magicLittleEndian && magic != magicBigEndian {
+		return nil, fmt.Errorf("unknown magic number %#x", magic)
+	}
 
+	var header GlobalHeader
 	if err := binary.Read(reader, binary.LittleEndian, &header); err != nil {
 		return nil, err
 	}
 
-	if header.MagicNumber != 0xa1b2c3d4 && header.MagicNumber != 0xd4c3b2a1 {
-		return nil, errors.New("invalid magic number in pcap file")
-	}
-
 	var packets []Packet
-
 	for {
 		var header Header
 		err := binary.Read(reader, binary.LittleEndian, &header)
@@ -77,6 +83,9 @@ func decode(reader io.Reader) (*File, error) {
 
 func encode(file *File) ([]byte, error) {
 	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.NativeEndian, magicLittleEndian); err != nil {
+		return nil, fmt.Errorf("write magic number: %w", err)
+	}
 
 	if err := binary.Write(buf, binary.LittleEndian, &file.Header); err != nil {
 		return nil, fmt.Errorf("global header: %v", err)
