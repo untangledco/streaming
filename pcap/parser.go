@@ -50,23 +50,22 @@ func decode(reader io.Reader) (*File, error) {
 
 	var header GlobalHeader
 	if err := binary.Read(reader, binary.LittleEndian, &header); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read global header: %w", err)
 	}
 
 	var packets []Packet
-	for {
+	for i := 1; ; i++ {
 		var header Header
 		err := binary.Read(reader, binary.LittleEndian, &header)
 		if err == io.EOF {
 			break
-		}
-		if err != nil {
-			return nil, err
+		} else if err != nil {
+			return nil, fmt.Errorf("packet %d: read header: %w", i, err)
 		}
 
 		data := make([]byte, header.InclLen)
 		if _, err = io.ReadFull(reader, data); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("packet %d: read data: %w", i, err)
 		}
 
 		packets = append(packets, Packet{
