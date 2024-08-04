@@ -97,7 +97,7 @@ func encode(file *File) ([]byte, error) {
 		return nil, fmt.Errorf("global header: %v", err)
 	}
 
-	for _, p := range file.Packets {
+	for i, p := range file.Packets {
 		sec, nsec := timestamp(p.Header.Time)
 		h := header{
 			Seconds:    sec,
@@ -106,10 +106,10 @@ func encode(file *File) ([]byte, error) {
 			OrigLen:    p.Header.OrigLen,
 		}
 		if err := binary.Write(buf, binary.LittleEndian, h); err != nil {
-			return nil, fmt.Errorf("packet header: %v", err)
+			return nil, fmt.Errorf("packet %d: header: %v", i, err)
 		}
-		if err := binary.Write(buf, binary.LittleEndian, p.Data); err != nil {
-			return nil, fmt.Errorf("packet data: %v", err)
+		if _, err := buf.Write(p.Data); err != nil {
+			return nil, fmt.Errorf("packet %d: data: %v", i, err)
 		}
 	}
 
