@@ -45,11 +45,10 @@ type File struct {
 }
 
 func decode(reader io.Reader) (*File, error) {
-	b := make([]byte, 4)
-	if _, err := io.ReadFull(reader, b); err != nil {
+	var magic uint32
+	if err := binary.Read(reader, binary.NativeEndian, &magic); err != nil {
 		return nil, fmt.Errorf("read magic number: %w", err)
 	}
-	magic := binary.NativeEndian.Uint32(b)
 	if magic != magicLittleEndian && magic != magicBigEndian {
 		return nil, fmt.Errorf("unknown magic number %#x", magic)
 	}
