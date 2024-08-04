@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestReadFile(t *testing.T) {
@@ -76,4 +77,14 @@ func TestReadFile(t *testing.T) {
 		fmt.Printf("Data %d: %x\n", i, packet.Data)
 	}
 
+}
+
+func TestTimestamp(t *testing.T) {
+	want := [2]uint32{1, 100}
+	when := time.Unix(1, 100)
+	sec, nsec := timestamp(when)
+	got := [2]uint32{sec, nsec}
+	if got != want {
+		t.Errorf("timestamp(%s) = %v, want %v", when, got, want)
+	}
 }

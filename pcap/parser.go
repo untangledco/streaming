@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"time"
 )
 
 const (
@@ -22,10 +23,16 @@ type GlobalHeader struct {
 }
 
 type Header struct {
-	TsSec   uint32
-	TsUsec  uint32
+	Time    time.Time
 	InclLen uint32
 	OrigLen uint32
+}
+
+type header struct {
+	Seconds    uint32
+	SubSeconds uint32 // micro or nanoseconds
+	InclLen    uint32
+	OrigLen    uint32
 }
 
 type Packet struct {
@@ -48,56 +55,68 @@ func decode(reader io.Reader) (*File, error) {
 		return nil, fmt.Errorf("unknown magic number %#x", magic)
 	}
 
-	var header GlobalHeader
-	if err := binary.Read(reader, binary.LittleEndian, &header); err != nil {
+	var gheader GlobalHeader
+	if err := binary.Read(reader, binary.LittleEndian, &gheader); err != nil {
 		return nil, fmt.Errorf("read global header: %w", err)
 	}
 
 	var packets []Packet
 	for i := 1; ; i++ {
-		var header Header
-		err := binary.Read(reader, binary.LittleEndian, &header)
+		var h header
+		err := binary.Read(reader, binary.LittleEndian, &h)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return nil, fmt.Errorf("packet %d: read header: %w", i, err)
 		}
+		hh := Header{
+			Time:    time.Unix(int64(h.Seconds), int64(h.SubSeconds)*1000),
+			InclLen: h.InclLen,
+			OrigLen: h.OrigLen,
+		}
 
-		data := make([]byte, header.InclLen)
+		data := make([]byte, h.InclLen)
 		if _, err = io.ReadFull(reader, data); err != nil {
 			return nil, fmt.Errorf("packet %d: read data: %w", i, err)
 		}
 
 		packets = append(packets, Packet{
-			Header: header,
+			Header: hh,
 			Data:   data,
 		})
 	}
 
 	return &File{
-		Header:  header,
+		Header:  gheader,
 		Packets: packets,
 	}, nil
 }
 
 func encode(file *File) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.NativeEndian, magicLittleEndian); err != nil {
-		return nil, fmt.Errorf("write magic number: %w", err)
-	}
-
+	b := make([]byte, 4)
+	binary.NativeEndian.PutUint32(b, magicLittleEndian)
+	buf := bytes.NewBuffer(b)
 	if err := binary.Write(buf, binary.LittleEndian, &file.Header); err != nil {
 		return nil, fmt.Errorf("global header: %v", err)
 	}
 
-	for _, packet := range file.Packets {
-		if err := binary.Write(buf, binary.LittleEndian, &packet.Header); err != nil {
-			return nil, fmt.Errorf("Packet Header: %v", err)
+	for _, p := range file.Packets {
+		sec, nsec := timestamp(p.Header.Time)
+		usec := nsec / 1000
+		h := header{sec, usec, p.Header.InclLen, p.Header.OrigLen}
+		if err := binary.Write(buf, binary.LittleEndian, &h); err != nil {
+			return nil, fmt.Errorf("packet header: %v", err)
 		}
-		if err := binary.Write(buf, binary.LittleEndian, &packet.Data); err != nil {
-			return nil, fmt.Errorf("Packet Data: %v", err)
+		if err := binary.Write(buf, binary.LittleEndian, &p.Data); err != nil {
+			return nil, fmt.Errorf("packet data: %v", err)
 		}
 	}
 
 	return buf.Bytes(), nil
+}
+
+func timestamp(t time.Time) (seconds, nanoSeconds uint32) {
+	seconds = uint32(t.Unix())
+	nanoSeconds = uint32(t.UnixNano() - t.Unix()*1e9)
+	return
 }
