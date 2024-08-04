@@ -24,7 +24,6 @@ type GlobalHeader struct {
 
 type Header struct {
 	Time    time.Time
-	InclLen uint32
 	OrigLen uint32
 }
 
@@ -71,7 +70,6 @@ func decode(reader io.Reader) (*File, error) {
 		}
 		hh := Header{
 			Time:    time.Unix(int64(h.Seconds), int64(h.SubSeconds)*1000),
-			InclLen: h.InclLen,
 			OrigLen: h.OrigLen,
 		}
 
@@ -102,12 +100,16 @@ func encode(file *File) ([]byte, error) {
 
 	for _, p := range file.Packets {
 		sec, nsec := timestamp(p.Header.Time)
-		usec := nsec / 1000
-		h := header{sec, usec, p.Header.InclLen, p.Header.OrigLen}
-		if err := binary.Write(buf, binary.LittleEndian, &h); err != nil {
+		h := header{
+			Seconds:    sec,
+			SubSeconds: nsec / 1000,
+			InclLen:    uint32(len(p.Data)),
+			OrigLen:    p.Header.OrigLen,
+		}
+		if err := binary.Write(buf, binary.LittleEndian, h); err != nil {
 			return nil, fmt.Errorf("packet header: %v", err)
 		}
-		if err := binary.Write(buf, binary.LittleEndian, &p.Data); err != nil {
+		if err := binary.Write(buf, binary.LittleEndian, p.Data); err != nil {
 			return nil, fmt.Errorf("packet data: %v", err)
 		}
 	}
