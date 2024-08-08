@@ -1,82 +1,62 @@
 package pcap
 
 import (
-	"fmt"
+	"bytes"
 	"os"
 	"testing"
 	"time"
 )
 
-func TestReadFile(t *testing.T) {
-	filePath := "testing/srt_capture_test.pcap"
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		t.Fatal("Failed to open file")
-	}
-	defer file.Close()
-
-	pcapFile, err := decode(file)
-	if err != nil {
-		t.Fatalf("Failed to read PCAP file: %v", err)
-	}
-
-	if len(pcapFile.Packets) == 0 {
-		t.Fatal("Should be at least one packet but there is 0")
-	}
-
-	fmt.Printf("PCAP Header: %+v\n", pcapFile.Header)
-
-	for i, packet := range pcapFile.Packets {
-		fmt.Printf("Packet %d: %+v\n", i, packet.Header)
-
-		fmt.Printf("Data %d: %x\n", i, packet.Data)
-	}
-
-	encodePcapFile, err := encode(pcapFile)
-
-	if err != nil {
-		t.Fatalf("encode file: %v", err)
-	}
-
-	fmt.Printf("Encoded PCAP: %x\n", encodePcapFile)
-
-	f, err := os.Create("testing/pcap_file_encode.pcap")
+func TestDecode(t *testing.T) {
+	f, err := os.Open("testing/srt_capture_test.pcap")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer f.Close()
 
-	_, err = f.Write(encodePcapFile)
+	gheader := GlobalHeader{
+		VersionMajor: 2,
+		VersionMinor: 4,
+		SnapLen:      524288,
+	}
+	header := Header{
+		// from tcpdump -tt -r testing/srt_capture_test.pcap
+		Time:    time.UnixMicro(1721314372204926),
+		OrigLen: 45,
+	}
+
+	capture, err := decode(f)
 	if err != nil {
-		t.Fatalf("Failed to write to PCAP file")
+		t.Fatal(err)
 	}
 
-	filePathTwo := "testing/pcap_file_encode.pcap"
+	if len(capture.Packets) != 1 {
+		t.Fatalf("expected 1 packet, found %d", len(capture.Packets))
+	}
+	if capture.Header != gheader {
+		t.Errorf("decoded global header %v, want %v", capture.Header, gheader)
+	}
+	if capture.Packets[0].Header != header {
+		t.Errorf("decoded packet header %v, want %v", capture.Packets[0].Header, header)
+	}
+}
 
-	fileTwo, err := os.Open(filePathTwo)
+func TestEncode(t *testing.T) {
+	want, err := os.ReadFile("testing/srt_capture_test.pcap")
 	if err != nil {
-		t.Fatal("Failed to open file")
+		t.Fatal(err)
 	}
-	defer fileTwo.Close()
-
-	pcap, err := decode(fileTwo)
+	capture, err := decode(bytes.NewReader(want))
 	if err != nil {
-		t.Fatalf("Failed to read PCAP file: %v", err)
+		t.Fatal(err)
 	}
-
-	if len(pcap.Packets) == 0 {
-		t.Fatal("Should be at least one packet but there is 0")
+	got, err := encode(capture)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
 	}
-
-	fmt.Printf("PCAP Header: %+v\n", pcap.Header)
-
-	for i, packet := range pcap.Packets {
-		fmt.Printf("Packet %d: %+v\n", i, packet.Header)
-
-		fmt.Printf("Data %d: %x\n", i, packet.Data)
+	if !bytes.Equal(got, want) {
+		t.Errorf("encode(%v) = %x, want %x", capture, got, want)
 	}
-
 }
 
 func TestTimestamp(t *testing.T) {
