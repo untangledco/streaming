@@ -8,7 +8,7 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	f, err := os.Open("testing/srt_capture_test.pcap")
+	f, err := os.Open("testdata/text_udp.pcap")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -20,7 +20,7 @@ func TestDecode(t *testing.T) {
 		SnapLen:      524288,
 	}
 	header := Header{
-		// from tcpdump -tt -r testing/srt_capture_test.pcap
+		// from tcpdump -tt -r testdata/text_udp.pcap
 		Time:    time.UnixMicro(1721314372204926),
 		OrigLen: 45,
 	}
@@ -42,7 +42,7 @@ func TestDecode(t *testing.T) {
 }
 
 func TestEncode(t *testing.T) {
-	want, err := os.ReadFile("testing/srt_capture_test.pcap")
+	want, err := os.ReadFile("testdata/text_udp.pcap")
 	if err != nil {
 		t.Fatal(err)
 	}
