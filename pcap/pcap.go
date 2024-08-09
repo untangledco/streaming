@@ -20,8 +20,8 @@ const (
 type GlobalHeader struct {
 	VersionMajor uint16
 	VersionMinor uint16
-	ThisZone     int32
-	SigFigs      uint32
+	_            int32 // leftover from old pcap versions
+	_            int32 // leftover from old pcap versions
 	SnapLen      uint32
 	Network      uint32
 }
