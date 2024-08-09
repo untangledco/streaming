@@ -17,13 +17,13 @@ const (
 	magicBigEndian    uint32 = 0xd4c3b2a1
 )
 
+var version = [2]uint16{2, 4}
+
 type GlobalHeader struct {
-	VersionMajor uint16
-	VersionMinor uint16
-	_            int32 // leftover from old pcap versions
-	_            int32 // leftover from old pcap versions
-	SnapLen      uint32
-	Network      uint32
+	_       int32 // leftover from old pcap versions
+	_       int32 // leftover from old pcap versions
+	SnapLen uint32
+	Network uint32
 }
 
 type Header struct {
@@ -57,9 +57,17 @@ func decode(reader io.Reader) (*File, error) {
 		return nil, fmt.Errorf("unknown magic number %#x", magic)
 	}
 
+	var v [2]uint16
+	if err := binary.Read(reader, binary.LittleEndian, &v); err != nil {
+		return nil, fmt.Errorf("read pcap version: %w", err)
+	}
+	if v != version {
+		return nil, fmt.Errorf("unsupported version %d.%d", v[0], v[1])
+	}
+
 	var gheader GlobalHeader
 	if err := binary.Read(reader, binary.LittleEndian, &gheader); err != nil {
-		return nil, fmt.Errorf("read global header: %w", err)
+		return nil, fmt.Errorf("read pcap version: %w", err)
 	}
 
 	var packets []Packet
@@ -94,8 +102,10 @@ func decode(reader io.Reader) (*File, error) {
 }
 
 func encode(file *File) ([]byte, error) {
-	b := make([]byte, 4)
+	b := make([]byte, 4+4) // magic + version
 	binary.NativeEndian.PutUint32(b, magicLittleEndian)
+	binary.NativeEndian.PutUint16(b[4:6], version[0])
+	binary.NativeEndian.PutUint16(b[6:8], version[1])
 	buf := bytes.NewBuffer(b)
 	if err := binary.Write(buf, binary.LittleEndian, &file.Header); err != nil {
 		return nil, fmt.Errorf("global header: %v", err)

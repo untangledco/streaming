@@ -15,9 +15,7 @@ func TestDecode(t *testing.T) {
 	defer f.Close()
 
 	gheader := GlobalHeader{
-		VersionMajor: 2,
-		VersionMinor: 4,
-		SnapLen:      524288,
+		SnapLen: 524288,
 	}
 	header := Header{
 		// from tcpdump -tt -r testdata/text_udp.pcap
