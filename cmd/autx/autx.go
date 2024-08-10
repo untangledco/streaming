@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	session.Clock = 44100 // 44.1KHz, not the audio sample rate.
+	session.Clock = rtp.ClockPCMAudio // not the audio sample rate.
 
 	origin := sdp.Origin{
 		ID:      sdp.Now(),

@@ -80,9 +80,9 @@ const (
 type PayloadType uint8
 
 const (
-	PayloadL16Stereo  PayloadType = 10
-	PayloadL16Mono PayloadType = 11
-	PayloadMP2T PayloadType = 33
+	PayloadL16Stereo PayloadType = 10
+	PayloadL16Mono   PayloadType = 11
+	PayloadMP2T      PayloadType = 33
 	// ...
 )
 
@@ -103,13 +103,16 @@ func (t PayloadType) String() string {
 	switch t {
 	case PayloadMP2T:
 		return "MP2T"
+	case PayloadL16Stereo, PayloadL16Mono:
+		return fmt.Sprintf("%d", t)
 	}
 	return "unknown"
 }
 
 const (
-	ClockMP2T = 90000 // 90KHz
-	ClockText = 1000  // 1KHz
+	ClockMP2T     = 90000 // 90KHz
+	ClockPCMAudio = 44100 // 44.1KHz
+	ClockText     = 1000  // 1KHz
 )
 
 type Extension struct {

@@ -27,10 +27,10 @@ func Example() {
 				Type:      sdp.MediaTypeAudio,
 				Port:      6969,
 				Transport: sdp.ProtoRTP,
-				Format:    []string{fmt.Sprintf("%d", rtp.PayloadL16Mono)},
+				Format:    []string{rtp.PayloadL16Mono.String()},
 				Attributes: []string{
-					fmt.Sprintf("rtpmap:%d", rtp.PayloadL16Mono),
-					fmt.Sprintf("L16/%d", 22050),
+					"rtpmap:" + rtp.PayloadL16Mono.String(),
+					"L16/22050",
 				},
 			},
 		},
