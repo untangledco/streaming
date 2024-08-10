@@ -12,7 +12,6 @@ import (
 func Example() {
 	session := sdp.Session{
 		Origin: sdp.Origin{
-			Username:    sdp.NoUsername,
 			ID:          3930287268, // example only; use sdp.Now()
 			Version:     3930287268, // example only; use sdp.Now()
 			AddressType: "IP6",      // or "IP4"

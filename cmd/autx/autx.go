@@ -73,7 +73,6 @@ func main() {
 
 	description := sdp.Session{
 		Origin: sdp.Origin{
-			Username:    sdp.NoUsername,
 			ID:          sdp.Now(),
 			Version:     sdp.Now(),
 			AddressType: ipv,

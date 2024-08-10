@@ -42,9 +42,8 @@ const NoUsername string = "-"
 
 // Origin represents the originator of the session as described in RFC 8866 section 5.2.
 type Origin struct {
-	// Username is a named identity on the originating host. If
-	// the host does not support usernames, this value should be set
-	// to NoUsername.
+	// Username is a named identity on the originating host. If unset,
+	// the encoded value will be NoUsername.
 	Username string
 
 	// ID is a globally unique identifier for the session.
