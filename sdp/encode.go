@@ -39,7 +39,6 @@ func (s Session) String() string {
 		fmt.Fprintln(buf, s.Bandwidth)
 	}
 
-	// TODO(otl): what about the invalid case where Time[0] is zero but Time[1] is not?
 	if s.Time[0].IsZero() {
 		fmt.Fprintln(buf, "t=0 0")
 	} else {

@@ -141,7 +141,6 @@ func parseBandwidth(s string) (Bandwidth, error) {
 	if !ok {
 		return Bandwidth{}, fmt.Errorf("missing %s separator", ":")
 	}
-	// TODO(otl): check bandwith type is actually one specified in section 5.8.
 	if t == "" {
 		return Bandwidth{}, fmt.Errorf("missing bandwidth type")
 	}
@@ -170,7 +169,6 @@ type Media struct {
 	Title      string
 	Connection *ConnInfo
 	Bandwidth  *Bandwidth
-	// TODO(otl): store as k, v pairs
 	Attributes []string
 }
 
@@ -311,9 +309,11 @@ func parseMedia(s string) (Media, error) {
 // ConnInfo represents connection information.
 type ConnInfo struct {
 	Address netip.Addr
-	// TODO(otl): what are these units? seconds?
-	TTL   uint8 // time to live
-	Count int   // number of addresses after Address
+	// TTL is the time-to-live of multicast packets.
+	TTL uint8
+	// Count is the number of subsequent IP addresses after
+	// Address used in the session.
+	Count int
 }
 
 func (c *ConnInfo) String() string {

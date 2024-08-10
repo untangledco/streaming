@@ -3,6 +3,7 @@ package sdp
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -44,8 +45,9 @@ type Repeat struct {
 }
 
 func (rp *Repeat) String() string {
-	// TODO(otl): print with no decimal places?
-	s := fmt.Sprintf("r=%f %f ", rp.Interval.Round(time.Second).Seconds(), rp.Active.Round(time.Second).Seconds())
+	interval := math.Round(rp.Interval.Round(time.Second).Seconds())
+	active := math.Round(rp.Active.Round(time.Second).Seconds())
+	s := fmt.Sprintf("r=%d %d ", int(interval), int(active))
 	if len(rp.Offsets) > 0 {
 		ss := make([]string, len(rp.Offsets))
 		for i := range rp.Offsets {

@@ -12,7 +12,6 @@ type parser struct {
 	*bufio.Scanner
 	err error
 	// Field name and value from the current line.
-	// TODO(otl): rename? key, value is very non-specific...
 	key, value string
 	next       []string // expected next field names
 
