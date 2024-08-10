@@ -11,7 +11,11 @@ func (s Session) String() string {
 	if s.Origin.Username == "" {
 		s.Origin.Username = NoUsername
 	}
-	fmt.Fprintf(buf, "o=%s %d %d IN %s %s\n", s.Origin.Username, s.Origin.ID, s.Origin.Version, s.Origin.AddressType, s.Origin.Address)
+	ipv := "IP6"
+	if s.Origin.Address.Is4() {
+		ipv = "IP4"
+	}
+	fmt.Fprintf(buf, "o=%s %d %d IN %s %s\n", s.Origin.Username, s.Origin.ID, s.Origin.Version, ipv, s.Origin.Address)
 	fmt.Fprintf(buf, "s=%s\n", s.Name)
 
 	if s.Info != "" {

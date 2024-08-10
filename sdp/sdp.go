@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/mail"
+	"net/netip"
 	"net/url"
 	"strconv"
 	"strings"
@@ -55,15 +56,8 @@ type Origin struct {
 	// value is a timestamp from Now().
 	Version int
 
-	// AddressType describes the type of Address. This is almost
-	// always "IP4" or "IP6" for IPv4 and IPv6 respectively.
-	AddressType string // TODO(otl): only "IP4", "IP6" valid... new int type?
-
-	// Address is the originating address of the session. This is
-	// almost always a literal IPv4 or IPv6 address such as
-	// "192.0.2.1" or "2001:db8::1".
-	// TODO(otl): is a hostname valid? if not, use netip.Addr, then can drop AddressType.
-	Address string
+	// Address is the originating address of the session.
+	Address netip.Addr
 }
 
 func ReadSession(rd io.Reader) (*Session, error) {
@@ -101,8 +95,13 @@ func parseOrigin(line string) (Origin, error) {
 	if fields[3] != "IN" {
 		return o, fmt.Errorf("unknown network class %q", fields[3])
 	}
-	o.AddressType = fields[4]
-	o.Address = fields[5]
+
+	// skip IP4/IP6 in fields[4]; netip handles the IP version for us.
+	addr, err := netip.ParseAddr(fields[5])
+	if err != nil {
+		return o, fmt.Errorf("parse address: %w", err)
+	}
+	o.Address = addr
 	return o, nil
 }
 
@@ -311,16 +310,18 @@ func parseMedia(s string) (Media, error) {
 
 // ConnInfo represents connection information.
 type ConnInfo struct {
-	Type string // TODO(otl): only "IP4", "IP6" valid... new int type?
-	// TODO(otl): can this be a hostname? if not, maybe use netip.Addr
-	Address string // IPv4, IPv6 literal
+	Address netip.Addr
 	// TODO(otl): what are these units? seconds?
 	TTL   uint8 // time to live
 	Count int   // number of addresses after Address
 }
 
 func (c *ConnInfo) String() string {
-	s := fmt.Sprintf("c=%s %s %s", "IN", c.Type, c.Address)
+	ipv := "IP6"
+	if c.Address.Is4() {
+		ipv = "IP4"
+	}
+	s := fmt.Sprintf("c=%s %s %s", "IN", ipv, c.Address)
 	if c.TTL > 0 {
 		s += fmt.Sprintf("/%d", c.TTL)
 	}
@@ -339,13 +340,16 @@ func parseConnInfo(s string) (ConnInfo, error) {
 		return ConnInfo{}, fmt.Errorf("unsupported class %q, expected IN", fields[0])
 	}
 
-	conn := ConnInfo{Type: fields[1]}
+	var conn ConnInfo
 	if fields[1] != "IP4" && fields[1] != "IP6" {
 		return conn, fmt.Errorf("unsupported network type %s", fields[2])
 	}
-	conn.Type = fields[1]
 	addr := strings.Split(fields[2], "/")
-	conn.Address = addr[0]
+	var err error
+	conn.Address, err = netip.ParseAddr(addr[0])
+	if err != nil {
+		return conn, fmt.Errorf("parse address: %w", err)
+	}
 	if len(addr) == 1 {
 		return conn, nil
 	}
@@ -359,7 +363,7 @@ func parseConnInfo(s string) (ConnInfo, error) {
 		}
 	}
 
-	if conn.Type == "IP4" {
+	if conn.Address.Is4() {
 		if subfields[0] < 0 || subfields[0] > 255 {
 			return conn, fmt.Errorf("ttl: %d is outside uint8 range", subfields[0])
 		}
@@ -369,9 +373,9 @@ func parseConnInfo(s string) (ConnInfo, error) {
 		}
 	}
 
-	if conn.Type == "IP6" && len(subfields) > 1 {
+	if conn.Address.Is6() && len(subfields) > 1 {
 		return conn, fmt.Errorf("parse address: only 1 subfield allowed, read %d", len(subfields))
-	} else if conn.Type == "IP6" && len(subfields) == 1 {
+	} else if conn.Address.Is6() && len(subfields) == 1 {
 		conn.Count = subfields[0]
 	}
 	return conn, nil

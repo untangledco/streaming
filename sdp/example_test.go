@@ -2,6 +2,7 @@ package sdp_test
 
 import (
 	"fmt"
+	"net/netip"
 
 	"github.com/untangledco/streaming/sdp"
 )
@@ -12,10 +13,9 @@ import (
 func Example() {
 	session := sdp.Session{
 		Origin: sdp.Origin{
-			ID:          3930287268, // example only; use sdp.Now()
-			Version:     3930287268, // example only; use sdp.Now()
-			AddressType: "IP6",      // or "IP4"
-			Address:     "2001:db8::1",
+			ID:      3930287268, // example only; use sdp.Now()
+			Version: 3930287268, // example only; use sdp.Now()
+			Address: netip.MustParseAddr("2001:db8::1"),
 		},
 		Name: "A call from me to you",
 	}
