@@ -25,6 +25,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/netip"
 	"os"
 	"strconv"
 	"strings"
@@ -54,11 +55,13 @@ func main() {
 	}
 	session.Clock = 44100 // 44.1KHz, not the audio sample rate.
 
-	ipv := "IP4"
-	origin := "127.0.0.1"
+	origin := sdp.Origin{
+		ID:      sdp.Now(),
+		Version: sdp.Now(),
+		Address: netip.AddrFrom4([4]byte{127, 0, 0, 1}),
+	}
 	if strings.HasPrefix(os.Args[1], "[") {
-		ipv = "IP6"
-		origin = "::1"
+		origin.Address = netip.IPv6Loopback()
 	}
 	_, port, err := net.SplitHostPort(os.Args[1])
 	if err != nil {
@@ -72,13 +75,8 @@ func main() {
 	}
 
 	description := sdp.Session{
-		Origin: sdp.Origin{
-			ID:          sdp.Now(),
-			Version:     sdp.Now(),
-			AddressType: ipv,
-			Address:     origin,
-		},
-		Name: "test",
+		Origin: origin,
+		Name:   "test",
 		Media: []sdp.Media{
 			{
 				Type:      sdp.MediaTypeAudio,
