@@ -310,6 +310,7 @@ func parseMedia(s string) (Media, error) {
 type ConnInfo struct {
 	Address netip.Addr
 	// TTL is the time-to-live of multicast packets.
+	// This field should only be used for IP4 connections.
 	TTL uint8
 	// Count is the number of subsequent IP addresses after
 	// Address used in the session.
