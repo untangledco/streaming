@@ -309,7 +309,7 @@ func parseMedia(s string) (Media, error) {
 // ConnInfo represents connection information.
 type ConnInfo struct {
 	Address netip.Addr
-	// TTL is the time-to-live of multicast packets.
+	// TTL is the time-to-live of IPv4 multicast packets.
 	TTL uint8
 	// Count is the number of subsequent IP addresses after
 	// Address used in the session.
@@ -322,7 +322,7 @@ func (c *ConnInfo) String() string {
 		ipv = "IP4"
 	}
 	s := fmt.Sprintf("c=%s %s %s", "IN", ipv, c.Address)
-	if c.TTL > 0 {
+	if c.Address.Is4() && c.TTL > 0 {
 		s += fmt.Sprintf("/%d", c.TTL)
 	}
 	if c.Count > 0 {
