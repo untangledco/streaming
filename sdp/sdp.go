@@ -322,7 +322,7 @@ func (c *ConnInfo) String() string {
 		ipv = "IP4"
 	}
 	s := fmt.Sprintf("c=%s %s %s", "IN", ipv, c.Address)
-	if c.TTL > 0 {
+	if c.Address.Is4() && c.TTL > 0 {
 		s += fmt.Sprintf("/%d", c.TTL)
 	}
 	if c.Count > 0 {
