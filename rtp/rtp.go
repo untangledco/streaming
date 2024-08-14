@@ -127,6 +127,8 @@ var ErrNoPayload = errors.New("no payload")
 // - 1 byte (version, padding, extension, contrib count)
 // - 1 byte (marker + type)
 // - 2 bytes (sequence)
+// - 4 bytes (timestamp)
+// - 4 bytes (sync source)
 const minHeaderLength = 12
 
 func Unmarshal(data []byte, p *Packet) error {
