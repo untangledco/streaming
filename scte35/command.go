@@ -178,6 +178,16 @@ func encodePrivateCommand(c *PrivateCommand) []byte {
 	return buf
 }
 
+func decodePrivateCommand(b []byte) (PrivateCommand, error) {
+	if len(b) < 4 {
+		return PrivateCommand{}, fmt.Errorf("need at least 4 bytes, have %d", len(b))
+	}
+	return PrivateCommand{
+		ID:   binary.BigEndian.Uint32(b[:4]),
+		Data: b[4:],
+	}, nil
+}
+
 // Insert represents the splice_insert command
 // as specified in SCTE 35 section 9.7.3.
 type Insert struct {

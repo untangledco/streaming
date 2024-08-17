@@ -263,6 +263,12 @@ func decodeCommand(buf []byte) (*Command, error) {
 		ins.AvailNum = uint8(buf[2])
 		ins.AvailExpected = uint8(buf[3])
 		cmd.Insert = &ins
+	case Private:
+		pcmd, err := decodePrivateCommand(buf[1:])
+		if err != nil {
+			return nil, fmt.Errorf("decode private command: %w", err)
+		}
+		cmd.Private = &pcmd
 	default:
 		// TODO(otl): we could support more commands but we
 		// just haven't written the code yet. See issues
