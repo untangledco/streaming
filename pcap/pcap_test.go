@@ -23,7 +23,7 @@ func TestDecode(t *testing.T) {
 		OrigLen: 45,
 	}
 
-	capture, err := decode(f)
+	capture, err := Decode(f)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,16 +44,16 @@ func TestEncode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	capture, err := decode(bytes.NewReader(want))
+	capture, err := Decode(bytes.NewReader(want))
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := encode(capture)
-	if err != nil {
-		t.Fatalf("encode: %v", err)
+	buf := &bytes.Buffer{}
+	if _, err := Encode(buf, capture); err != nil {
+		t.Fatal(err)
 	}
-	if !bytes.Equal(got, want) {
-		t.Errorf("encode(%v) = %x, want %x", capture, got, want)
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("Encode(%v) = %x, want %x", capture, buf.Bytes(), want)
 	}
 }
 

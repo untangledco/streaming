@@ -48,9 +48,10 @@ type File struct {
 	Packets []Packet
 }
 
-func decode(reader io.Reader) (*File, error) {
+// Decode returns a decoded savefile packet capture from rd.
+func Decode(rd io.Reader) (*File, error) {
 	var magic uint32
-	if err := binary.Read(reader, binary.NativeEndian, &magic); err != nil {
+	if err := binary.Read(rd, binary.NativeEndian, &magic); err != nil {
 		return nil, fmt.Errorf("read magic number: %w", err)
 	}
 	if magic != magicLittleEndian && magic != magicBigEndian {
@@ -58,7 +59,7 @@ func decode(reader io.Reader) (*File, error) {
 	}
 
 	var v [2]uint16
-	if err := binary.Read(reader, binary.LittleEndian, &v); err != nil {
+	if err := binary.Read(rd, binary.LittleEndian, &v); err != nil {
 		return nil, fmt.Errorf("read pcap version: %w", err)
 	}
 	if v != version {
@@ -66,14 +67,14 @@ func decode(reader io.Reader) (*File, error) {
 	}
 
 	var gheader GlobalHeader
-	if err := binary.Read(reader, binary.LittleEndian, &gheader); err != nil {
+	if err := binary.Read(rd, binary.LittleEndian, &gheader); err != nil {
 		return nil, fmt.Errorf("read pcap version: %w", err)
 	}
 
 	var packets []Packet
 	for i := 1; ; i++ {
 		var h header
-		err := binary.Read(reader, binary.LittleEndian, &h)
+		err := binary.Read(rd, binary.LittleEndian, &h)
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -85,7 +86,7 @@ func decode(reader io.Reader) (*File, error) {
 		}
 
 		data := make([]byte, h.InclLen)
-		if _, err = io.ReadFull(reader, data); err != nil {
+		if _, err = io.ReadFull(rd, data); err != nil {
 			return nil, fmt.Errorf("packet %d: read data: %w", i, err)
 		}
 
@@ -101,16 +102,22 @@ func decode(reader io.Reader) (*File, error) {
 	}, nil
 }
 
-func encode(file *File) ([]byte, error) {
+// Encode writes a savefile-encoded representation of file to w.
+func Encode(w io.Writer, file *File) (n int64, err error) {
 	b := make([]byte, 4+4) // magic + version
 	binary.NativeEndian.PutUint32(b, magicLittleEndian)
 	binary.NativeEndian.PutUint16(b[4:6], version[0])
 	binary.NativeEndian.PutUint16(b[6:8], version[1])
 	buf := bytes.NewBuffer(b)
 	if err := binary.Write(buf, binary.LittleEndian, &file.Header); err != nil {
-		return nil, fmt.Errorf("global header: %v", err)
+		return n, fmt.Errorf("global header: %v", err)
+	}
+	n, err = io.Copy(w, buf)
+	if err != nil {
+		return n, fmt.Errorf("global header: %w", err)
 	}
 
+	buf.Reset()
 	for i, p := range file.Packets {
 		sec, nsec := timestamp(p.Header.Time)
 		h := header{
@@ -120,14 +127,18 @@ func encode(file *File) ([]byte, error) {
 			OrigLen:    p.Header.OrigLen,
 		}
 		if err := binary.Write(buf, binary.LittleEndian, h); err != nil {
-			return nil, fmt.Errorf("packet %d: header: %v", i, err)
+			return n, fmt.Errorf("packet %d: header: %v", i, err)
 		}
 		if _, err := buf.Write(p.Data); err != nil {
-			return nil, fmt.Errorf("packet %d: data: %v", i, err)
+			return n, fmt.Errorf("packet %d: data: %v", i, err)
+		}
+		nn, err := io.Copy(w, buf)
+		n += nn
+		if err != nil {
+			return n, fmt.Errorf("packet %d: %w", i, err)
 		}
 	}
-
-	return buf.Bytes(), nil
+	return n, nil
 }
 
 func timestamp(t time.Time) (seconds, nanoSeconds uint32) {
