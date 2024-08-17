@@ -2,9 +2,13 @@ package mpegts
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 )
+
+var ErrLongPacket = errors.New("long packet")
+var ErrShortPacket = errors.New("short packet")
 
 func Unmarshal(buf []byte, p *Packet) error {
 	if len(buf) != PacketSize {
@@ -253,8 +257,10 @@ func Encode(w io.Writer, p *Packet) error {
 	if p.Payload != nil {
 		buf = append(buf, p.Payload...)
 	}
-	if len(buf) != PacketSize {
-		return fmt.Errorf("bad encoded packet length %d", len(buf))
+	if len(buf) > PacketSize {
+		return fmt.Errorf("%w: %d bytes", ErrLongPacket, len(buf))
+	} else if len(buf) < PacketSize {
+		return fmt.Errorf("%w: %d bytes", ErrShortPacket, len(buf))
 	}
 	_, err := w.Write(buf)
 	return err
