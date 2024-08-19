@@ -98,7 +98,7 @@ func textPackets(dur time.Duration, count int) chan Packet {
 }
 
 func TestSession(t *testing.T) {
-	ln, err := net.ListenPacket("udp", "[::]:0")
+	ln, err := net.ListenPacket("udp", "[::1]:0")
 	if err != nil {
 		t.Fatal(err)
 	}
