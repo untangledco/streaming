@@ -1,4 +1,5 @@
 [![pkgsite](https://pkg.go.dev/badge/github.com/untangledco/streaming)](https://pkg.go.dev/github.com/untangledco/streaming)
+[![0 dependencies!](https://0dependencies.dev/0dependencies.svg)](https://0dependencies.dev)
 
 This repository contains packages for developing media streaming systems in Go.
 Watch it being developed live!
