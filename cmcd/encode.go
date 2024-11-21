@@ -74,7 +74,7 @@ func (s Session) Encode() string {
 	}
 	// "SHOULD only be sent if not equal to 1": CTA-5004 page 10.
 	if s.PlayRate != RealTime {
-		attrs = append(attrs, fmt.Sprintf("pr=%d", s.PlayRate))
+		attrs = append(attrs, fmt.Sprintf("pr=%v", s.PlayRate))
 	}
 	switch s.Format {
 	case FormatDASH, FormatHLS, FormatSmooth, FormatOther:
