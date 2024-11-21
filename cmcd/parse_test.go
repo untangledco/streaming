@@ -15,10 +15,10 @@ import (
 )
 
 var tests = map[string]Info{
-	"testdata/simple": Info{
+	"testdata/simple": {
 		Session: Session{ID: "6e2fb550-c457-11e9-bb97-0800200c9a66", PlayRate: RealTime},
 	},
-	"testdata/all_four": Info{
+	"testdata/all_four": {
 		Request: Request{Throughput: 25400},
 		Object: Object{
 			Bitrate:    3200,
@@ -29,17 +29,17 @@ var tests = map[string]Info{
 		Status:  Status{true, 15000},
 		Session: Session{ID: "6e2fb550-c457-11e9-bb97-0800200c9a66", PlayRate: RealTime},
 	},
-	"testdata/booleans": Info{
+	"testdata/booleans": {
 		Status:  Status{true, 0},
 		Request: Request{Startup: true},
 		Session: Session{PlayRate: RealTime},
 	},
-	"testdata/range": Info{
+	"testdata/range": {
 		Request: Request{NextRange: [2]int{12323, 48763}},
 		Object:  Object{Duration: 4004 * time.Millisecond},
 		Session: Session{PlayRate: RealTime},
 	},
-	"testdata/custom": Info{
+	"testdata/custom": {
 		Object:  Object{Duration: 4004 * time.Millisecond},
 		Session: Session{PlayRate: RealTime},
 		Custom: map[string]any{
