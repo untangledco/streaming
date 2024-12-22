@@ -3,11 +3,12 @@ package wav
 import (
 	"io"
 	"os"
+	"reflect"
 	"testing"
 )
 
 func TestDecodeEncode(t *testing.T) {
-	var source [44]byte
+	source := make([]byte, headerLength+extensionLength)
 	f, err := os.Open("test.wav")
 	if err != nil {
 		t.Fatal(err)
@@ -25,7 +26,7 @@ func TestDecodeEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 	header := EncodeHeader(file.Header)
-	if source != header {
+	if !reflect.DeepEqual(source, header) {
 		t.Errorf("encode header: want %v, got %v", source, header)
 	}
 }
