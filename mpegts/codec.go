@@ -123,7 +123,7 @@ func parseAdaptationField(buf []byte) *Adaptation {
 // 5 eeee eeee
 func parsePCR(a [6]byte) PCR {
 	b := []byte{0, 0, 0, a[0], a[1], a[2], a[3], a[4] & 0x80}
-	base := binary.BigEndian.Uint64(b)
+	base := binary.BigEndian.Uint64(b) >> 7
 	// next 6 bits reserved, so remaining 1 bit in a[5] and all of a[6] have the extension.
 	ext := binary.BigEndian.Uint16([]byte{a[4] & 0x01, a[5]})
 	return PCR{base, ext}
