@@ -119,15 +119,41 @@ func TestScanner(t *testing.T) {
 }
 
 func TestPCR(t *testing.T) {
-	a := [6]byte{0x00, 0x24, 0x52, 0xd4, 0x7e, 0x00}
-	pcr := parsePCR(a)
-
-	var got [6]byte
-	if err := putPCR(got[:], &pcr); err != nil {
-		t.Errorf("put pcr: %v", err)
+	var tests = []struct {
+		name    string
+		encoded [6]byte
+		want    PCR
+	}{
+		{
+			"zero",
+			[6]byte{0, 0, 0, 0, 0b01111110, 0}, // 6 reserved bits toggled
+			PCR{},
+		},
+		{
+			"max base", // 2^33 - 1
+			[6]byte{0xff, 0xff, 0xff, 0xff, 0xfe, 0x00},
+			PCR{8589934591, 0},
+		},
+		{
+			"max extension", // 2^9 - 1
+			[6]byte{0, 0, 0, 0, 0x7f, 0xff},
+			PCR{0, 511},
+		},
 	}
-	if got != a {
-		t.Errorf("PCR differs after decode, re-encode")
-		t.Errorf("putPCR(buf, %v) = %08b, want %08b", pcr, got, a)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pcr := parsePCR(tt.encoded)
+			if pcr != tt.want {
+				t.Errorf("parsePCR(%v) = %v, want %v", tt.encoded, pcr, tt.want)
+			}
+
+			var a [6]byte
+			if err := putPCR(a[:], &pcr); err != nil {
+				t.Fatalf("put PCR: %v", err)
+			}
+			if a != tt.encoded {
+				t.Errorf("re-encoded pcr is %v, want %v", a, tt.encoded)
+			}
+		})
 	}
 }

@@ -115,16 +115,26 @@ func parseAdaptationField(buf []byte) *Adaptation {
 	return &af
 }
 
-// 0 pppp pppp
-// 1 pppp pppp
-// 2 pppp pppp
-// 3 pppp pppp
-// 4 prrr rrre
-// 5 eeee eeee
+// parsePCR parses the encoded PCR from a.
+// The 33-bit base and the 9-bit extension
+// are stored in a 6 byte array with the following bit layout,
+// where "b" stands for "base", "r" for reserved bits, and "e" for extension.
+//
+//	0 bbbb bbbb
+//	1 bbbb bbbb
+//	2 bbbb bbbb
+//	3 bbbb bbbb
+//	4 brrr rrre
+//	5 eeee eeee
 func parsePCR(a [6]byte) PCR {
-	b := []byte{0, 0, 0, a[0], a[1], a[2], a[3], a[4] & 0x80}
-	base := binary.BigEndian.Uint64(b) >> 7
-	// next 6 bits reserved, so remaining 1 bit in a[5] and all of a[6] have the extension.
+	// we only want the left-most bit.
+	// 6 bits are reserved and the right-most bit is part of extension.
+	b := [8]byte{0, 0, 0, a[0], a[1], a[2], a[3], a[4] & 0x80}
+	base := binary.BigEndian.Uint64(b[:])
+	base = base >> 7 // trim masked reserved, extension bits
+	// next 6 bits of a[4] are reserved, so right-most bit in a[4]
+	// and all of a[5] have the extension.
+
 	ext := binary.BigEndian.Uint16([]byte{a[4] & 0x01, a[5]})
 	return PCR{base, ext}
 }
@@ -266,25 +276,52 @@ func Encode(w io.Writer, p *Packet) error {
 	return err
 }
 
+const (
+	baseMax      = 8589934592 - 1 // max 33-bit uint
+	extensionMax = 512 - 1        // max 9-bit uint
+)
+
 func putPCR(b []byte, pcr *PCR) error {
 	if len(b) != 6 {
 		return fmt.Errorf("need %d bytes, got %d", 6, len(b))
 	}
-	max := uint64(8589934592 - 1) // max 33-bit int
-	if pcr.Base > max {
-		return fmt.Errorf("base %d larger than max %d", pcr.Base, max)
+	if pcr.Base > baseMax {
+		return fmt.Errorf("base %d larger than max %d", pcr.Base, baseMax)
+	} else if pcr.Extension > extensionMax {
+		return fmt.Errorf("extension %d larger than max %d", pcr.Extension, extensionMax)
 	}
-	ubuf := make([]byte, 8)
-	binary.BigEndian.PutUint64(ubuf, pcr.Base)
-	ubuf = ubuf[3:] // we only want 33 bits, so get 4 + 1 bytes (32+1 bits)
-	copy(b, ubuf)
-	b[4] |= 0x7e // toggle 6 reserved bits
 
-	var emax uint16 = 512 - 1 // max 9-bit int
-	if pcr.Extension > emax {
-		return fmt.Errorf("extension %d larger than max %d", pcr.Extension, emax)
-	}
-	b[4] |= byte(pcr.Extension >> 8)
-	b[5] = byte(pcr.Extension)
+	ubuf := make([]byte, 8, 8)
+	binary.BigEndian.PutUint64(ubuf, pcr.Base)
+	// we're only working with 33 bits, so slice off the first 3
+	// bytes to get 4 + 1 bytes (32+1 bits)
+	ubuf = ubuf[3:]
+
+	// now pack 33 bits from ubuf into b[:4].
+	// The 33rd bit of our 33-bit integer is in the first byte: 0b00000001.
+	// We're packing bits from left to right, so shift it left and assign to b[0].
+	b[0] = ubuf[0] << 7
+
+	// We have 7 bits free in b[0], so get 7 bits from ubuf[1] and pack it into b[0].
+	b[0] |= ubuf[1] >> 1
+
+	// 1 bit left in ubuf[1]; put it in the next dest byte.
+	// Rinse and repeat until we're out of bits.
+	b[1] = ubuf[1] << 7
+	b[1] |= ubuf[2] >> 1
+	b[2] = ubuf[2] << 7
+	b[2] |= ubuf[3] >> 1
+	b[3] = ubuf[3] << 7
+	b[3] |= ubuf[4] >> 1
+	b[4] = ubuf[4] << 7
+	// No more base bits to pack.
+
+	// Next, toggle the 6 reserved bits.
+	b[4] |= 0b01111110
+
+	var ext [2]byte
+	binary.BigEndian.PutUint16(ext[:], pcr.Extension)
+	b[4] |= ext[0]
+	b[5] = ext[1]
 	return nil
 }
