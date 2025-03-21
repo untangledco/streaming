@@ -1,7 +1,9 @@
+// Package sip ... SIP protocol as specified in RFC 3261.
 package sip
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"net/textproto"
@@ -25,15 +27,24 @@ type Request struct {
 	Method string
 	URI    string
 
-	Proto      string
-	ProtoMajor int
-	ProtoMinor int
-
 	Header        textproto.MIMEHeader
 	ContentLength int64
+	ContentType   string
 	Sequence      int
+	Via           Via
 
 	Body io.Reader
+}
+
+const magicViaCookie = "z9hG4bK"
+
+type Via struct {
+	Address string
+	Branch  string
+}
+
+func (v Via) String() string {
+	return fmt.Sprintf("SIP/2.0/UDP %s;branch=%s%s", v.Address, magicViaCookie, v.Branch)
 }
 
 func ReadRequest(r io.Reader) (*Request, error) {
@@ -51,8 +62,6 @@ func parseRequest(msg *message) (*Request, error) {
 	if msg.startLine[2] != version {
 		return &req, fmt.Errorf("unknown version %q", msg.startLine[2])
 	}
-	req.Proto = version
-	req.ProtoMajor = 2
 
 	req.Header = msg.header
 	if s := req.Header.Get("Content-Length"); s != "" {
@@ -64,6 +73,42 @@ func parseRequest(msg *message) (*Request, error) {
 	}
 	req.Body = msg.body
 	return &req, nil
+}
+
+func WriteRequest(w io.Writer, req *Request) (n int64, err error) {
+	// section 8.1.1. We can set Max-Forwards automatically.
+	required := []string{"To", "From", "CSeq", "Call-ID"}
+	for _, s := range required {
+		if req.Header.Get(s) == "" {
+			return 0, fmt.Errorf("missing field %s in header", s)
+		}
+	}
+	if req.Header.Get("Max-Forwards") == "" {
+		// TODO(otl): find section in RFC recommending 70.
+		// section x.x.x
+		req.Header.Set("Max-Forwards", strconv.Itoa(70))
+	}
+	if req.ContentLength > 0 {
+		req.Header.Set("Content-Length", strconv.Itoa(int(req.ContentLength)))
+	}
+	req.Header.Set("Via", req.Via.String())
+
+	buf := &bytes.Buffer{}
+	fmt.Fprintf(buf, "%s %s SIP/2.0\r\n", req.Method, req.URI)
+	for k := range req.Header {
+		for _, v := range req.Header.Values(k) {
+			fmt.Fprintf(buf, "%s: %s\r\n", k, v)
+		}
+	}
+	buf.WriteString("\r\n")
+	n, err = io.Copy(w, buf)
+	if err != nil {
+		return n, err
+	}
+
+	nn, err := io.Copy(w, req.Body)
+	n += nn
+	return n, err
 }
 
 type message struct {
@@ -118,7 +163,32 @@ type Response struct {
 
 	Header        textproto.MIMEHeader
 	ContentLength int64
-	Sequence      CommandSequence
+	// Sequence      CommandSequence
 
-	Body io.ReadCloser
+	Body io.Reader
+}
+
+func parseResponse(msg *message) (*Response, error) {
+	if msg.startLine[0] != version {
+		return nil, fmt.Errorf("unknown version %s", msg.startLine[0])
+	}
+
+	var resp Response
+	var err error
+	resp.StatusCode, err = strconv.Atoi(msg.startLine[1])
+	if err != nil {
+		return nil, fmt.Errorf("bad status code %q: %v", msg.startLine[1], err)
+	}
+	resp.Status = msg.startLine[2]
+
+	resp.Header = msg.header
+	if s := resp.Header.Get("Content-Length"); s != "" {
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return &resp, fmt.Errorf("parse content-length: %w", err)
+		}
+		resp.ContentLength = int64(n)
+	}
+	resp.Body = msg.body
+	return &resp, nil
 }
