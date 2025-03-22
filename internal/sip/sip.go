@@ -106,8 +106,11 @@ func WriteRequest(w io.Writer, req *Request) (n int64, err error) {
 		return n, err
 	}
 
-	nn, err := io.Copy(w, req.Body)
-	n += nn
+	if req.Body != nil {
+		var nn int64
+		nn, err = io.Copy(w, req.Body)
+		n += nn
+	}
 	return n, err
 }
 
