@@ -10,18 +10,47 @@ import (
 
 func TestWriteRequest(t *testing.T) {
 	header := make(textproto.MIMEHeader)
-	header.Set("Call-ID", "blabla")
-	header.Set("To", "test <sip:test@example.com>")
-	header.Set("From", "Oliver <sip:o@olowe.co>")
-	header.Set("CSeq", "1 "+MethodRegister)
+	header.Set("Call-ID", "a84b4c76e66710@pc33.example.com")
+	header.Set("CSeq", "314159 "+MethodInvite)
+	header.Set("Contact", "<sip:alice@pc33.example.com>")
 	req := &Request{
-		Method: MethodRegister,
-		URI:    "sip:test@example.com",
+		Method: MethodInvite,
+		URI:    "sip:bob@example.com",
+		To:     Address{Name: "Bob", URI: URI{Scheme: "sip", Opaque: "bob@example.com"}},
+		From:   Address{Name: "Alice", URI: URI{Scheme: "sip", Opaque: "alice@example.com"}},
+		Via:    Via{Address: "pc33.example.com", Branch: "776asdhds"},
 		Header: header,
 	}
-	_, err := WriteRequest(io.Discard, req)
-	if err == nil {
-		t.Errorf("no error writing request with zero Via field")
+
+	if _, err := WriteRequest(io.Discard, req); err != nil {
+		t.Fatalf("write request: %v", err)
+	}
+}
+
+func TestAddress(t *testing.T) {
+	var tests = []struct {
+		name string
+		addr string
+		want string
+	}{
+		{"bare", "sip:test@example.com", "<sip:test@example.com>"},
+		{"basic", "<sip:test@example.com>", "<sip:test@example.com>"},
+		{"bare tag", "sip:+1234@example.com;tag=887s", "<sip:+1234@example.com>;tag=887s"},
+		{"tag", "<sip:test@example.com>;tag=1234", "<sip:test@example.com>;tag=1234"},
+		{"name", "Oliver <sip:test@example.com>", "Oliver <sip:test@example.com>"},
+		{"name tag", "Oliver <sip:test@example.com>;tag=1234", "Oliver <sip:test@example.com>;tag=1234"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseAddress(tt.addr)
+			if err != nil {
+				t.Fatalf("parse %q: %v", tt.addr, err)
+			}
+			if got.String() != tt.want {
+				t.Fatalf("ParseAddress(%q) = %s, want %s", tt.addr, got, tt.want)
+			}
+		})
 	}
 }
 
