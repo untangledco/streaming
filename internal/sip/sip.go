@@ -38,13 +38,32 @@ type Request struct {
 
 const magicViaCookie = "z9hG4bK"
 
+const (
+	TransportUDP int = iota
+	TransportTCP
+)
+
+// Via represents the Via field in the header of requests.
 type Via struct {
+	// Transport indicates whether TCP or UDP should be used in
+	// subsequent transactions.
+	Transport int
+	// Address is a hostname or IP address to which responses
+	// should be sent.
 	Address string
-	Branch  string
+	// Branch uniquely identifies transactions from a particular user-agent.
+	Branch string
 }
 
 func (v Via) String() string {
-	return fmt.Sprintf("SIP/2.0/UDP %s;branch=%s%s", v.Address, magicViaCookie, v.Branch)
+	tport := "unknown"
+	switch v.Transport {
+	case TransportUDP:
+		tport = "UDP"
+	case TransportTCP:
+		tport = "TCP"
+	}
+	return fmt.Sprintf("SIP/2.0/%s %s;branch=%s%s", tport, v.Address, magicViaCookie, v.Branch)
 }
 
 func ReadRequest(r io.Reader) (*Request, error) {
@@ -83,6 +102,13 @@ func WriteRequest(w io.Writer, req *Request) (n int64, err error) {
 			return 0, fmt.Errorf("missing field %s in header", s)
 		}
 	}
+	if req.Via.Address == "" {
+		return 0, fmt.Errorf("empty address in via header field")
+	} else if req.Via.Branch == "" {
+		return 0, fmt.Errorf("empty branch in via header field")
+	}
+
+	req.Header.Set("Via", req.Via.String())
 	if req.Header.Get("Max-Forwards") == "" {
 		// TODO(otl): find section in RFC recommending 70.
 		// section x.x.x
@@ -91,7 +117,6 @@ func WriteRequest(w io.Writer, req *Request) (n int64, err error) {
 	if req.ContentLength > 0 {
 		req.Header.Set("Content-Length", strconv.Itoa(int(req.ContentLength)))
 	}
-	req.Header.Set("Via", req.Via.String())
 
 	buf := &bytes.Buffer{}
 	fmt.Fprintf(buf, "%s %s SIP/2.0\r\n", req.Method, req.URI)

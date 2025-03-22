@@ -1,13 +1,31 @@
 package sip
 
 import (
-	"fmt"
+	"io"
+	"net/textproto"
 	"os"
 	"strings"
 	"testing"
 )
 
-func TestRequest(t *testing.T) {
+func TestWriteRequest(t *testing.T) {
+	header := make(textproto.MIMEHeader)
+	header.Set("Call-ID", "blabla")
+	header.Set("To", "test <sip:test@example.com>")
+	header.Set("From", "Oliver <sip:o@olowe.co>")
+	header.Set("CSeq", "1 "+MethodRegister)
+	req := &Request{
+		Method: MethodRegister,
+		URI:    "sip:test@example.com",
+		Header: header,
+	}
+	_, err := WriteRequest(io.Discard, req)
+	if err == nil {
+		t.Errorf("no error writing request with zero Via field")
+	}
+}
+
+func TestReadRequest(t *testing.T) {
 	f, err := os.Open("testdata/invite")
 	if err != nil {
 		t.Fatal(err)
@@ -17,6 +35,7 @@ func TestRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal("read request:", err)
 	}
+
 }
 
 func TestResponse(t *testing.T) {
@@ -40,9 +59,8 @@ Content-Length: 131
 	if err != nil {
 		t.Fatal("read message:", err)
 	}
-	resp, err := parseResponse(msg)
+	_, err = parseResponse(msg)
 	if err != nil {
 		t.Fatalf("parse response: %v", err)
 	}
-	fmt.Printf("%+v\n", resp)
 }
