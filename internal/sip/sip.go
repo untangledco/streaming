@@ -259,13 +259,20 @@ func parseStartLine(text string) (line [3]string, err error) {
 		return line, fmt.Errorf("expected 3 fields, read %d", len(fields))
 	}
 	for i, s := range fields {
-		for _, r := range s {
-			if unicode.IsSpace(r) {
-				return line, fmt.Errorf("illegal space character in field %d", i)
-			}
+		if containsSpace(s) {
+			return line, fmt.Errorf("illegal space character in field %d", i)
 		}
 	}
 	return [3]string{fields[0], fields[1], fields[2]}, nil
+}
+
+func containsSpace(s string) bool {
+	for _, r := range s {
+		if unicode.IsSpace(r) {
+			return true
+		}
+	}
+	return false
 }
 
 type CommandSequence struct {
