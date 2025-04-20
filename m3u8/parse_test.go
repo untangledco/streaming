@@ -135,3 +135,18 @@ func TestFrameRate(t *testing.T) {
 		}
 	}
 }
+
+func TestParseSequence(t *testing.T) {
+	f, err := os.Open("testdata/sequence.m3u8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	plist, err := Decode(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plist.Sequence != 91240 {
+		t.Errorf("want %d, got %d", 91240, plist.Sequence)
+	}
+}

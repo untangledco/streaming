@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -85,6 +86,12 @@ func Decode(rd io.Reader) (*Playlist, error) {
 				p.Segments = append(p.Segments, *segment)
 			case tagEndList:
 				p.End = true
+			case tagMediaSequence:
+				val, err := parseSequence(lex)
+				if err != nil {
+					return p, fmt.Errorf("parse media sequence: %w", err)
+				}
+				p.Sequence = val
 			}
 		}
 	}
@@ -380,4 +387,15 @@ func parseByteRange(s string) (ByteRange, error) {
 		return ByteRange{}, err
 	}
 	return ByteRange{n, nn}, nil
+}
+
+func parseSequence(lex *lexer) (int, error) {
+	re := regexp.MustCompile(`#EXT-X-MEDIA-SEQUENCE:(\d+)`)
+
+	match := re.FindStringSubmatch(lex.input)
+	if len(match) > 1 {
+		return strconv.Atoi(match[1])
+	}
+
+	return 0, fmt.Errorf("invalid sequence number")
 }
