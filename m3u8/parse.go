@@ -151,9 +151,6 @@ func parseVariant(items chan item) (*Variant, error) {
 				v.FrameRate = float32(n)
 			case "HDCP-LEVEL":
 				it = <-items
-				if it.typ != itemString {
-					return nil, fmt.Errorf("parse HDCP level: unexpected %s", it)
-				}
 				l, err := parseHDCPLevel(it.val)
 				if err != nil {
 					return nil, fmt.Errorf("parse HDCP level: %w", err)

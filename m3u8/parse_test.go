@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -39,11 +40,11 @@ func ExampleEncode() {
 func ExampleDecode() {
 	s := `
 #EXTM3U
-#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=640x360
+#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=640x360,HDCP-LEVEL=NONE
 url_0/low.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=2560000,RESOLUTION=1280x720
+#EXT-X-STREAM-INF:BANDWIDTH=2560000,RESOLUTION=1280x720,HDCP-LEVEL=NONE
 url_0/mid.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=7680000,RESOLUTION=1920x1080
+#EXT-X-STREAM-INF:BANDWIDTH=7680000,RESOLUTION=1920x1080,HDCP-LEVEL=NONE
 url_0/high.m3u8`
 
 	p, err := Decode(strings.NewReader(s))
@@ -76,6 +77,48 @@ func TestDecode(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+	}
+}
+
+func TestVariant(t *testing.T) {
+	f, err := os.Open("testdata/master.m3u8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	plist, err := Decode(f)
+	if err != nil {
+		t.Fatalf("read playlist: %v", err)
+	}
+	want := []Variant{
+		{
+			Bandwidth: 1280000,
+			Video:     "low",
+			HDCP:      HDCPType0,
+			URI:       "low/main/audio-video.m3u8",
+		},
+		{
+			Bandwidth: 2560000,
+			Video:     "mid",
+			HDCP:      HDCPType1,
+			URI:       "mid/main/audio-video.m3u8",
+		},
+		{
+			Bandwidth: 7680000,
+			Video:     "hi",
+			URI:       "hi/main/audio-video.m3u8",
+		},
+		{
+			Bandwidth: 65000,
+			Codecs:    []string{"mp4a.40.5"},
+			HDCP:      HDCPNone,
+			URI:       "main/audio-only.m3u8",
+		},
+	}
+	for i, got := range plist.Variants {
+		if !reflect.DeepEqual(got, want[i]) {
+			t.Errorf("variant %d: got %v, want %v", i, got, want)
+		}
 	}
 }
 
