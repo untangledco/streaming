@@ -134,9 +134,6 @@ func parseVariant(items chan item) (*Variant, error) {
 				v.Codecs = strings.Split(strings.Trim(it.val, `"`), ",")
 			case "RESOLUTION":
 				it = <-items
-				if it.typ != itemString {
-					return nil, fmt.Errorf("parse resolution attribute: unexpected %s", it)
-				}
 				res, err := parseResolution(it.val)
 				if err != nil {
 					return nil, fmt.Errorf("parse resolution: %w", err)
@@ -179,7 +176,7 @@ func parseVariant(items chan item) (*Variant, error) {
 			case "CLOSED-CAPTIONS":
 				it = <-items
 				if it.typ != itemString {
-					return nil, fmt.Errorf("parse closed-captions: unexpcted %s", it)
+					return nil, fmt.Errorf("parse closed-captions: unexpected %s", it)
 				}
 				v.ClosedCaptions = strings.Trim(it.val, `"`)
 			default:
@@ -192,7 +189,6 @@ func parseVariant(items chan item) (*Variant, error) {
 			return &v, nil
 		}
 	}
-	fmt.Println(v)
 	return &v, nil
 }
 
@@ -208,6 +204,9 @@ func parseResolution(s string) (res [2]int, err error) {
 	res[1], err = strconv.Atoi(y)
 	if err != nil {
 		return res, fmt.Errorf("vertical pixels: %v", err)
+	}
+	if res[0] < 0 || res[1] < 0 {
+		return res, fmt.Errorf("negative dimensions")
 	}
 	return res, nil
 }

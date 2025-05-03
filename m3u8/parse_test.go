@@ -150,3 +150,24 @@ func TestParseSequence(t *testing.T) {
 		t.Errorf("want %d, got %d", 91240, plist.Sequence)
 	}
 }
+
+func TestResolution(t *testing.T) {
+	var tests = []struct {
+		name string
+		s    string
+	}{
+		{"double x", "1280xx720"},
+		{"missing x", "1280720"},
+		{"missing height", "1280x"},
+		{"negative", "-1x-1"},
+		{"decimal", "10.69x20"},
+	}
+
+	for _, tt := range tests {
+		_, err := parseResolution(tt.s)
+		if err == nil {
+			t.Errorf("parse resolution %q (%s): no error", tt.s, tt.name)
+			continue
+		}
+	}
+}
