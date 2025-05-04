@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"unicode/utf8"
 )
@@ -73,6 +74,9 @@ type lexer struct {
 	pos   int
 	width int
 	items chan item
+
+	// if enabled, emitted items are printed to standard error.
+	debug bool
 }
 
 type stateFn func(*lexer) stateFn
@@ -113,7 +117,9 @@ func (l *lexer) run() {
 
 func (l *lexer) emit(t itemType) {
 	l.items <- item{t, l.input[l.start:l.pos]}
-	// fmt.Println(item{t, l.input[l.start:l.pos]})
+	if l.debug {
+		fmt.Fprintln(os.Stderr, item{t, l.input[l.start:l.pos]})
+	}
 	l.start = l.pos
 }
 
