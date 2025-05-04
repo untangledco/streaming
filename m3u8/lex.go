@@ -127,6 +127,7 @@ func newLexer(r io.Reader) *lexer {
 	return &lexer{
 		sc:    bufio.NewScanner(r),
 		items: make(chan item),
+		debug: false,
 	}
 }
 
@@ -135,7 +136,10 @@ func lexStart(l *lexer) stateFn {
 		if l.sc.Text() == "" {
 			continue // ignore blank lines
 		}
-		l.input = l.sc.Text() + "\n"
+		text := l.sc.Text()
+		// ignore valid but meaningless trailing commas.
+		text = strings.TrimSuffix(text, ",")
+		l.input = text + "\n"
 		l.pos = 0
 		l.start = 0
 		if strings.HasPrefix(l.input, tagStart) {
@@ -145,7 +149,7 @@ func lexStart(l *lexer) stateFn {
 		}
 		// not a tag, so must be a URL.
 		// emit the URL, then the newline we appended ourselves.
-		l.pos = len(l.sc.Text())
+		l.pos = len(text)
 		l.emit(itemURL)
 		l.emit(itemNewline)
 	}
@@ -179,7 +183,7 @@ func lexTagName(l *lexer) stateFn {
 		case ':':
 			l.emit(itemTag)
 			l.next()
-			l.ignore()
+			l.ignore() // ignore ':' after tag name
 			return lexAttrs(l)
 		}
 		return l.errorf("illegal tag character %q", r)
@@ -225,6 +229,9 @@ func lexAttrs(l *lexer) stateFn {
 			return lexAttrValue(l)
 		case r == '@':
 			return lexAttrValue(l)
+		case r == '"':
+			l.next()
+			return lexQString(l)
 		default:
 			return l.errorf("illegal character %q in attribute name", r)
 		}
