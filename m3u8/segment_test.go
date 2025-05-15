@@ -113,7 +113,7 @@ func TestParseSegment(t *testing.T) {
 		Key: &Key{
 			Method: EncryptMethodAES128,
 			URI:    "key1.json?f=1041&s=0&p=1822767&m=1506045858",
-			IV:     [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1B, 0xD0, 0x2F},
+			IV:     [...]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1B, 0xD0, 0x2F},
 		},
 		URI: "1041_6_1822767.ts?m=1506045858",
 	}

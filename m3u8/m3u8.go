@@ -99,6 +99,7 @@ const (
 	EncryptMethodNone EncryptMethod = 0 + iota
 	EncryptMethodAES128
 	EncryptMethodSampleAES
+	encryptMethodInvalid EncryptMethod = 255
 )
 
 func (m EncryptMethod) String() string {
@@ -111,6 +112,18 @@ func (m EncryptMethod) String() string {
 		return "SAMPLE-AES"
 	}
 	return "invalid"
+}
+
+func parseEncryptMethod(s string) EncryptMethod {
+	switch s {
+	case EncryptMethodNone.String():
+		return EncryptMethodNone
+	case EncryptMethodAES128.String():
+		return EncryptMethodAES128
+	case EncryptMethodSampleAES.String():
+		return EncryptMethodSampleAES
+	}
+	return encryptMethodInvalid
 }
 
 type Map struct {

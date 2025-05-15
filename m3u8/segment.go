@@ -2,6 +2,7 @@ package m3u8
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -38,6 +39,12 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 				return nil, fmt.Errorf("parse segment duration: %w", err)
 			}
 			seg.Duration = dur
+		case tagKey:
+			key, err := parseKey(items)
+			if err != nil {
+				return nil, fmt.Errorf("parse key: %w", err)
+			}
+			seg.Key = &key
 		default:
 			return nil, fmt.Errorf("parse leading item %s: unsupported", leading)
 		}
@@ -75,6 +82,12 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 			seg.Range = r
 		case tagDiscontinuity:
 			seg.Discontinuity = true
+		case tagKey:
+			key, err := parseKey(items)
+			if err != nil {
+				return nil, fmt.Errorf("parse key: %w", err)
+			}
+			seg.Key = &key
 		default:
 			return nil, fmt.Errorf("parsing %s unsupported", it)
 		}
@@ -121,6 +134,61 @@ func parseSegmentDuration(it item) (time.Duration, error) {
 	// precision based on a 90KHz clock.
 	microseconds := seconds * 1e6
 	return time.Duration(microseconds) * time.Microsecond, nil
+}
+
+func parseKey(items chan item) (Key, error) {
+	var key Key
+	for it := range items {
+		switch it.typ {
+		case itemError:
+			return key, errors.New(it.val)
+		case itemNewline:
+			return key, nil
+		case itemAttrName:
+			v := <-items
+			if v.typ != itemEquals {
+				return key, fmt.Errorf("expected %q after %s, got %s", "=", it.typ, v)
+			}
+			switch it.val {
+			case "METHOD":
+				v = <-items
+				key.Method = parseEncryptMethod(v.val)
+				if key.Method == encryptMethodInvalid {
+					return key, fmt.Errorf("bad encrypt method %q", v.val)
+				}
+			case "URI":
+				v = <-items
+				key.URI = strings.Trim(v.val, `"`)
+			case "IV":
+				v = <-items
+				b, err := hex.DecodeString(strings.TrimPrefix(v.val, "0x"))
+				if err != nil {
+					return key, fmt.Errorf("parse initialisation vector: %w", err)
+				}
+				if len(b) != len(key.IV) {
+					return key, fmt.Errorf("bad initialisation length %d, want %d", len(b), len(key.IV))
+				}
+				copy(key.IV[:], b)
+			case "KEYFORMAT":
+				v = <-items
+				key.Format = strings.Trim(v.val, `"`)
+			case "KEYFORMATVERSIONS":
+				v = <-items
+				ss := strings.Split(v.val, "/")
+				key.FormatVersions = make([]uint32, len(ss))
+				for i := range ss {
+					n, err := strconv.Atoi(ss[i])
+					if err != nil {
+						return key, fmt.Errorf("parse key format version: %w", err)
+					}
+					key.FormatVersions[i] = uint32(n)
+				}
+			default:
+				return key, fmt.Errorf("TODO %s", it.val)
+			}
+		}
+	}
+	return key, fmt.Errorf("TODO")
 }
 
 func writeSegments(w io.Writer, segments []Segment) (n int, err error) {
