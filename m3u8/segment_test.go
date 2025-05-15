@@ -2,6 +2,8 @@ package m3u8
 
 import (
 	"encoding/binary"
+	"os"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -91,5 +93,32 @@ func TestWriteKey(t *testing.T) {
 		t.Errorf("unexpected segment key text")
 		t.Log("got:", k.String())
 		t.Log("want:", want)
+	}
+}
+
+func TestParseSegment(t *testing.T) {
+	f, err := os.Open("testdata/discontinuities.m3u8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	plist, err := Decode(f)
+	if err != nil {
+		t.Fatalf("decode playlist: %v", err)
+	}
+
+	encrypted := Segment{
+		Duration: 10 * time.Second,
+		Key: &Key{
+			Method: EncryptMethodAES128,
+			URI:    "key1.json?f=1041&s=0&p=1822767&m=1506045858",
+			IV:     [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1B, 0xD0, 0x2F},
+		},
+		URI: "1041_6_1822767.ts?m=1506045858",
+	}
+
+	if !reflect.DeepEqual(plist.Segments[0], encrypted) {
+		t.Errorf("decode encrypted segment: got %v, want %v", plist.Segments[0], encrypted)
 	}
 }

@@ -70,6 +70,7 @@ func Decode(rd io.Reader) (*Playlist, error) {
 					return p, fmt.Errorf("parse playlist type: %w", err)
 				}
 				p.Type = typ
+
 			case tagTargetDuration:
 				it = <-lex.items
 				dur, err := parseTargetDuration(it)
@@ -77,12 +78,14 @@ func Decode(rd io.Reader) (*Playlist, error) {
 					return p, fmt.Errorf("parse target duration: %w", err)
 				}
 				p.TargetDuration = dur
-			case tagSegmentDuration, tagByteRange:
+
+			case tagSegmentDuration, tagByteRange, tagKey:
 				segment, err := parseSegment(lex.items, it)
 				if err != nil {
 					return p, fmt.Errorf("parse segment: %w", err)
 				}
 				p.Segments = append(p.Segments, *segment)
+
 			case tagEndList:
 				p.End = true
 			case tagMediaSequence:

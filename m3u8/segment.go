@@ -25,7 +25,7 @@ const (
 )
 
 // parseSegment returns the next segment from items and the leading
-// item which indecated the start of a segment.
+// item which indicated the start of a segment.
 func parseSegment(items chan item, leading item) (*Segment, error) {
 	var seg Segment
 	switch leading.typ {
@@ -38,42 +38,45 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 				return nil, fmt.Errorf("parse segment duration: %w", err)
 			}
 			seg.Duration = dur
+		default:
+			return nil, fmt.Errorf("parse leading item %s: unsupported", leading)
 		}
 	}
+
 	for it := range items {
-		if it.typ == itemError {
-			return nil, errors.New(it.val)
-		}
 		switch it.typ {
+		case itemError:
+			return nil, errors.New(it.val)
 		case itemURL:
 			seg.URI = it.val
 			return &seg, nil
-		case itemTag:
-			switch it.val {
-			case tagSegmentDuration:
-				it = <-items
-				dur, err := parseSegmentDuration(it)
-				if err != nil {
-					return nil, fmt.Errorf("parse segment duration: %w", err)
-				}
-				seg.Duration = dur
-			case tagByteRange:
-				it = <-items
-				if it.typ != itemString {
-					return nil, fmt.Errorf("parse byte range: got %s, want item type string", it)
-				}
-				r, err := parseByteRange(it.val)
-				if err != nil {
-					return nil, fmt.Errorf("parse byte range: %w", err)
-				}
-				seg.Range = r
-			case tagDiscontinuity:
-				seg.Discontinuity = true
-			case tagKey:
-				return nil, fmt.Errorf("parsing %s unsupported", it)
-			default:
-				return nil, fmt.Errorf("parsing %s unsupported", it)
+		case itemNewline:
+			continue
+		default:
+			if it.typ != itemTag {
+				return nil, fmt.Errorf("unexpected %s", it)
 			}
+		}
+
+		switch it.val {
+		case tagSegmentDuration:
+			it = <-items
+			dur, err := parseSegmentDuration(it)
+			if err != nil {
+				return nil, fmt.Errorf("parse segment duration: %w", err)
+			}
+			seg.Duration = dur
+		case tagByteRange:
+			it = <-items
+			r, err := parseByteRange(it.val)
+			if err != nil {
+				return nil, fmt.Errorf("parse byte range: %w", err)
+			}
+			seg.Range = r
+		case tagDiscontinuity:
+			seg.Discontinuity = true
+		default:
+			return nil, fmt.Errorf("parsing %s unsupported", it)
 		}
 	}
 	return nil, fmt.Errorf("no url")
