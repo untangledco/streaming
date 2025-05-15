@@ -126,6 +126,9 @@ func parseEncryptMethod(s string) EncryptMethod {
 	return encryptMethodInvalid
 }
 
+// Map represents the EXT-X-MAP tag.
+// A Map informs of any byte sequences to initialise readers of
+// some media formats.
 type Map struct {
 	URI       string
 	ByteRange ByteRange

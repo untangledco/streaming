@@ -88,6 +88,12 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 				return nil, fmt.Errorf("parse key: %w", err)
 			}
 			seg.Key = &key
+		case tagMap:
+			m, err := parseMap(items)
+			if err != nil {
+				return nil, fmt.Errorf("parse map: %w", err)
+			}
+			seg.Map = &m
 		default:
 			return nil, fmt.Errorf("parsing %s unsupported", it)
 		}
@@ -184,11 +190,43 @@ func parseKey(items chan item) (Key, error) {
 					key.FormatVersions[i] = uint32(n)
 				}
 			default:
-				return key, fmt.Errorf("TODO %s", it.val)
+				return key, fmt.Errorf("unexpected attribute %q", it.val)
 			}
 		}
 	}
-	return key, fmt.Errorf("TODO")
+	return key, fmt.Errorf("unexpected end of tag")
+}
+
+func parseMap(items chan item) (Map, error) {
+	var mmap Map
+	for it := range items {
+		switch it.typ {
+		case itemError:
+			return mmap, errors.New(it.val)
+		case itemNewline:
+			return mmap, nil
+		case itemAttrName:
+			v := <-items
+			if v.typ != itemEquals {
+				return Map{}, fmt.Errorf("expected %q after %s, got %s", "=", it.typ, v)
+			}
+			switch it.val {
+			case "URI":
+				v = <-items
+				mmap.URI = strings.Trim(it.val, `"`)
+			case "BYTERANGE":
+				v = <-items
+				r, err := parseByteRange(v.val)
+				if err != nil {
+					return Map{}, fmt.Errorf("parse byte range: %w", err)
+				}
+				mmap.ByteRange = r
+			default:
+				return Map{}, fmt.Errorf("unexpected attribute %q", it.val)
+			}
+		}
+	}
+	return Map{}, fmt.Errorf("unexpected end of tag")
 }
 
 func writeSegments(w io.Writer, segments []Segment) (n int, err error) {
