@@ -1,4 +1,5 @@
 #EXTM3U
+## from https://test-streams.mux.dev/dai-discontinuity-deltatre/manifest.m3u8
 #EXT-X-YOSPACE-ANALYTICS-URL:"https://csm-e-cebteurxaws416-2hjvnjz85og7.tls1.yospace.com/csm/analytics;jsessionid=E97CB20FD3BCE93F89ADDB12E8C82895.csm-e-cebteurxaws416-2hjvnjz85og7.tls1.yospace.com"
 #EXT-X-TARGETDURATION:10
 #EXT-X-VERSION:3
