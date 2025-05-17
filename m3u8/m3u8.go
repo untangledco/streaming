@@ -40,20 +40,30 @@ type Playlist struct {
 
 type Segment struct {
 	URI string
-	// Duration of this specific segment from the #EXTINF tag.
+
+	// Duration of this specific segment from the EXTINF tag.
 	Duration time.Duration
+
 	// Indicates this segment holds a subset of the segment point to by URI.
-	// Range is the length of the subsegment from from the #EXT-X-BYTERANGE tag.
+	// Range is the length of the subsegment from the EXT-X-BYTERANGE tag.
 	Range ByteRange
+
 	// If true, the preceding segment and the following segment
 	// are discontinuous. For example, this segment is part of a
 	// commercial break.
 	Discontinuity bool
+
 	// Holds information on how to decrypt this segment.
 	// If nil, the segment is not encrypted.
-	Key       *Key
-	Map       *Map
-	DateTime  time.Time
+	Key *Key
+
+	Map *Map
+
+	// Associates an absolute time with the start of the segment.
+	// The EXT-X-PROGRAM-DATE-TIME tag holds this value to
+	// millisecond accuracy.
+	DateTime time.Time
+
 	DateRange *DateRange
 }
 

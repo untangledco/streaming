@@ -115,7 +115,8 @@ func TestParseSegment(t *testing.T) {
 			URI:    "key1.json?f=1041&s=0&p=1822767&m=1506045858",
 			IV:     [...]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1B, 0xD0, 0x2F},
 		},
-		URI: "1041_6_1822767.ts?m=1506045858",
+		DateTime: time.Date(2020, 12, 2, 18, 33, 3, 447e6, time.UTC),
+		URI:      "1041_6_1822767.ts?m=1506045858",
 	}
 
 	if !reflect.DeepEqual(plist.Segments[0], encrypted) {

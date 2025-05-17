@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -229,6 +230,8 @@ func lexAttrs(l *lexer) stateFn {
 			return lexAttrValue(l)
 		case r == '@':
 			return lexAttrValue(l)
+		case r == ':':
+			return lexAttrValue(l)
 		case r == '"':
 			l.next()
 			return lexQString(l)
@@ -241,7 +244,7 @@ func lexAttrs(l *lexer) stateFn {
 func lexAttrValue(l *lexer) stateFn {
 	r := l.next()
 	switch r {
-	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ':':
 		return lexNumber(l)
 	case '"':
 		return lexQString(l)
@@ -262,6 +265,13 @@ func lexNumber(l *lexer) stateFn {
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
 			l.next()
 			continue
+		case ':', 'T', 'Z':
+			// could be a RFC 3339 timestamp
+			l.next()
+			if !unicode.IsDigit(l.peek()) {
+				return l.errorf("expected digit after timestamp character %c, got %c", r, l.peek())
+			}
+			return lexRawString(l)
 		default:
 			l.emit(itemNumber)
 			return lexAttrs(l)
