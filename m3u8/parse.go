@@ -120,91 +120,97 @@ func parseVariant(items chan item) (*Variant, error) {
 	var v Variant
 	for it := range items {
 		switch it.typ {
-		case itemAttrName:
-			attr := it
-			it = <-items
-			if it.typ != itemEquals {
-				return nil, fmt.Errorf("missing equals after %s", attr)
-			}
-			switch attr.val {
-			case "PROGRAM-ID", "NAME":
-				// parsing PROGRAM-ID attribute unsupported; removed in HLS version 6
-				// NAME is non-standard, should be set in Rendition.
-			case "BANDWIDTH", "AVERAGE-BANDWIDTH":
-				it = <-items
-				if it.typ != itemNumber {
-					return nil, fmt.Errorf("parse bandwidth attribute: unexpected %s", it)
-				}
-				n, err := strconv.Atoi(it.val)
-				if err != nil {
-					return nil, fmt.Errorf("parse bandwidth: %w", err)
-				}
-				if attr.val == "BANDWIDTH" {
-					v.Bandwidth = n
-				} else {
-					v.AverageBandwidth = n
-				}
-			case "CODECS":
-				it = <-items
-				if it.typ != itemString {
-					return nil, fmt.Errorf("parse codecs attribute: unexpected %s", it)
-				}
-				v.Codecs = strings.Split(strings.Trim(it.val, `"`), ",")
-			case "RESOLUTION":
-				it = <-items
-				res, err := parseResolution(it.val)
-				if err != nil {
-					return nil, fmt.Errorf("parse resolution: %w", err)
-				}
-				v.Resolution = res
-			case "FRAME-RATE":
-				it = <-items
-				if it.typ != itemNumber {
-					return nil, fmt.Errorf("parse frame rate: unexpected %s", it)
-				}
-				n, err := strconv.ParseFloat(it.val, 32)
-				if err != nil {
-					return nil, fmt.Errorf("parse frame rate: %w", err)
-				}
-				v.FrameRate = float32(n)
-			case "HDCP-LEVEL":
-				it = <-items
-				l, err := parseHDCPLevel(it.val)
-				if err != nil {
-					return nil, fmt.Errorf("parse HDCP level: %w", err)
-				}
-				v.HDCP = l
-			case "AUDIO", "VIDEO", "SUBTITLES":
-				name := attr.val
-				it = <-items
-				if it.typ != itemString {
-					return nil, fmt.Errorf("parse %s: unexpected %s", name, it)
-				}
-				it.val = strings.Trim(it.val, `"`)
-				if name == "AUDIO" {
-					v.Audio = it.val
-				} else if name == "VIDEO" {
-					v.Video = it.val
-				} else if name == "SUBTITLES" {
-					v.Subtitles = it.val
-				}
-			case "CLOSED-CAPTIONS":
-				it = <-items
-				if it.typ != itemString {
-					return nil, fmt.Errorf("parse closed-captions: unexpected %s", it)
-				}
-				v.ClosedCaptions = strings.Trim(it.val, `"`)
-			default:
-				return nil, fmt.Errorf("unknown attribute %s", attr.val)
-			}
-		case itemComma:
+		case itemError:
+			return nil, errors.New(it.val)
+		case itemComma, itemNewline:
 			continue
 		case itemURL:
 			v.URI = it.val
 			return &v, nil
+		default:
+			if it.typ != itemAttrName {
+				return nil, fmt.Errorf("expected %s, got %s", itemAttrName, it.typ)
+			}
+		}
+		attr := it
+		it = <-items
+		if it.typ != itemEquals {
+			return nil, fmt.Errorf("missing equals after %s", attr)
+		}
+
+		switch attr.val {
+		case "PROGRAM-ID", "NAME":
+			// parsing PROGRAM-ID attribute unsupported; removed in HLS version 6
+			// NAME is non-standard, should be set in Rendition.
+		case "BANDWIDTH", "AVERAGE-BANDWIDTH":
+			it = <-items
+			if it.typ != itemNumber {
+				return nil, fmt.Errorf("parse bandwidth attribute: unexpected %s", it)
+			}
+			n, err := strconv.Atoi(it.val)
+			if err != nil {
+				return nil, fmt.Errorf("parse bandwidth: %w", err)
+			}
+			if attr.val == "BANDWIDTH" {
+				v.Bandwidth = n
+			} else {
+				v.AverageBandwidth = n
+			}
+		case "CODECS":
+			it = <-items
+			if it.typ != itemString {
+				return nil, fmt.Errorf("parse codecs attribute: unexpected %s", it)
+			}
+			v.Codecs = strings.Split(strings.Trim(it.val, `"`), ",")
+		case "RESOLUTION":
+			it = <-items
+			res, err := parseResolution(it.val)
+			if err != nil {
+				return nil, fmt.Errorf("parse resolution: %w", err)
+			}
+			v.Resolution = res
+		case "FRAME-RATE":
+			it = <-items
+			if it.typ != itemNumber {
+				return nil, fmt.Errorf("parse frame rate: unexpected %s", it)
+			}
+			n, err := strconv.ParseFloat(it.val, 32)
+			if err != nil {
+				return nil, fmt.Errorf("parse frame rate: %w", err)
+			}
+			v.FrameRate = float32(n)
+		case "HDCP-LEVEL":
+			it = <-items
+			l, err := parseHDCPLevel(it.val)
+			if err != nil {
+				return nil, fmt.Errorf("parse HDCP level: %w", err)
+			}
+			v.HDCP = l
+		case "AUDIO", "VIDEO", "SUBTITLES":
+			name := attr.val
+			it = <-items
+			if it.typ != itemString {
+				return nil, fmt.Errorf("parse %s: unexpected %s", name, it)
+			}
+			it.val = strings.Trim(it.val, `"`)
+			if name == "AUDIO" {
+				v.Audio = it.val
+			} else if name == "VIDEO" {
+				v.Video = it.val
+			} else if name == "SUBTITLES" {
+				v.Subtitles = it.val
+			}
+		case "CLOSED-CAPTIONS":
+			it = <-items
+			if it.typ != itemString {
+				return nil, fmt.Errorf("parse closed-captions: unexpected %s", it)
+			}
+			v.ClosedCaptions = strings.Trim(it.val, `"`)
+		default:
+			return nil, fmt.Errorf("unknown attribute %s", attr.val)
 		}
 	}
-	return &v, nil
+	return nil, fmt.Errorf("no url")
 }
 
 func parseResolution(s string) (res [2]int, err error) {
