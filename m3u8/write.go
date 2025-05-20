@@ -86,9 +86,9 @@ func writeDateRange(w io.Writer, dr *DateRange) error {
 	}
 	var attrs []string
 	attrs = append(attrs, fmt.Sprintf("ID=%q", dr.ID))
-	attrs = append(attrs, fmt.Sprintf("START-DATE=%q", dr.Start.Format(time.RFC3339)))
+	attrs = append(attrs, fmt.Sprintf("START-DATE=%q", dr.Start.Format(rfc3339Milli)))
 	if !dr.End.IsZero() {
-		attrs = append(attrs, fmt.Sprintf("END-DATE=%q", dr.End.Format(time.RFC3339)))
+		attrs = append(attrs, fmt.Sprintf("END-DATE=%q", dr.End.Format(rfc3339Milli)))
 	}
 	if dr.Class != "" {
 		attrs = append(attrs, fmt.Sprintf("CLASS=%q", dr.Class))

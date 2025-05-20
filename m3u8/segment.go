@@ -86,7 +86,7 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 			seg.Map = &m
 		case tagDateTime:
 			it = <-segItems
-			t, err := time.Parse(time.RFC3339Nano, it.val)
+			t, err := time.Parse(rfc3339Milli, it.val)
 			if err != nil {
 				return nil, fmt.Errorf("bad date time tag: %w", err)
 			}
@@ -275,7 +275,7 @@ func (seg *Segment) MarshalText() ([]byte, error) {
 		tags = append(tags, seg.Map.String())
 	}
 	if !seg.DateTime.IsZero() {
-		tags = append(tags, fmt.Sprintf("%s:%s", tagDateTime, seg.DateTime.Format(RFC3339Milli)))
+		tags = append(tags, fmt.Sprintf("%s:%s", tagDateTime, seg.DateTime.Format(rfc3339Milli)))
 	}
 	us := seg.Duration / time.Microsecond
 	// we do .03f for the same precision as test-streams.mux.dev.

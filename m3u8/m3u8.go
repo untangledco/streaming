@@ -14,7 +14,7 @@ import (
 
 const MimeType string = "application/vnd.apple.mpegurl"
 
-const RFC3339Milli string = "2006-01-02T15:04:05.999Z07:00"
+const rfc3339Milli string = "2006-01-02T15:04:05.999Z07:00"
 
 type Playlist struct {
 	Version             int
