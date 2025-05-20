@@ -28,59 +28,43 @@ const (
 // parseSegment returns the next segment from items and the leading
 // item which indicated the start of a segment.
 func parseSegment(items chan item, leading item) (*Segment, error) {
-	var seg Segment
-	switch leading.typ {
-	case itemTag:
-		switch leading.val {
-		case tagSegmentDuration:
-			it := <-items
-			dur, err := parseSegmentDuration(it)
-			if err != nil {
-				return nil, fmt.Errorf("parse segment duration: %w", err)
+	// we've already read one item, so send everything through again
+	// starting with the leading item to maintain the lexer's original order.
+	segItems := make(chan item)
+	go func() {
+		segItems <- leading
+		for it := range items {
+			if it.typ == itemURL {
+				segItems <- it
+				close(segItems)
+				return
 			}
-			seg.Duration = dur
-		case tagKey:
-			key, err := parseKey(items)
-			if err != nil {
-				return nil, fmt.Errorf("parse key: %w", err)
-			}
-			seg.Key = &key
-		case tagMap:
-			m, err := parseMap(items)
-			if err != nil {
-				return nil, fmt.Errorf("parse map: %w", err)
-			}
-			seg.Map = &m
-		default:
-			return nil, fmt.Errorf("parse leading item %s: unsupported", leading)
+			segItems <- it
 		}
-	}
+	}()
 
-	for it := range items {
+	var seg Segment
+	for it := range segItems {
 		switch it.typ {
+		case itemNewline:
+			continue
 		case itemError:
 			return nil, errors.New(it.val)
 		case itemURL:
 			seg.URI = it.val
 			return &seg, nil
-		case itemNewline:
-			continue
-		default:
-			if it.typ != itemTag {
-				return nil, fmt.Errorf("unexpected %s", it)
-			}
 		}
 
 		switch it.val {
 		case tagSegmentDuration:
-			it = <-items
+			it = <-segItems
 			dur, err := parseSegmentDuration(it)
 			if err != nil {
 				return nil, fmt.Errorf("parse segment duration: %w", err)
 			}
 			seg.Duration = dur
 		case tagByteRange:
-			it = <-items
+			it = <-segItems
 			r, err := parseByteRange(it.val)
 			if err != nil {
 				return nil, fmt.Errorf("parse byte range: %w", err)
@@ -89,19 +73,19 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 		case tagDiscontinuity:
 			seg.Discontinuity = true
 		case tagKey:
-			key, err := parseKey(items)
+			key, err := parseKey(segItems)
 			if err != nil {
 				return nil, fmt.Errorf("parse key: %w", err)
 			}
 			seg.Key = &key
 		case tagMap:
-			m, err := parseMap(items)
+			m, err := parseMap(segItems)
 			if err != nil {
 				return nil, fmt.Errorf("parse map: %w", err)
 			}
 			seg.Map = &m
 		case tagDateTime:
-			it = <-items
+			it = <-segItems
 			t, err := time.Parse(time.RFC3339Nano, it.val)
 			if err != nil {
 				return nil, fmt.Errorf("bad date time tag: %w", err)
