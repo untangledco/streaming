@@ -162,6 +162,9 @@ func (r ByteRange) String() string {
 	return fmt.Sprintf("%d@%d", r[0], r[1])
 }
 
+// DateRange represents the EXT-X-DATERANGE tag.
+// A DateRange associates third party-defined attribute/value pairs
+// with a start and end time.
 type DateRange struct {
 	ID       string
 	Class    string
