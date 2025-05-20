@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -32,70 +33,84 @@ func Decode(rd io.Reader) (*Playlist, error) {
 	if it.typ != itemTag || it.val != tagHead {
 		return nil, fmt.Errorf("expected head tag, got %q", it.val)
 	}
+
 	p := &Playlist{}
 	var err error
 	for it := range lex.items {
 		switch it.typ {
 		case itemError:
 			return p, errors.New(it.val)
-		case itemTag:
-			switch it.val {
-			case tagVersion:
-				it = <-lex.items
-				if p.Version != 0 {
-					return p, fmt.Errorf("parse %s: playlist version already specified", it)
-				}
-				p.Version, err = strconv.Atoi(it.val)
-				if err != nil {
-					return p, fmt.Errorf("parse playlist version: %w", err)
-				}
-			case tagIndependentSegments:
-				p.IndependentSegments = true
-			case tagVariant:
-				variant, err := parseVariant(lex.items)
-				if err != nil {
-					return p, fmt.Errorf("parse variant: %w", err)
-				}
-				p.Variants = append(p.Variants, *variant)
-			case tagRendition:
-				rend, err := parseRendition(lex.items)
-				if err != nil {
-					return p, fmt.Errorf("parse rendition: %w", err)
-				}
-				p.Media = append(p.Media, *rend)
-			case tagPlaylistType:
-				it = <-lex.items
-				typ, err := parsePlaylistType(it)
-				if err != nil {
-					return p, fmt.Errorf("parse playlist type: %w", err)
-				}
-				p.Type = typ
-
-			case tagTargetDuration:
-				it = <-lex.items
-				dur, err := parseTargetDuration(it)
-				if err != nil {
-					return p, fmt.Errorf("parse target duration: %w", err)
-				}
-				p.TargetDuration = dur
-
-			case tagSegmentDuration, tagByteRange, tagKey:
-				segment, err := parseSegment(lex.items, it)
-				if err != nil {
-					return p, fmt.Errorf("parse segment: %w", err)
-				}
-				p.Segments = append(p.Segments, *segment)
-
-			case tagEndList:
-				p.End = true
-			case tagMediaSequence:
-				it = <-lex.items
-				seq, err := strconv.Atoi(it.val)
-				if err != nil {
-					return p, fmt.Errorf("parse media sequence: %w", err)
-				}
-				p.Sequence = seq
+		case itemNewline:
+			continue
+		default:
+			if it.typ != itemTag {
+				return p, fmt.Errorf("unexpected %s %q, expected tag", it.typ, it.val)
 			}
+		}
+
+		switch it.val {
+		case tagVersion:
+			it = <-lex.items
+			if p.Version != 0 {
+				return p, fmt.Errorf("parse %s: playlist version already specified", it)
+			}
+			p.Version, err = strconv.Atoi(it.val)
+			if err != nil {
+				return p, fmt.Errorf("parse playlist version: %w", err)
+			}
+		case tagIndependentSegments:
+			p.IndependentSegments = true
+		case tagVariant:
+			variant, err := parseVariant(lex.items)
+			if err != nil {
+				return p, fmt.Errorf("parse variant: %w", err)
+			}
+			p.Variants = append(p.Variants, *variant)
+		case tagRendition:
+			rend, err := parseRendition(lex.items)
+			if err != nil {
+				return p, fmt.Errorf("parse rendition: %w", err)
+			}
+			p.Media = append(p.Media, *rend)
+		case tagPlaylistType:
+			it = <-lex.items
+			typ, err := parsePlaylistType(it)
+			if err != nil {
+				return p, fmt.Errorf("parse playlist type: %w", err)
+			}
+			p.Type = typ
+
+		case tagTargetDuration:
+			it = <-lex.items
+			dur, err := parseTargetDuration(it)
+			if err != nil {
+				return p, fmt.Errorf("parse target duration: %w", err)
+			}
+			p.TargetDuration = dur
+
+		case tagSegmentDuration, tagByteRange, tagKey:
+			segment, err := parseSegment(lex.items, it)
+			if err != nil {
+				return p, fmt.Errorf("parse segment: %w", err)
+			}
+			p.Segments = append(p.Segments, *segment)
+
+		case tagEndList:
+			p.End = true
+		case tagMediaSequence:
+			it = <-lex.items
+			seq, err := strconv.Atoi(it.val)
+			if err != nil {
+				return p, fmt.Errorf("parse media sequence: %w", err)
+			}
+			p.Sequence = seq
+		default:
+			if lex.debug {
+				fmt.Fprintln(os.Stderr, "unknown tag", it)
+			}
+			// throw away whatever is next; we don't support it but also don't want to
+			// return errors while this package is in development.
+			<-lex.items
 		}
 	}
 	return p, nil

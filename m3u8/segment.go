@@ -147,48 +147,54 @@ func parseKey(items chan item) (Key, error) {
 			return key, errors.New(it.val)
 		case itemNewline:
 			return key, nil
-		case itemAttrName:
-			v := <-items
-			if v.typ != itemEquals {
-				return key, fmt.Errorf("expected %q after %s, got %s", "=", it.typ, v)
+		case itemComma:
+			continue
+		default:
+			if it.typ != itemAttrName {
+				return Key{}, fmt.Errorf("expected attribute name, got %s", it.val)
 			}
-			switch it.val {
-			case "METHOD":
-				v = <-items
-				key.Method = parseEncryptMethod(v.val)
-				if key.Method == encryptMethodInvalid {
-					return key, fmt.Errorf("bad encrypt method %q", v.val)
-				}
-			case "URI":
-				v = <-items
-				key.URI = strings.Trim(v.val, `"`)
-			case "IV":
-				v = <-items
-				b, err := hex.DecodeString(strings.TrimPrefix(v.val, "0x"))
+		}
+		v := <-items
+		if v.typ != itemEquals {
+			return key, fmt.Errorf("expected %q after %s, got %s", "=", it.typ, v)
+		}
+
+		switch it.val {
+		case "METHOD":
+			v = <-items
+			key.Method = parseEncryptMethod(v.val)
+			if key.Method == encryptMethodInvalid {
+				return key, fmt.Errorf("bad encrypt method %q", v.val)
+			}
+		case "URI":
+			v = <-items
+			key.URI = strings.Trim(v.val, `"`)
+		case "IV":
+			v = <-items
+			b, err := hex.DecodeString(strings.TrimPrefix(v.val, "0x"))
+			if err != nil {
+				return key, fmt.Errorf("parse initialisation vector: %w", err)
+			}
+			if len(b) != len(key.IV) {
+				return key, fmt.Errorf("bad initialisation length %d, want %d", len(b), len(key.IV))
+			}
+			copy(key.IV[:], b)
+		case "KEYFORMAT":
+			v = <-items
+			key.Format = strings.Trim(v.val, `"`)
+		case "KEYFORMATVERSIONS":
+			v = <-items
+			ss := strings.Split(v.val, "/")
+			key.FormatVersions = make([]uint32, len(ss))
+			for i := range ss {
+				n, err := strconv.Atoi(ss[i])
 				if err != nil {
-					return key, fmt.Errorf("parse initialisation vector: %w", err)
+					return key, fmt.Errorf("parse key format version: %w", err)
 				}
-				if len(b) != len(key.IV) {
-					return key, fmt.Errorf("bad initialisation length %d, want %d", len(b), len(key.IV))
-				}
-				copy(key.IV[:], b)
-			case "KEYFORMAT":
-				v = <-items
-				key.Format = strings.Trim(v.val, `"`)
-			case "KEYFORMATVERSIONS":
-				v = <-items
-				ss := strings.Split(v.val, "/")
-				key.FormatVersions = make([]uint32, len(ss))
-				for i := range ss {
-					n, err := strconv.Atoi(ss[i])
-					if err != nil {
-						return key, fmt.Errorf("parse key format version: %w", err)
-					}
-					key.FormatVersions[i] = uint32(n)
-				}
-			default:
-				return key, fmt.Errorf("unexpected attribute %q", it.val)
+				key.FormatVersions[i] = uint32(n)
 			}
+		default:
+			return key, fmt.Errorf("unexpected attribute %q", it.val)
 		}
 	}
 	return key, fmt.Errorf("unexpected end of tag")
