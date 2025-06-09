@@ -314,14 +314,51 @@ func (d AudioDescriptor) Data() []byte {
 		b = append(b, ch.ComponentTag)
 		b = append(b, ch.Language[:]...)
 		var c byte
-		c |= (ch.BitstreamMode << 5) // set left 3 bits
-		c |= (ch.Count & 0x0f)       // only want 4 bits
+		c |= (ch.BitstreamMode << 5)  // set left 3 bits (7-5)
+		c |= ((ch.Count & 0x0f) << 1) // 4 bits shifted left for bits 4-1
 		if ch.FullService {
-			c |= 0x01 // set last remaining bit
+			c |= 0x01 // set last remaining bit (0)
 		}
 		b = append(b, c)
 	}
 	return b
+}
+
+func unmarshalAudioDescriptor(buf []byte) AudioDescriptor {
+	if len(buf) == 0 {
+		return AudioDescriptor{}
+	}
+
+	// Extract channel count from upper 4 bits of first byte
+	count := int(buf[0] >> 4)
+	if count == 0 {
+		return AudioDescriptor{}
+	}
+
+	// Each channel requires 5 bytes (1 + 3 + 1)
+	expectedLen := 1 + (count * 5)
+	if len(buf) < expectedLen {
+		return AudioDescriptor{}
+	}
+
+	channels := make([]AudioChannel, count)
+	buf = buf[1:] // skip first byte with count
+
+	for i := 0; i < count; i++ {
+		ch := &channels[i]
+		ch.ComponentTag = buf[0]
+		copy(ch.Language[:], buf[1:4])
+
+		// Decode the packed byte: BitstreamMode (3 bits) + Count (4 bits) + FullService (1 bit)
+		packed := buf[4]
+		ch.BitstreamMode = (packed >> 5) & 0x07 // upper 3 bits
+		ch.Count = (packed >> 1) & 0x0F         // middle 4 bits
+		ch.FullService = (packed & 0x01) != 0   // lowest bit
+
+		buf = buf[5:] // move to next channel
+	}
+
+	return AudioDescriptor(channels)
 }
 
 func decodeAllDescriptors(buf []byte) ([]SpliceDescriptor, error) {
@@ -365,6 +402,8 @@ func unmarshalSpliceDescriptor(buf []byte) (SpliceDescriptor, error) {
 		return unmarshalSegDescriptor(buf), nil
 	case TagDTMF:
 		return unmarshalDTMF(buf), nil
+	case TagAudio:
+		return unmarshalAudioDescriptor(buf), nil
 	}
 	return nil, fmt.Errorf("unmarshal %d unsupported", tag)
 }
