@@ -296,10 +296,23 @@ type AudioChannel struct {
 	Language [3]byte
 	// A 3-bit integer from ATSC A/52 Table 5.7.
 	BitstreamMode uint8
-	// Number of channels as a 4-bit integer, from ATSC A/52 Table A4.5.
-	Count       uint8
+	// Number of channels as a 4 bit field, from ATSC A/52 Table A4.5.
+	Count       NumChannels
 	FullService bool
 }
+
+type NumChannels uint8
+
+const (
+	OneChan NumChannels = 0b10000000 + (iota << 4)
+	TwoChan
+	ThreeChan
+	FourChan
+	FiveChan
+	SixChan
+	_ // Reserved
+	_ // Reserved
+)
 
 type AudioDescriptor []AudioChannel
 
@@ -314,10 +327,10 @@ func (d AudioDescriptor) Data() []byte {
 		b = append(b, ch.ComponentTag)
 		b = append(b, ch.Language[:]...)
 		var c byte
-		c |= (ch.BitstreamMode << 5) // set left 3 bits
-		c |= (ch.Count & 0x0f)       // only want 4 bits
+		c |= (ch.BitstreamMode << 5) // set bits 0-2
+		c |= byte(ch.Count) >> 3     // set bits 3-7
 		if ch.FullService {
-			c |= 0x01 // set last remaining bit
+			c |= 0x01 // set last bit
 		}
 		b = append(b, c)
 	}

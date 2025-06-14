@@ -116,6 +116,7 @@ func Encode(splice *Splice) ([]byte, error) {
 	tier := splice.Tier & 0x0fff // just 12 bits
 	// right 4 bits are for command length
 	buf = binary.BigEndian.AppendUint16(buf, tier<<4)
+
 	if splice.Command == nil {
 		return nil, fmt.Errorf("nil command")
 	}

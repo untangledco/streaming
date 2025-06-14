@@ -165,3 +165,34 @@ func TestEncode(t *testing.T) {
 		})
 	}
 }
+
+const bitstreamModeKaraoke uint8 = 0b00000111
+
+func TestAudioDescriptor(t *testing.T) {
+	desc := []AudioChannel{
+		{
+			ComponentTag:  0xff,                   // should be 0xff if unused.
+			Language:      [3]byte{'e', 'n', 'g'}, // English
+			BitstreamMode: bitstreamModeKaraoke,
+			Count:         SixChan,
+			FullService:   true,
+		},
+	}
+
+	want := [6]byte{
+		0b00010000,    // we have a single channel (above), shifted left 4. reserved bits untoggled.
+		0xff,          // ComponentTag
+		'e', 'n', 'g', // Language
+		// bit layout is
+		//	mode mode mode, count count count count, fullservice
+		0b11111011, // Mode = karaoke, Count = SixChan, FullService = true
+	}
+
+	var got [6]byte
+	marshalled := AudioDescriptor(desc).Data()
+	copy(got[:], marshalled)
+	if got != want {
+		t.Logf("final byte = %#08b, want %#08b", got[5], want[5])
+		t.Fatalf("Data() = %#08bb, want %#08b", got, want)
+	}
+}
