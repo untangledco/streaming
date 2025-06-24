@@ -73,8 +73,7 @@ func encodeCommand(c *Command) ([]byte, error) {
 		}
 		return b, nil
 	case SpliceInsert:
-		b := encodeInsert(c.Insert)
-		return b, nil
+		return encodeInsert(c.Insert), nil
 	case TimeSignal:
 		if c.TimeSignal == nil {
 			return nil, fmt.Errorf("cannot encode nil TimeSignal")
@@ -211,45 +210,44 @@ type Insert struct {
 func encodeInsert(ins *Insert) []byte {
 	buf := make([]byte, 4+1) // uint32 + 1 byte
 	binary.BigEndian.PutUint32(buf[:4], ins.ID)
+	buf[4] |= 0x7f // toggle reserved bits
 	if ins.Cancel {
-		buf[4] |= (1 << 7)
+		buf[4] |= (1 << 7) // toggle unreserved bit
+		return buf
 	}
-	// toggle remaining reserved 7 bits
-	buf[4] |= 0x7f
 
-	if !ins.Cancel {
-		buf = append(buf, 0x00)
-		if ins.OutOfNetwork {
-			buf[5] |= (1 << 7)
-		}
-		// assume program_splice is set;
-		// we do not support the deprecated component_count mode.
-		buf[5] |= (1 << 6)
-		if ins.Duration != nil {
-			buf[5] |= (1 << 5)
-		}
-		if ins.Immediate {
-			buf[5] |= (1 << 4)
-		}
-		if ins.idCompliance {
-			buf[5] |= (1 << 3)
-		}
-		// toggle remaining 3 reserved bits.
-		buf[5] |= 0x07
-
-		if ins.SpliceTime != nil && !ins.Immediate {
-			b := encodeSpliceTime(*ins.SpliceTime)
-			buf = append(buf, b[:]...)
-		}
-
-		if ins.Duration != nil {
-			b := packBreakDuration(ins.Duration)
-			buf = append(buf, b[:]...)
-		}
-		buf = append(buf, byte(ins.ProgramID>>8))
-		buf = append(buf, byte(ins.ProgramID))
-		buf = append(buf, byte(ins.AvailNum), byte(ins.AvailExpected))
+	var flags byte
+	if ins.OutOfNetwork {
+		flags |= (1 << 7)
 	}
+	// assume program_splice is set;
+	// we do not support the deprecated component_count mode.
+	flags |= (1 << 6)
+	if ins.Duration != nil {
+		flags |= (1 << 5)
+	}
+	if ins.Immediate {
+		flags |= (1 << 4)
+	}
+	if ins.idCompliance {
+		flags |= (1 << 3)
+	}
+	// toggle remaining 3 reserved bits.
+	flags |= 0x07
+	buf = append(buf, flags)
+
+	if ins.SpliceTime != nil && !ins.Immediate {
+		b := encodeSpliceTime(*ins.SpliceTime)
+		buf = append(buf, b[:]...)
+	}
+
+	if ins.Duration != nil {
+		b := packBreakDuration(ins.Duration)
+		buf = append(buf, b[:]...)
+	}
+	buf = append(buf, byte(ins.ProgramID>>8))
+	buf = append(buf, byte(ins.ProgramID))
+	buf = append(buf, byte(ins.AvailNum), byte(ins.AvailExpected))
 	return buf
 }
 
