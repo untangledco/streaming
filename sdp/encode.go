@@ -1,21 +1,21 @@
 package sdp
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
 
-func (s Session) String() string {
+func (s Session) MarshalText() ([]byte, error) {
 	buf := &strings.Builder{}
 	fmt.Fprintln(buf, "v=0")
+
 	if s.Origin.Username == "" {
 		s.Origin.Username = NoUsername
 	}
-	ipv := "IP6"
-	if s.Origin.Address.Is4() {
-		ipv = "IP4"
-	}
-	fmt.Fprintf(buf, "o=%s %d %d IN %s %s\n", s.Origin.Username, s.Origin.ID, s.Origin.Version, ipv, s.Origin.Address)
+
+	fmt.Fprintln(buf, s.Origin)
+
 	fmt.Fprintf(buf, "s=%s\n", s.Name)
 
 	if s.Info != "" {
@@ -65,5 +65,5 @@ func (s Session) String() string {
 		fmt.Fprintln(buf, m)
 	}
 
-	return strings.TrimSpace(buf.String())
+	return bytes.TrimSpace([]byte(buf.String())), nil
 }

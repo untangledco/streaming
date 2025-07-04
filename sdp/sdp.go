@@ -60,6 +60,14 @@ type Origin struct {
 	Address netip.Addr
 }
 
+func (o Origin) String() string {
+	ipv := "IP6"
+	if o.Address.Is4() {
+		ipv = "IP4"
+	}
+	return fmt.Sprintf("o=%s %d %d IN %s %s", o.Username, o.ID, o.Version, ipv, o.Address)
+}
+
 func ReadSession(rd io.Reader) (*Session, error) {
 	parser := &parser{Scanner: bufio.NewScanner(rd)}
 	if err := parser.parse(); err != nil {

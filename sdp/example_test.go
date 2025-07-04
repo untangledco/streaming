@@ -12,8 +12,8 @@ import (
 // audio in RTP starts by setting the mandatory fields Origin and Name.
 // The Media field contains information about the audio such as the sample rate
 // and the number of audio channels.
-// The Session type implements fmt.Stringer;
-// to encode a Session in the SDP text format, use Session.String().
+// Session implements encoding.TextMarshaler;
+// to encode a Session in the SDP text format, use Session.MarshalText().
 func Example() {
 	session := sdp.Session{
 		Origin: sdp.Origin{
@@ -35,7 +35,8 @@ func Example() {
 			},
 		},
 	}
-	fmt.Printf("%s", session)
+	text, _ := session.MarshalText()
+	fmt.Printf("%s", text)
 	// Output:
 	// v=0
 	// o=- 3930287268 3930287268 IN IP6 2001:db8::1

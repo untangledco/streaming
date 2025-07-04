@@ -12,18 +12,21 @@ func TestWriteSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := io.ReadAll(f)
+	want, err := io.ReadAll(f)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := string(b)
-	session, err := ReadSession(bytes.NewReader(b))
+	session, err := ReadSession(bytes.NewReader(want))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want != session.String() {
+	got, err := session.MarshalText()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(want, got) {
 		t.Errorf("mismatched sdp text")
-		t.Log("want", want)
-		t.Log("got", session.String())
+		t.Log("want", string(want))
+		t.Log("got", string(got))
 	}
 }
