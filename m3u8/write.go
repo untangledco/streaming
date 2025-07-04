@@ -31,23 +31,9 @@ func Encode(w io.Writer, p *Playlist) error {
 	}
 
 	for _, r := range p.Media {
-		if r.Name == "" {
-			return fmt.Errorf("empty name")
+		if _, err := writeRendition(w, r); err != nil {
+			return fmt.Errorf("rendition %s: %w", r.Name, err)
 		}
-		rname := fmt.Sprintf("rendition %s", r.Name)
-		if r.Type > MediaClosedCaptions {
-			return fmt.Errorf("%s: unknown type %s", rname, r.Type)
-		}
-		if r.Group == "" {
-			return fmt.Errorf("%s: empty group", rname)
-		}
-		if r.Type != MediaClosedCaptions && r.InstreamID != nil {
-			return fmt.Errorf("%s: instream-id set but type is %s", rname, r.Type)
-		}
-		if r.Type == MediaClosedCaptions && r.InstreamID == nil {
-			return fmt.Errorf("%s: nil instream-id", rname)
-		}
-		fmt.Fprintln(w, r)
 	}
 
 	for i, v := range p.Variants {
@@ -84,6 +70,7 @@ func writeDateRange(w io.Writer, dr *DateRange) error {
 	} else if dr.Start.IsZero() {
 		return fmt.Errorf("zero start time")
 	}
+
 	var attrs []string
 	attrs = append(attrs, fmt.Sprintf("ID=%q", dr.ID))
 	attrs = append(attrs, fmt.Sprintf("START-DATE=%q", dr.Start.Format(rfc3339Milli)))
@@ -125,11 +112,22 @@ func writeDateRange(w io.Writer, dr *DateRange) error {
 	return err
 }
 
-func writeMap(w io.Writer, m Map) (n int, err error) {
-	if m.ByteRange != [2]int{0, 0} {
-		return fmt.Fprintf(w, "%s:URI=%q,BYTERANGE=%s\n", tagMap, m.URI, m.ByteRange)
+func writeRendition(w io.Writer, r Rendition) (n int, err error) {
+	if r.Name == "" {
+		return 0, fmt.Errorf("empty name")
+	} else if r.Group == "" {
+		return 0, fmt.Errorf("empty group")
 	}
-	return fmt.Fprintf(w, "%s:URI=%q\n", tagMap, m.URI)
+
+	if r.Type > MediaClosedCaptions {
+		return 0, fmt.Errorf("unknown type %s", r.Type)
+	}
+	if r.Type != MediaClosedCaptions && r.InstreamID != nil {
+		return 0, fmt.Errorf("instream-id set but type is %s", r.Type)
+	} else if r.Type == MediaClosedCaptions && r.InstreamID == nil {
+		return 0, fmt.Errorf("nil instream-id")
+	}
+	return fmt.Fprintln(w, r)
 }
 
 func writeSessionData(w io.Writer, sd SessionData) (n int, err error) {
