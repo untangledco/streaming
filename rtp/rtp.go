@@ -134,6 +134,8 @@ const minHeaderLength = 12
 func Unmarshal(data []byte, p *Packet) error {
 	if len(data) < minHeaderLength {
 		return fmt.Errorf("need at least %d bytes, have %d", minHeaderLength, len(data))
+	} else if len(data) == minHeaderLength {
+		return ErrNoPayload
 	}
 
 	p.Header.Version = uint8(data[0] & 0b11000000)
@@ -153,10 +155,8 @@ func Unmarshal(data []byte, p *Packet) error {
 	p.Header.Timestamp = binary.BigEndian.Uint32(data[4:8])
 	p.Header.SyncSource = binary.BigEndian.Uint32(data[8:12])
 
-	if len(data) == minHeaderLength {
-		return ErrNoPayload
-	}
-	data = data[12:]
+	// throw away unmarshalled bytes
+	data = data[minHeaderLength:]
 
 	if hasExtension {
 		if len(data) < 4 {
@@ -194,6 +194,8 @@ func Unmarshal(data []byte, p *Packet) error {
 	return nil
 }
 
+const maxContribCount = 0x0f // max 4-bit integer
+
 func Marshal(p *Packet) ([]byte, error) {
 	if p.Header.Version > VersionRFC3550 {
 		return nil, fmt.Errorf("bad version %v", p.Header.Version)
@@ -206,7 +208,6 @@ func Marshal(p *Packet) ([]byte, error) {
 	if p.Header.Extension != nil {
 		buf[0] |= 0b00010000
 	}
-	maxContribCount := 0x0f // max 4-bit integer
 	if len(p.Header.ContribSource) > maxContribCount {
 		return nil, fmt.Errorf("contribution source count %d greater than max %d", len(p.Header.ContribSource), maxContribCount)
 	}
@@ -215,6 +216,7 @@ func Marshal(p *Packet) ([]byte, error) {
 	if p.Header.Marker {
 		buf[1] |= 0b10000000
 	}
+
 	if p.Header.Type > 0x7f {
 		return nil, fmt.Errorf("payload type %s (%d) greater than max %d", p.Header.Type, p.Header.Type, 0x7f)
 	}
