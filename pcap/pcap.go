@@ -5,7 +5,6 @@
 package pcap
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -80,26 +79,21 @@ func Decode(rd io.Reader) (*File, error) {
 		} else if err != nil {
 			return nil, fmt.Errorf("packet %d: read header: %w", i, err)
 		}
-		hh := Header{
+		var p Packet
+		p.Header = Header{
 			Time:    time.Unix(int64(h.Seconds), int64(h.SubSeconds)*1000),
 			OrigLen: h.OrigLen,
 		}
 
-		data := make([]byte, h.InclLen)
-		if _, err = io.ReadFull(rd, data); err != nil {
+		p.Data = make([]byte, h.InclLen)
+		if _, err = io.ReadFull(rd, p.Data); err != nil {
 			return nil, fmt.Errorf("packet %d: read data: %w", i, err)
 		}
 
-		packets = append(packets, Packet{
-			Header: hh,
-			Data:   data,
-		})
+		packets = append(packets, p)
 	}
 
-	return &File{
-		Header:  gheader,
-		Packets: packets,
-	}, nil
+	return &File{gheader, packets}, nil
 }
 
 // Encode writes a savefile-encoded representation of file to w.
@@ -108,16 +102,16 @@ func Encode(w io.Writer, file *File) (n int64, err error) {
 	binary.NativeEndian.PutUint32(b, magicLittleEndian)
 	binary.NativeEndian.PutUint16(b[4:6], version[0])
 	binary.NativeEndian.PutUint16(b[6:8], version[1])
-	buf := bytes.NewBuffer(b)
-	if err := binary.Write(buf, binary.LittleEndian, &file.Header); err != nil {
-		return n, fmt.Errorf("global header: %v", err)
-	}
-	n, err = io.Copy(w, buf)
+	nn, err := w.Write(b)
+	n += int64(nn)
 	if err != nil {
+		return n, fmt.Errorf("magic header: %w", err)
+	}
+	if err := binary.Write(w, binary.LittleEndian, &file.Header); err != nil {
 		return n, fmt.Errorf("global header: %w", err)
 	}
+	n += (4*4) // 4 32-bit ints in GlobalHeader
 
-	buf.Reset()
 	for i, p := range file.Packets {
 		sec, nsec := timestamp(p.Header.Time)
 		h := header{
@@ -126,16 +120,14 @@ func Encode(w io.Writer, file *File) (n int64, err error) {
 			InclLen:    uint32(len(p.Data)),
 			OrigLen:    p.Header.OrigLen,
 		}
-		if err := binary.Write(buf, binary.LittleEndian, h); err != nil {
+		if err := binary.Write(w, binary.LittleEndian, h); err != nil {
 			return n, fmt.Errorf("packet %d: header: %v", i, err)
 		}
-		if _, err := buf.Write(p.Data); err != nil {
-			return n, fmt.Errorf("packet %d: data: %v", i, err)
-		}
-		nn, err := io.Copy(w, buf)
-		n += nn
+		n += 4*4 // 4 uint32s in header
+		nn, err := w.Write(p.Data)
+		n += int64(nn)
 		if err != nil {
-			return n, fmt.Errorf("packet %d: %w", i, err)
+			return n, fmt.Errorf("packet %d: data: %v", i, err)
 		}
 	}
 	return n, nil
