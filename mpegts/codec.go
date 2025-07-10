@@ -29,6 +29,7 @@ func Unmarshal(buf []byte, p *Packet) error {
 	// skip next 2 bits until later when we need to decode adaptation or payload.
 	// now just get last 4 bits
 	p.Continuity = buf[3] & 0x0f
+
 	afc := buf[3] >> 4
 	switch afc {
 	case 0x01:
@@ -43,10 +44,8 @@ func Unmarshal(buf []byte, p *Packet) error {
 	default:
 		return fmt.Errorf("neither adaptation field or payload present")
 	}
-	if err := unmarshalPayload(buf, p); err != nil {
-		return fmt.Errorf("unmarshal payload: %w", err)
-	}
-	return nil
+
+	return unmarshalPayload(buf, p)
 }
 
 func Decode(r io.Reader) (*Packet, error) {
