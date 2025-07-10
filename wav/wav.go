@@ -150,27 +150,23 @@ type FormatExtension struct {
 
 func readHeader(rd io.Reader) (*header, error) {
 	var head header
-	var fchunk fileChunk
-	if err := binary.Read(rd, binary.LittleEndian, &fchunk); err != nil {
+	if err := binary.Read(rd, binary.LittleEndian, &head.File); err != nil {
 		return nil, fmt.Errorf("read file chunk: %w", err)
 	}
-	if fchunk.ID != riffID {
-		return nil, fmt.Errorf("bad RIFF id %x", fchunk.ID)
-	} else if fchunk.FormatID != waveID {
-		return nil, fmt.Errorf("bad WAVE file format id %x", fchunk.FormatID)
+	if head.File.ID != riffID {
+		return nil, fmt.Errorf("bad RIFF id %x", head.File.ID)
+	} else if head.File.FormatID != waveID {
+		return nil, fmt.Errorf("bad WAVE file format id %x", head.File.FormatID)
 	}
-	head.File = fchunk
 
-	var fmtchunk formatChunk
-	if err := binary.Read(rd, binary.LittleEndian, &fmtchunk); err != nil {
+	if err := binary.Read(rd, binary.LittleEndian, &head.Format); err != nil {
 		return nil, fmt.Errorf("read file chunk: %w", err)
 	}
-	if fmtchunk.ID != formatChunkID {
-		return nil, fmt.Errorf("bad format chunk id %x", fmtchunk.ID)
+	if head.Format.ID != formatChunkID {
+		return nil, fmt.Errorf("bad format chunk id %x", head.Format.ID)
 	}
-	head.Format = fmtchunk
 
-	if fmtchunk.AudioFormat == AudioFormatExtensible {
+	if head.Format.AudioFormat == AudioFormatExtensible {
 		var ext FormatExtension
 		if err := binary.Read(rd, binary.LittleEndian, &ext); err != nil {
 			return nil, fmt.Errorf("read format chunk extension: %w", err)
@@ -178,10 +174,8 @@ func readHeader(rd io.Reader) (*header, error) {
 		head.FormatExtension = &ext
 	}
 
-	var data dataChunk
-	if err := binary.Read(rd, binary.LittleEndian, &data); err != nil {
+	if err := binary.Read(rd, binary.LittleEndian, &head.Data); err != nil {
 		return nil, fmt.Errorf("read data chunk: %w", err)
 	}
-	head.Data = data
 	return &head, nil
 }
