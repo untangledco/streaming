@@ -7,22 +7,22 @@ Watch it being developed live!
 - [twitch.tv/untangledco]
 - [youtube.com/@untangledco]
 
-We use these packages to self-host the livestream at [olowe.co/live].
+We used to use these packages to self-host the livestream,
+but the dayjob prevents me from streaming often enough to keep the
+server running.
 
 [twitch.tv/untangledco]: https://twitch.tv/untangledco
 [youtube.com/@untangledco]: https://www.youtube.com/@untangledco
-[olowe.co/live]: https://olowe.co/live
 
 ## Contributing
 
 ### Stuff to do
 
-Larger, fleshed-out tasks are managed in
-[issues](https://github.com/untangledco/streaming/issues).
+Larger, fleshed-out tasks are managed in [issues].
 
 There are `TODO` notes in the source code, too.
-[godoc] provides a graphic interface to view these
-with the `-notes` flag:
+[godoc] provides a graphic interface to view these with the `-notes`
+flag:
 
 	godoc -notes TODO
 
@@ -31,6 +31,7 @@ Of course `grep` works too:
 	git grep -n TODO
 
 [godoc]: https://pkg.go.dev/golang.org/x/tools/cmd/godoc
+[issues]: https://github.com/untangledco/streaming/issues
 
 ### Patches
 
