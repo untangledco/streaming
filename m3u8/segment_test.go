@@ -42,6 +42,15 @@ func TestMarshalSegments(t *testing.T) {
 			},
 			"#EXT-X-BYTERANGE:69@420\n#EXTINF:2.000\nvid.ts",
 		},
+		{
+			"title",
+			Segment{
+				Duration: 2 * time.Second,
+				URI:      "1.fmp4",
+				Title:    "first",
+			},
+			"#EXTINF:2.000,first\n1.fmp4",
+		},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -121,5 +130,31 @@ func TestParseSegment(t *testing.T) {
 
 	if !reflect.DeepEqual(plist.Segments[0], encrypted) {
 		t.Errorf("decode encrypted segment: got %v, want %v", plist.Segments[0], encrypted)
+	}
+}
+
+func TestSegmentTitles(t *testing.T) {
+	f, err := os.Open("testdata/segment_titles.m3u8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	plist, err := Decode(f)
+	if err != nil {
+		t.Fatalf("decode %s: %v", f.Name(), err)
+	}
+
+	want := Segment{
+		Duration: 6 * time.Second,
+		Title:    "second",
+		URI:      "002.fmp4",
+	}
+
+	if want.Title != plist.Segments[1].Title {
+		t.Errorf("second segment title = %s, want %s", plist.Segments[1].Title, want.Title)
+	}
+	if plist.Segments[0].Title != "" || plist.Segments[2].Title != "" {
+		t.Errorf("unexpected non-empty titles in parsed segments")
 	}
 }

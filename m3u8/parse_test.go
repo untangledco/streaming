@@ -125,7 +125,7 @@ func TestVariant(t *testing.T) {
 func TestParseDuration(t *testing.T) {
 	want := 9967000 * time.Microsecond
 	it := item{typ: itemNumber, val: "9.967"}
-	dur, err := parseSegmentDuration(it)
+	dur, err := parseSegmentDuration(it.val)
 	if err != nil {
 		t.Fatal(err)
 	}

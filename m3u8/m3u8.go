@@ -44,6 +44,10 @@ type Segment struct {
 	// Duration of this specific segment from the EXTINF tag.
 	Duration time.Duration
 
+	// Title is an optional human-readable name of the segment
+	// from the EXTINF tag.
+	Title string
+
 	// Indicates this segment holds a subset of the segment point to by URI.
 	// Range is the length of the subsegment from the EXT-X-BYTERANGE tag.
 	Range ByteRange

@@ -58,11 +58,26 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 		switch it.val {
 		case tagSegmentDuration:
 			it = <-segItems
-			dur, err := parseSegmentDuration(it)
+			if it.typ != itemAttrName && it.typ != itemNumber {
+				return nil, fmt.Errorf("parse segment duration: unexpected %s: want attribute name or number", it)
+			}
+			dur, err := parseSegmentDuration(it.val)
 			if err != nil {
 				return nil, fmt.Errorf("parse segment duration: %w", err)
 			}
 			seg.Duration = dur
+
+			// check for the optional segment title
+			it = <-segItems
+			if it.typ == itemNewline {
+				continue
+			} else if it.typ != itemComma {
+				return nil, fmt.Errorf("expected comma after segment duration, got %s", it)
+			}
+			it = <-segItems
+			seg.Title = it.val
+
+
 		case tagByteRange:
 			it = <-segItems
 			r, err := parseByteRange(it.val)
@@ -98,25 +113,23 @@ func parseSegment(items chan item, leading item) (*Segment, error) {
 	return nil, fmt.Errorf("no url")
 }
 
-func parseSegmentDuration(it item) (time.Duration, error) {
-	if it.typ != itemAttrName && it.typ != itemNumber {
-		return 0, fmt.Errorf("got %s: want attribute name or number", it)
-	}
+func parseSegmentDuration(s string) (time.Duration, error) {
 	// Some numbers can be converted straight to ints, e.g.:
 	// 	10
 	// 	10.000
 	// Others need to be converted from floating point, e.g:
 	// 	9.967
 	// Try the easiest paths first.
-	if !strings.Contains(it.val, ".") {
-		i, err := strconv.Atoi(it.val)
+	if !strings.Contains(s, ".") {
+		i, err := strconv.Atoi(s)
 		if err != nil {
 			return 0, err
 		}
 		return time.Duration(i) * time.Second, nil
 	}
+
 	// 10.000
-	before, after, _ := strings.Cut(it.val, ".")
+	before, after, _ := strings.Cut(s, ".")
 	var allZeroes = true
 	for r := range after {
 		if r != '0' {
@@ -130,7 +143,7 @@ func parseSegmentDuration(it item) (time.Duration, error) {
 		}
 		return time.Duration(i) * time.Second, nil
 	}
-	seconds, err := strconv.ParseFloat(it.val, 32)
+	seconds, err := strconv.ParseFloat(s, 32)
 	if err != nil {
 		return 0, err
 	}
@@ -285,7 +298,11 @@ func (seg *Segment) MarshalText() ([]byte, error) {
 	}
 	us := seg.Duration / time.Microsecond
 	// we do .03f for the same precision as test-streams.mux.dev.
-	tags = append(tags, fmt.Sprintf("%s:%.03f", tagSegmentDuration, float32(us)/1e6))
+	durTag := fmt.Sprintf("%s:%.03f", tagSegmentDuration, float32(us)/1e6)
+	if seg.Title != "" {
+		durTag += ","+seg.Title
+	}
+	tags = append(tags, durTag)
 	tags = append(tags, seg.URI)
 	return []byte(strings.Join(tags, "\n")), nil
 }

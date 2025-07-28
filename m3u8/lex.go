@@ -256,6 +256,7 @@ func lexAttrValue(l *lexer) stateFn {
 }
 
 func lexNumber(l *lexer) stateFn {
+Loop:
 	for {
 		switch r := l.peek(); r {
 		case 'x', '@':
@@ -274,10 +275,26 @@ func lexNumber(l *lexer) stateFn {
 			return lexRawString(l)
 		default:
 			l.emit(itemNumber)
-			return lexAttrs(l)
+			break Loop
 		}
 	}
+
+	// Hack to lex segment titles. A title can be any UTF-8 text until a newline!
+	// Titles are an exception since they don't follow any of the
+	// other rules for text in HLS tags. Since titles can only be
+	// placed after the segment duration we jam our lexing workaround here.
+	// The lexer is too clever/complicated and I'm not smart enough to handle anything smarter.
+	// TODO(otl): good case for using a more basic line-by-line parser
+	if strings.HasPrefix(l.input, tagSegmentDuration) {
+		if l.peek() == ',' {
+			l.next()
+			l.emit(itemComma)
+			return lexSegmentTitle(l)
+		}
+	}
+	return lexAttrs(l)
 }
+
 
 func lexQString(l *lexer) stateFn {
 	for {
@@ -300,4 +317,15 @@ func lexRawString(l *lexer) stateFn {
 	}
 	l.emit(itemString)
 	return lexAttrs(l)
+}
+
+func lexSegmentTitle(l *lexer) stateFn {
+	for {
+		if l.peek() == '\n' {
+			break
+		}
+		l.next()
+	}
+	l.emit(itemString)
+	return lexStart(l)
 }
